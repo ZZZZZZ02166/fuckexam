@@ -1,0 +1,168 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - complementary [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: fuckexam
+        - generic [ref=e19]: AI study companion
+      - navigation [ref=e20]:
+        - paragraph [ref=e21]: Menu
+        - generic [ref=e22]:
+          - link "🏠 Dashboard" [ref=e23] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e24]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e25] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e26]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e27] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/mastery
+            - generic [ref=e28]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e29]: Subjects
+        - generic [ref=e30]:
+          - link "computer systems" [ref=e31] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e33]: computer systems
+          - link "computer system" [ref=e34] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e36]: computer system
+          - link "computer system" [ref=e37] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e39]: computer system
+          - link "computer system" [ref=e40] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e42]: computer system
+        - paragraph [ref=e43]: Account
+        - link "＋ Add subject" [ref=e44] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e45]: ＋
+          - text: Add subject
+      - generic [ref=e47]:
+        - generic [ref=e48]: 🎓
+        - generic [ref=e49]:
+          - paragraph [ref=e50]: nioozhiqi
+          - button "Sign out" [ref=e51]
+    - generic [ref=e52]:
+      - banner [ref=e53]:
+        - generic [ref=e54]:
+          - link "← Study Path" [ref=e55] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+          - generic [ref=e56]: /
+          - generic [ref=e57]: Stage View
+      - main [ref=e58]:
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - generic [ref=e64]: Stage 1
+                - generic [ref=e65]: ·
+                - generic [ref=e66]: computer systems
+              - generic [ref=e67]:
+                - heading "Understanding Interprocess Communication" [level=1] [ref=e68]
+                - generic [ref=e69]:
+                  - generic [ref=e70]: ~30 min
+                  - button "Test myself →" [ref=e71]
+            - generic [ref=e72]:
+              - button "Summary" [ref=e73]
+              - button "Flashcards" [ref=e74]
+              - button "Concept Map" [ref=e75]
+            - generic [ref=e77]:
+              - generic [ref=e78]:
+                - generic [ref=e79]:
+                  - generic [ref=e80]: ⚡
+                  - paragraph [ref=e81]: Learn this in 5 min
+                - list [ref=e83]:
+                  - listitem [ref=e84]:
+                    - generic [ref=e86]: Interprocess Communication (IPC) involves communication between processes or threads.
+                  - listitem [ref=e87]:
+                    - generic [ref=e89]: Processes need to share resources/data, implementing IPC mechanisms like shared memory, pipes, and sockets.
+                  - listitem [ref=e90]:
+                    - generic [ref=e92]: Critical regions are parts of code where shared resources are accessed, requiring careful execution control.
+                  - listitem [ref=e93]:
+                    - generic [ref=e95]: Mutual exclusion ensures that only one process is in a critical region at any time.
+                  - listitem [ref=e96]:
+                    - generic [ref=e98]: Race conditions occur when multiple processes access shared resources without proper synchronization.
+              - generic [ref=e99]:
+                - generic [ref=e100]:
+                  - generic [ref=e101]: 💡
+                  - paragraph [ref=e102]: Big Idea
+                - paragraph [ref=e104]: Understanding interprocess communication mechanisms is crucial for managing how processes share resources and communicate effectively. This knowledge establishes a foundation for more complex concepts, such as managing race conditions and ensuring mutual exclusion, which will be addressed in subsequent stages.
+              - generic [ref=e105]:
+                - generic [ref=e106]:
+                  - generic [ref=e107]: 🎯
+                  - paragraph [ref=e108]: Key Concepts
+                - generic [ref=e112]:
+                  - paragraph [ref=e113]: Interprocess Communication (IPC)
+                  - paragraph [ref=e114]: IPC is a set of mechanisms used for processes to communicate and synchronize their actions when sharing resources or data.
+                  - paragraph [ref=e115]: IPC is tested because it underpins how processes interact and resolve data sharing issues.
+              - generic [ref=e116]:
+                - generic [ref=e117]:
+                  - generic [ref=e118]: 🔗
+                  - paragraph [ref=e119]: How It Connects
+                - generic [ref=e120]:
+                  - generic [ref=e121]:
+                    - generic [ref=e122]: Interprocess Communication (IPC)
+                    - generic [ref=e123]: →
+                    - generic [ref=e124]: enables
+                    - generic [ref=e125]: →
+                    - generic [ref=e126]: Critical Region
+                  - generic [ref=e127]:
+                    - generic [ref=e128]: Critical Region
+                    - generic [ref=e129]: →
+                    - generic [ref=e130]: is required by
+                    - generic [ref=e131]: →
+                    - generic [ref=e132]: Mutual Exclusion
+                  - generic [ref=e133]:
+                    - generic [ref=e134]: Mutual Exclusion
+                    - generic [ref=e135]: →
+                    - generic [ref=e136]: prevents
+                    - generic [ref=e137]: →
+                    - generic [ref=e138]: Race Conditions
+              - generic [ref=e139]:
+                - generic [ref=e140]:
+                  - generic [ref=e141]: ⚠️
+                  - paragraph [ref=e142]: Exam Traps
+                - generic [ref=e143]:
+                  - generic [ref=e144]:
+                    - paragraph [ref=e145]: ✗ Students may confuse critical regions with entire programs or processes.
+                    - paragraph [ref=e146]: ✓ A critical region specifically refers to the segments of code that access shared resources.
+                  - generic [ref=e147]:
+                    - paragraph [ref=e148]: ✗ Students often believe race conditions can be ignored if they think processes execute sequentially.
+                    - paragraph [ref=e149]: ✓ Race conditions can occur regardless of perceived sequential execution due to timing issues in concurrent environments.
+              - generic [ref=e150]:
+                - generic [ref=e151]:
+                  - generic [ref=e152]: ✅
+                  - paragraph [ref=e153]: Quick Check
+                - generic [ref=e154]:
+                  - generic [ref=e155]:
+                    - paragraph [ref=e156]: What is a critical region?
+                    - button "Show Answer ▾" [ref=e157]
+                  - generic [ref=e158]:
+                    - paragraph [ref=e159]: Why are race conditions problematic in concurrent processes?
+                    - button "Show Answer ▾" [ref=e160]
+              - button "📄 Detailed Notes ▾" [ref=e162]:
+                - text: 📄 Detailed Notes
+                - generic [ref=e163]: ▾
+          - generic [ref=e164]:
+            - generic [ref=e165]:
+              - heading "Stage info" [level=3] [ref=e166]
+              - generic [ref=e167]:
+                - generic [ref=e168]:
+                  - generic [ref=e169]: Estimated time
+                  - generic [ref=e170]: ~30 min
+                - generic [ref=e171]:
+                  - generic [ref=e172]: Status
+                  - generic [ref=e173]: In progress
+                - generic [ref=e174]:
+                  - generic [ref=e175]: Order
+                  - generic [ref=e176]: Stage 1 of 7
+            - generic [ref=e177]:
+              - heading "Topics in this stage" [level=3] [ref=e178]
+              - generic [ref=e180]:
+                - generic [ref=e182]: Interprocess Communication Mechanisms
+                - generic [ref=e183]: Not started
+            - button "Test myself →" [ref=e184]
+  - button "Open Next.js Dev Tools" [ref=e10] [cursor=pointer]:
+    - img [ref=e11]
+  - alert [ref=e14]: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/stages/214b6a70-b04d-4497-ba54-22b763d2b54f

@@ -1,0 +1,162 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e36]:
+    - complementary [ref=e37]:
+      - generic [ref=e38]:
+        - generic [ref=e39]: fuckexam
+        - generic [ref=e40]: AI study companion
+      - navigation [ref=e41]:
+        - paragraph [ref=e42]: Menu
+        - generic [ref=e43]:
+          - link "🏠 Dashboard" [ref=e44] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e45]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e46] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e47]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e48] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e49]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e50]: Subjects
+        - generic [ref=e51]:
+          - link "computer systems" [ref=e52] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e54]: computer systems
+          - link "computer system" [ref=e55] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e57]: computer system
+          - link "computer system" [ref=e58] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e60]: computer system
+          - link "computer system" [ref=e61] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e63]: computer system
+        - paragraph [ref=e64]: Account
+        - link "＋ Add subject" [ref=e65] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e66]: ＋
+          - text: Add subject
+      - generic [ref=e68]:
+        - generic [ref=e69]: 🎓
+        - generic [ref=e70]:
+          - paragraph [ref=e71]: nioozhiqi
+          - button "Sign out" [ref=e72]
+    - generic [ref=e73]:
+      - banner [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e76]: Dashboard
+          - generic [ref=e77]: Dashboard
+        - link "+ Add subject" [ref=e79] [cursor=pointer]:
+          - /url: /subjects/new
+      - main [ref=e80]:
+        - generic [ref=e82]:
+          - generic [ref=e83]:
+            - paragraph [ref=e84]: Overview
+            - heading "Your study dashboard" [level=1] [ref=e85]
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - paragraph [ref=e88]: Continue where you left off
+              - paragraph [ref=e89]: computer systems
+              - paragraph [ref=e90]: Understanding Interprocess Communication · ~30 min
+              - generic [ref=e93]: 0% ready
+            - button "Resume →" [ref=e94]
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - heading "Your subjects" [level=2] [ref=e97]
+              - generic [ref=e98]: 4 active
+            - generic [ref=e99]:
+              - link "computer systems 83d 17 July 2026 0/7 stages done 0% ready" [ref=e100] [cursor=pointer]:
+                - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+                - generic [ref=e101]:
+                  - paragraph [ref=e102]: computer systems
+                  - generic [ref=e103]: 83d
+                - paragraph [ref=e104]: 17 July 2026
+                - generic [ref=e107]:
+                  - generic [ref=e108]: 0/7 stages done
+                  - generic [ref=e109]: 0% ready
+              - link "computer system 47d 11 June 2026 1/7 stages done 0% ready" [ref=e119] [cursor=pointer]:
+                - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+                - generic [ref=e120]:
+                  - paragraph [ref=e121]: computer system
+                  - generic [ref=e122]: 47d
+                - paragraph [ref=e123]: 11 June 2026
+                - generic [ref=e126]:
+                  - generic [ref=e127]: 1/7 stages done
+                  - generic [ref=e128]: 0% ready
+              - link "computer system 59d 23 June 2026 0/0 stages done 0% ready +2" [ref=e139] [cursor=pointer]:
+                - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+                - generic [ref=e140]:
+                  - paragraph [ref=e141]: computer system
+                  - generic [ref=e142]: 59d
+                - paragraph [ref=e143]: 23 June 2026
+                - generic [ref=e146]:
+                  - generic [ref=e147]: 0/0 stages done
+                  - generic [ref=e148]: 0% ready
+                - generic [ref=e159]: "+2"
+              - link "computer system 65d 29 June 2026 0/0 stages done 0% ready" [ref=e160] [cursor=pointer]:
+                - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+                - generic [ref=e161]:
+                  - paragraph [ref=e162]: computer system
+                  - generic [ref=e163]: 65d
+                - paragraph [ref=e164]: 29 June 2026
+                - generic [ref=e167]:
+                  - generic [ref=e168]: 0/0 stages done
+                  - generic [ref=e169]: 0% ready
+              - link "+ Add a subject Upload your notes and get a study path" [ref=e171] [cursor=pointer]:
+                - /url: /subjects/new
+                - generic [ref=e173]: +
+                - paragraph [ref=e174]: Add a subject
+                - paragraph [ref=e175]: Upload your notes and get a study path
+          - generic [ref=e176]:
+            - heading "Summary" [level=2] [ref=e177]
+            - table [ref=e180]:
+              - rowgroup [ref=e181]:
+                - row "Subject Exam date Days left Readiness Stages Mastery" [ref=e182]:
+                  - columnheader "Subject" [ref=e183]
+                  - columnheader "Exam date" [ref=e184]
+                  - columnheader "Days left" [ref=e185]
+                  - columnheader "Readiness" [ref=e186]
+                  - columnheader "Stages" [ref=e187]
+                  - columnheader "Mastery" [ref=e188]
+              - rowgroup [ref=e189]:
+                - row "computer systems 17 July 2026 83 days 0% 0/7 0/7 mastered" [ref=e190] [cursor=pointer]:
+                  - cell "computer systems" [ref=e191]
+                  - cell "17 July 2026" [ref=e192]
+                  - cell "83 days" [ref=e193]:
+                    - generic [ref=e194]: 83 days
+                  - cell "0%" [ref=e195]:
+                    - generic [ref=e198]: 0%
+                  - cell "0/7" [ref=e199]
+                  - cell "0/7 mastered" [ref=e200]
+                - row "computer system 11 June 2026 47 days 0% 1/7 0/8 mastered" [ref=e201] [cursor=pointer]:
+                  - cell "computer system" [ref=e202]
+                  - cell "11 June 2026" [ref=e203]
+                  - cell "47 days" [ref=e204]:
+                    - generic [ref=e205]: 47 days
+                  - cell "0%" [ref=e206]:
+                    - generic [ref=e209]: 0%
+                  - cell "1/7" [ref=e210]
+                  - cell "0/8 mastered" [ref=e211]
+                - row "computer system 23 June 2026 59 days 0% 0/0 0/10 mastered" [ref=e212] [cursor=pointer]:
+                  - cell "computer system" [ref=e213]
+                  - cell "23 June 2026" [ref=e214]
+                  - cell "59 days" [ref=e215]:
+                    - generic [ref=e216]: 59 days
+                  - cell "0%" [ref=e217]:
+                    - generic [ref=e220]: 0%
+                  - cell "0/0" [ref=e221]
+                  - cell "0/10 mastered" [ref=e222]
+                - row "computer system 29 June 2026 65 days 0% 0/0 0/0 mastered" [ref=e223] [cursor=pointer]:
+                  - cell "computer system" [ref=e224]
+                  - cell "29 June 2026" [ref=e225]
+                  - cell "65 days" [ref=e226]:
+                    - generic [ref=e227]: 65 days
+                  - cell "0%" [ref=e228]:
+                    - generic [ref=e231]: 0%
+                  - cell "0/0" [ref=e232]
+                  - cell "0/0 mastered" [ref=e233]
+  - button "Open Next.js Dev Tools" [ref=e31] [cursor=pointer]:
+    - img [ref=e32]
+  - alert [ref=e35]: fuckexam

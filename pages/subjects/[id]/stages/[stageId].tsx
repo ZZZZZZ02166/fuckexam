@@ -261,20 +261,24 @@ function StageView() {
             {/* Left column */}
             <div className="space-y-5">
               {/* Stage heading */}
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B] mb-1.5">
-                  Stage {stage.stage_order} · {stage.subjects.name}
-                </p>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <h1 className="text-xl font-extrabold text-[#0F172A] leading-tight">{stage.name}</h1>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[12px] font-bold text-[#64748B] bg-[#F1F5F9] border border-[#E2E8F0] px-3 py-1.5 rounded-full">
+              <div className="border-b border-[#F1F5F9] pb-5">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <span className="inline-flex items-center text-[11px] font-extrabold uppercase tracking-[0.1em] text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                    Stage {stage.stage_order}
+                  </span>
+                  <span className="text-[#CBD5E1]">·</span>
+                  <span className="text-xs font-semibold text-[#64748B] truncate">{stage.subjects.name}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <h1 className="text-2xl font-extrabold text-[#0F172A] leading-tight tracking-tight">{stage.name}</h1>
+                  <div className="flex items-center gap-2 shrink-0 mt-1">
+                    <span className="text-xs font-bold text-[#475569] bg-[#F1F5F9] border border-[#E2E8F0] px-3 py-1.5 rounded-full">
                       ~{stage.estimated_minutes} min
                     </span>
                     <button
                       onClick={startQuiz}
                       disabled={generating}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold px-4 py-2 rounded-xl transition active:scale-95"
+                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold px-5 py-2 rounded-xl transition active:scale-95 shadow-sm"
                     >
                       Test myself →
                     </button>
@@ -283,7 +287,7 @@ function StageView() {
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-1 bg-[#F0F4FF] rounded-xl p-1 border border-[#E2E8F0]">
+              <div className="flex gap-1 bg-[#EEF2FF] rounded-xl p-1 border border-[#E2E8F0]">
                 {(['summary', 'flashcards', 'concept_map'] as Tab[]).map(tab => (
                   <button
                     key={tab}
@@ -296,8 +300,8 @@ function StageView() {
                     className={cn(
                       'flex-1 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-bold transition',
                       activeTab === tab
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-[#64748B] hover:text-[#0F172A]'
+                        ? 'bg-white text-blue-600 shadow-sm border border-blue-100'
+                        : 'text-[#64748B] hover:text-[#334155] hover:bg-white/50'
                     )}
                   >
                     {TAB_LABELS[tab]}
@@ -533,18 +537,18 @@ function renderInline(text: string): string {
 }
 
 const NODE_TYPE_CLASSES: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-  concept:      { bg: 'bg-violet-50',   border: 'border-violet-200',  text: 'text-violet-900',   badge: 'bg-violet-100 text-violet-700' },
-  definition:   { bg: 'bg-purple-50',   border: 'border-purple-200',  text: 'text-purple-900',   badge: 'bg-purple-100 text-purple-700' },
-  process:      { bg: 'bg-sky-50',      border: 'border-sky-200',     text: 'text-sky-900',      badge: 'bg-sky-100 text-sky-700' },
-  solution:     { bg: 'bg-emerald-50',  border: 'border-emerald-200', text: 'text-emerald-900',  badge: 'bg-emerald-100 text-emerald-700' },
-  problem:      { bg: 'bg-red-50',      border: 'border-red-200',     text: 'text-red-900',      badge: 'bg-red-100 text-red-700' },
-  exam_trap:    { bg: 'bg-amber-50',    border: 'border-amber-200',   text: 'text-amber-900',    badge: 'bg-amber-100 text-amber-700' },
-  limitation:   { bg: 'bg-orange-50',   border: 'border-orange-200',  text: 'text-orange-900',   badge: 'bg-orange-100 text-orange-700' },
-  comparison:   { bg: 'bg-cyan-50',     border: 'border-cyan-200',    text: 'text-cyan-900',     badge: 'bg-cyan-100 text-cyan-700' },
-  evidence:     { bg: 'bg-teal-50',     border: 'border-teal-200',    text: 'text-teal-900',     badge: 'bg-teal-100 text-teal-700' },
-  formula:      { bg: 'bg-pink-50',     border: 'border-pink-200',    text: 'text-pink-900',     badge: 'bg-pink-100 text-pink-700' },
-  example:      { bg: 'bg-slate-50',    border: 'border-slate-200',   text: 'text-slate-700',    badge: 'bg-slate-100 text-slate-600' },
-  code_example: { bg: 'bg-zinc-50',     border: 'border-emerald-200', text: 'text-emerald-700',  badge: 'bg-zinc-100 text-emerald-600' },
+  concept:      { bg: 'bg-violet-50',   border: 'border-violet-300',  text: 'text-violet-900',   badge: 'bg-violet-200 text-violet-800' },
+  definition:   { bg: 'bg-purple-50',   border: 'border-purple-300',  text: 'text-purple-900',   badge: 'bg-purple-200 text-purple-800' },
+  process:      { bg: 'bg-sky-50',      border: 'border-sky-300',     text: 'text-sky-900',      badge: 'bg-sky-200 text-sky-800' },
+  solution:     { bg: 'bg-emerald-50',  border: 'border-emerald-300', text: 'text-emerald-900',  badge: 'bg-emerald-200 text-emerald-800' },
+  problem:      { bg: 'bg-red-50',      border: 'border-red-300',     text: 'text-red-900',      badge: 'bg-red-200 text-red-800' },
+  exam_trap:    { bg: 'bg-amber-50',    border: 'border-amber-300',   text: 'text-amber-900',    badge: 'bg-amber-200 text-amber-800' },
+  limitation:   { bg: 'bg-orange-50',   border: 'border-orange-300',  text: 'text-orange-900',   badge: 'bg-orange-200 text-orange-800' },
+  comparison:   { bg: 'bg-cyan-50',     border: 'border-cyan-300',    text: 'text-cyan-900',     badge: 'bg-cyan-200 text-cyan-800' },
+  evidence:     { bg: 'bg-teal-50',     border: 'border-teal-300',    text: 'text-teal-900',     badge: 'bg-teal-200 text-teal-800' },
+  formula:      { bg: 'bg-pink-50',     border: 'border-pink-300',    text: 'text-pink-900',     badge: 'bg-pink-200 text-pink-800' },
+  example:      { bg: 'bg-slate-50',    border: 'border-slate-300',   text: 'text-slate-800',    badge: 'bg-slate-200 text-slate-700' },
+  code_example: { bg: 'bg-zinc-50',     border: 'border-emerald-300', text: 'text-emerald-800',  badge: 'bg-emerald-100 text-emerald-700' },
 }
 
 function nodeTypeClasses(type: string) {
@@ -554,8 +558,8 @@ function nodeTypeClasses(type: string) {
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <span className="text-sm">{icon}</span>
-      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{text}</p>
+      <span className="text-base leading-none">{icon}</span>
+      <p className="text-[12px] font-extrabold uppercase tracking-[0.1em] text-[#334155]">{text}</p>
     </div>
   )
 }
@@ -602,10 +606,13 @@ function SummaryTab({ content }: { content: SummaryContent }) {
           <SectionLabel icon="🎯" text="Key Concepts" />
           <div className="space-y-2">
             {content.keyConcepts.map((kc, i) => (
-              <div key={i} className="bg-white rounded-xl border border-[#E2E8F0] border-l-2 border-l-blue-600 px-4 py-3">
-                <p className="text-[#0F172A] font-bold text-sm">{kc.term}</p>
-                <p className="text-[#64748B] text-sm mt-1 leading-relaxed">{kc.explanation}</p>
-                <p className="text-blue-600 text-xs mt-1.5 italic">{kc.whyItMatters}</p>
+              <div key={i} className="flex bg-white rounded-xl border border-[#E2E8F0] overflow-hidden shadow-sm">
+                <div className="w-[3px] shrink-0 bg-blue-500" />
+                <div className="px-4 py-3 flex-1 min-w-0">
+                  <p className="text-[#0F172A] font-bold text-sm">{kc.term}</p>
+                  <p className="text-[#64748B] text-sm mt-1 leading-relaxed">{kc.explanation}</p>
+                  <p className="text-blue-600 text-xs mt-1.5 font-medium">{kc.whyItMatters}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -617,10 +624,12 @@ function SummaryTab({ content }: { content: SummaryContent }) {
           <SectionLabel icon="🔗" text="How It Connects" />
           <div className="space-y-2">
             {content.ideaConnections.map((conn, i) => (
-              <div key={i} className="flex items-center gap-2 flex-wrap">
-                <span className="rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1 text-slate-700 font-medium text-xs">{conn.from}</span>
-                <span className="text-slate-400 text-xs">── {conn.relationship} ──▶</span>
-                <span className="rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1 text-slate-700 font-medium text-xs">{conn.to}</span>
+              <div key={i} className="flex items-center gap-2 flex-wrap bg-white border border-[#E2E8F0] rounded-xl px-3 py-2.5">
+                <span className="rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1 text-blue-700 font-semibold text-xs">{conn.from}</span>
+                <span className="text-[#94A3B8] text-xs font-medium">→</span>
+                <span className="text-[#64748B] text-xs italic flex-1">{conn.relationship}</span>
+                <span className="text-[#94A3B8] text-xs font-medium">→</span>
+                <span className="rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1 text-[#334155] font-semibold text-xs">{conn.to}</span>
               </div>
             ))}
           </div>
@@ -783,15 +792,15 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
                 if (!node) return null
                 const cls = nodeTypeClasses(node.type)
                 return (
-                  <div key={id} className={cn('rounded-xl border px-4 py-3', cls.bg, cls.border)}>
-                    <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide', cls.badge)}>
+                  <div key={id} className={cn('rounded-xl border-[1.5px] px-4 py-3.5', cls.bg, cls.border)}>
+                    <span className={cn('inline-block rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide', cls.badge)}>
                       {node.type.replace(/_/g, ' ')}
                     </span>
-                    <p className={cn('font-semibold mt-1.5', cls.text,
-                      (node as any).importance === 'primary' ? 'text-sm font-bold' :
-                      (node as any).importance === 'supporting' ? 'text-xs opacity-70' : 'text-sm'
+                    <p className={cn('font-bold mt-2', cls.text,
+                      (node as any).importance === 'primary' ? 'text-sm' :
+                      (node as any).importance === 'supporting' ? 'text-xs opacity-80' : 'text-sm'
                     )}>{node.label}</p>
-                    <p className="text-slate-500 text-xs mt-1 leading-relaxed">{node.detail}</p>
+                    <p className="text-slate-600 text-xs mt-1.5 leading-relaxed">{node.detail}</p>
                   </div>
                 )
               })}
@@ -817,12 +826,12 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
             {orphans.map(node => {
               const cls = nodeTypeClasses(node.type)
               return (
-                <div key={node.id} className={cn('rounded-xl border px-4 py-3', cls.bg, cls.border)}>
-                  <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide', cls.badge)}>
+                <div key={node.id} className={cn('rounded-xl border-[1.5px] px-4 py-3.5', cls.bg, cls.border)}>
+                  <span className={cn('inline-block rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide', cls.badge)}>
                     {node.type.replace(/_/g, ' ')}
                   </span>
-                  <p className={cn('font-semibold mt-1.5 text-sm', cls.text)}>{node.label}</p>
-                  <p className="text-slate-500 text-xs mt-1 leading-relaxed">{node.detail}</p>
+                  <p className={cn('font-bold mt-2 text-sm', cls.text)}>{node.label}</p>
+                  <p className="text-slate-600 text-xs mt-1.5 leading-relaxed">{node.detail}</p>
                 </div>
               )
             })}

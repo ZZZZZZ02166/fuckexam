@@ -207,7 +207,6 @@ export function Layout({ children, backHref, backLabel, title, actions }: Layout
             )}
             {title && backHref && <span className="text-[#CBD5E1]">/</span>}
             {title && <span className="font-bold text-[#1E293B] text-sm">{title}</span>}
-            {title && !backHref && <span className="font-bold text-[#1E293B] text-sm">{title}</span>}
           </div>
 
           <div className="flex-1" />
