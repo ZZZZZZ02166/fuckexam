@@ -14,7 +14,7 @@ const PathSchema = z.object({
     estimated_minutes: z.number().int().min(10).max(120),
     material_types: z.array(z.enum(['summary', 'flashcards', 'concept_map'])),
     test_types: z.array(z.enum(['recall', 'mcq'])),
-    rationale: z.string().optional(),
+    rationale: z.string().nullable().optional(),
   }))
 })
 

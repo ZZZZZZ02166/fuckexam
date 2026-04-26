@@ -12,8 +12,8 @@ const ConceptMapSchema = z.object({
   root: z.string(),
   tree: z.array(z.object({
     label: z.string(),
-    detail: z.string().optional(),
-    children: z.array(z.object({ label: z.string(), detail: z.string().optional() })).optional(),
+    detail: z.string().nullable().optional(),
+    children: z.array(z.object({ label: z.string(), detail: z.string().nullable().optional() })).nullable().optional(),
   }))
 })
 
