@@ -22,19 +22,19 @@ export function daysUntil(date: string | Date | null): number | null {
 
 export function masteryColor(level: string): string {
   switch (level) {
-    case 'green': return 'text-green-400'
-    case 'yellow': return 'text-yellow-400'
-    case 'red': return 'text-red-400'
-    default: return 'text-zinc-500'
+    case 'green': return 'text-green-600'
+    case 'yellow': return 'text-yellow-600'
+    case 'red': return 'text-red-600'
+    default: return 'text-slate-400'
   }
 }
 
 export function masteryBg(level: string): string {
   switch (level) {
-    case 'green': return 'bg-green-500/20 border-green-500/40'
-    case 'yellow': return 'bg-yellow-500/20 border-yellow-500/40'
-    case 'red': return 'bg-red-500/20 border-red-500/40'
-    default: return 'bg-zinc-800 border-zinc-700'
+    case 'green': return 'bg-green-50 border-green-200'
+    case 'yellow': return 'bg-yellow-50 border-yellow-200'
+    case 'red': return 'bg-red-50 border-red-200'
+    default: return 'bg-slate-50 border-slate-200'
   }
 }
 

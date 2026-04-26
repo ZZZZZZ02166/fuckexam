@@ -45,7 +45,6 @@ function StageView() {
   const [generating, setGenerating] = useState(false)
   const [mode, setMode] = useState<Mode>('study')
 
-  // Quiz state
   const [questions, setQuestions] = useState<Question[]>([])
   const [qIndex, setQIndex] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
@@ -56,7 +55,6 @@ function StageView() {
   const [mcqSelected, setMcqSelected] = useState<number | null>(null)
   const [submittingResults, setSubmittingResults] = useState(false)
 
-  // Flashcard state
   const [cardIndex, setCardIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
 
@@ -94,7 +92,6 @@ function StageView() {
       setLoading(false)
     }
 
-    // Auto-generate summary if not cached — fires after page is visible
     if (!genItems.find(g => g.type === 'summary')) {
       setGenerating(true)
       try {
@@ -220,8 +217,8 @@ function StageView() {
   const partialCount = answers.filter(a => a.score === 'partial').length
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <Spinner className="text-indigo-400 w-5 h-5" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <Spinner className="text-blue-500 w-5 h-5" />
     </div>
   )
   if (!data) return null
@@ -232,14 +229,14 @@ function StageView() {
   return (
     <>
       <Head><title>{stage.name} — fuckexam</title></Head>
-      <div className="min-h-screen bg-zinc-950">
+      <div className="min-h-screen bg-slate-50">
         {/* Header */}
-        <div className="border-b border-zinc-800 px-4 py-3">
+        <div className="border-b border-slate-200 bg-white px-4 py-3">
           <div className="max-w-2xl mx-auto flex items-center gap-3">
-            <Link href={`/subjects/${subjectId}/path`} className="text-zinc-500 hover:text-zinc-300 text-sm transition">←</Link>
+            <Link href={`/subjects/${subjectId}/path`} className="text-slate-400 hover:text-slate-700 text-sm transition">←</Link>
             <div className="min-w-0">
-              <p className="text-xs text-zinc-500 truncate">{stage.subjects.name}</p>
-              <p className="text-sm font-semibold text-white truncate">{stage.name}</p>
+              <p className="text-xs text-slate-400 truncate">{stage.subjects.name}</p>
+              <p className="text-sm font-semibold text-slate-900 truncate">{stage.name}</p>
             </div>
           </div>
         </div>
@@ -250,7 +247,7 @@ function StageView() {
           {mode === 'study' && (
             <div className="space-y-5">
               {/* Tabs */}
-              <div className="flex gap-1 bg-zinc-900 rounded-lg p-1">
+              <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
                 {(['summary', 'flashcards', 'concept_map'] as Tab[]).map(tab => (
                   <button
                     key={tab}
@@ -263,8 +260,8 @@ function StageView() {
                     className={cn(
                       'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition capitalize',
                       activeTab === tab
-                        ? 'bg-zinc-700 text-white'
-                        : 'text-zinc-400 hover:text-zinc-300'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
                     )}
                   >
                     {tab === 'concept_map' ? 'Map' : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -276,8 +273,8 @@ function StageView() {
               <div className="min-h-[320px]">
                 {generating && !generated.find(g => g.type === activeTab) ? (
                   <div className="flex flex-col items-center justify-center h-48 gap-3">
-                    <Spinner className="text-indigo-400 w-5 h-5" />
-                    <p className="text-zinc-400 text-sm">Generating {activeTab.replace('_', ' ')}…</p>
+                    <Spinner className="text-blue-500 w-5 h-5" />
+                    <p className="text-slate-500 text-sm">Generating {activeTab.replace('_', ' ')}…</p>
                   </div>
                 ) : (
                   <TabContent
@@ -294,15 +291,15 @@ function StageView() {
               </div>
 
               {/* Test Me */}
-              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 flex items-center justify-between gap-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center justify-between gap-4 shadow-sm">
                 <div>
-                  <p className="text-white text-sm font-medium">Test yourself on this stage</p>
-                  <p className="text-zinc-500 text-xs mt-0.5">Active recall + quiz</p>
+                  <p className="text-slate-900 text-sm font-medium">Test yourself on this stage</p>
+                  <p className="text-slate-400 text-xs mt-0.5">Active recall + quiz</p>
                 </div>
                 <button
                   onClick={startQuiz}
                   disabled={generating}
-                  className="shrink-0 rounded-lg px-4 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 transition"
+                  className="shrink-0 rounded-lg px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition"
                 >
                   Test me →
                 </button>
@@ -315,21 +312,21 @@ function StageView() {
             <div className="space-y-5">
               {generating ? (
                 <div className="flex flex-col items-center justify-center h-48 gap-3">
-                  <Spinner className="text-indigo-400 w-5 h-5" />
-                  <p className="text-zinc-400 text-sm">Generating questions…</p>
+                  <Spinner className="text-blue-500 w-5 h-5" />
+                  <p className="text-slate-500 text-sm">Generating questions…</p>
                 </div>
               ) : questions.length > 0 ? (
                 <>
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-zinc-500">Question {qIndex + 1} of {questions.length}</p>
-                    <button onClick={() => setMode('study')} className="text-xs text-zinc-500 hover:text-zinc-300 transition">
+                    <p className="text-xs text-slate-400">Question {qIndex + 1} of {questions.length}</p>
+                    <button onClick={() => setMode('study')} className="text-xs text-slate-400 hover:text-slate-700 transition">
                       Exit quiz
                     </button>
                   </div>
 
-                  <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
+                  <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-indigo-500 transition-all"
+                      className="h-full rounded-full bg-blue-500 transition-all"
                       style={{ width: `${((qIndex) / questions.length) * 100}%` }}
                     />
                   </div>
@@ -354,14 +351,14 @@ function StageView() {
           {/* RESULTS MODE */}
           {mode === 'results' && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-center">
+              <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
                 <p className="text-4xl mb-3">
                   {correctCount + partialCount * 0.5 >= answers.length * 0.7 ? '🎉' : '📚'}
                 </p>
-                <p className="text-white font-bold text-xl mb-1">
+                <p className="text-slate-900 font-bold text-xl mb-1">
                   {correctCount} / {answers.length} correct
                 </p>
-                <p className="text-zinc-400 text-sm">
+                <p className="text-slate-500 text-sm">
                   {partialCount > 0 && `${partialCount} partial · `}
                   {answers.filter(a => a.score === 'wrong').length} missed
                 </p>
@@ -369,25 +366,25 @@ function StageView() {
 
               {answers.filter(a => a.score !== 'correct').length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Review</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Review</p>
                   <div className="space-y-2">
                     {answers.filter(a => a.score !== 'correct').map(a => {
                       const q = questions.find(q => q.id === a.question_id)
                       if (!q) return null
                       return (
-                        <div key={a.question_id} className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-sm">
+                        <div key={a.question_id} className="rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className={a.score === 'partial' ? 'text-yellow-400' : 'text-red-400'}>
+                            <span className={a.score === 'partial' ? 'text-yellow-600' : 'text-red-600'}>
                               {a.score === 'partial' ? '◑' : '✗'}
                             </span>
-                            <p className="text-white font-medium">
+                            <p className="text-slate-900 font-medium">
                               {q.type === 'recall'
                                 ? (q.content as unknown as RecallContent).prompt
                                 : (q.content as unknown as MCQContent).question}
                             </p>
                           </div>
                           {a.feedback?.missing_parts?.length ? (
-                            <p className="text-zinc-400 text-xs">Missed: {a.feedback.missing_parts.join(', ')}</p>
+                            <p className="text-slate-500 text-xs">Missed: {a.feedback.missing_parts.join(', ')}</p>
                           ) : null}
                         </div>
                       )
@@ -398,13 +395,13 @@ function StageView() {
 
               {submittingResults ? (
                 <div className="flex items-center justify-center gap-2 py-2">
-                  <Spinner className="text-indigo-400 w-4 h-4" />
-                  <span className="text-zinc-400 text-sm">Saving results…</span>
+                  <Spinner className="text-blue-500 w-4 h-4" />
+                  <span className="text-slate-500 text-sm">Saving results…</span>
                 </div>
               ) : (
                 <button
                   onClick={() => router.push(`/subjects/${subjectId}/path`)}
-                  className="w-full rounded-lg px-4 py-2.5 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition"
+                  className="w-full rounded-lg px-4 py-2.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
                 >
                   Continue →
                 </button>
@@ -419,30 +416,30 @@ function StageView() {
 
 function renderInline(text: string): string {
   return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-    .replace(/`([^`]+)`/g, '<code class="bg-zinc-800 text-indigo-300 px-1 py-0.5 rounded text-xs font-mono">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 font-semibold">$1</strong>')
+    .replace(/`([^`]+)`/g, '<code class="bg-slate-100 text-blue-600 px-1 py-0.5 rounded text-xs font-mono">$1</code>')
 }
 
 const NODE_TYPE_CLASSES: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-  concept:      { bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', text: 'text-indigo-200',  badge: 'bg-indigo-500/20 text-indigo-300' },
-  definition:   { bg: 'bg-violet-500/10', border: 'border-violet-500/30', text: 'text-violet-200',  badge: 'bg-violet-500/20 text-violet-300' },
-  process:      { bg: 'bg-blue-500/10',   border: 'border-blue-500/30',   text: 'text-blue-200',    badge: 'bg-blue-500/20 text-blue-300' },
-  solution:     { bg: 'bg-green-500/10',  border: 'border-green-500/30',  text: 'text-green-200',   badge: 'bg-green-500/20 text-green-300' },
-  problem:      { bg: 'bg-red-500/10',    border: 'border-red-500/30',    text: 'text-red-200',     badge: 'bg-red-500/20 text-red-300' },
-  exam_trap:    { bg: 'bg-amber-500/10',  border: 'border-amber-500/30',  text: 'text-amber-200',   badge: 'bg-amber-500/20 text-amber-300' },
-  limitation:   { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-200',  badge: 'bg-orange-500/20 text-orange-300' },
-  comparison:   { bg: 'bg-cyan-500/10',   border: 'border-cyan-500/30',   text: 'text-cyan-200',    badge: 'bg-cyan-500/20 text-cyan-300' },
-  evidence:     { bg: 'bg-teal-500/10',   border: 'border-teal-500/30',   text: 'text-teal-200',    badge: 'bg-teal-500/20 text-teal-300' },
-  formula:      { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-200',  badge: 'bg-purple-500/20 text-purple-300' },
-  example:      { bg: 'bg-zinc-800',      border: 'border-zinc-700',      text: 'text-zinc-300',    badge: 'bg-zinc-700 text-zinc-300' },
-  code_example: { bg: 'bg-zinc-900',      border: 'border-zinc-700',      text: 'text-green-400',   badge: 'bg-zinc-800 text-green-400' },
+  concept:      { bg: 'bg-blue-50',    border: 'border-blue-200',    text: 'text-blue-800',    badge: 'bg-blue-100 text-blue-600' },
+  definition:   { bg: 'bg-violet-50',  border: 'border-violet-200',  text: 'text-violet-800',  badge: 'bg-violet-100 text-violet-600' },
+  process:      { bg: 'bg-sky-50',     border: 'border-sky-200',     text: 'text-sky-800',     badge: 'bg-sky-100 text-sky-600' },
+  solution:     { bg: 'bg-green-50',   border: 'border-green-200',   text: 'text-green-800',   badge: 'bg-green-100 text-green-600' },
+  problem:      { bg: 'bg-red-50',     border: 'border-red-200',     text: 'text-red-800',     badge: 'bg-red-100 text-red-600' },
+  exam_trap:    { bg: 'bg-amber-50',   border: 'border-amber-200',   text: 'text-amber-800',   badge: 'bg-amber-100 text-amber-600' },
+  limitation:   { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-800',  badge: 'bg-orange-100 text-orange-600' },
+  comparison:   { bg: 'bg-cyan-50',    border: 'border-cyan-200',    text: 'text-cyan-800',    badge: 'bg-cyan-100 text-cyan-600' },
+  evidence:     { bg: 'bg-teal-50',    border: 'border-teal-200',    text: 'text-teal-800',    badge: 'bg-teal-100 text-teal-600' },
+  formula:      { bg: 'bg-purple-50',  border: 'border-purple-200',  text: 'text-purple-800',  badge: 'bg-purple-100 text-purple-600' },
+  example:      { bg: 'bg-slate-50',   border: 'border-slate-200',   text: 'text-slate-700',   badge: 'bg-slate-100 text-slate-500' },
+  code_example: { bg: 'bg-slate-100',  border: 'border-slate-200',   text: 'text-emerald-700', badge: 'bg-slate-200 text-emerald-600' },
 }
 function nodeTypeClasses(type: string) {
   return NODE_TYPE_CLASSES[type] ?? NODE_TYPE_CLASSES.concept
 }
 
 function SectionLabel({ text }: { text: string }) {
-  return <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-2">{text}</p>
+  return <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">{text}</p>
 }
 
 function SummaryTab({ content }: { content: SummaryContent }) {
@@ -462,8 +459,8 @@ function SummaryTab({ content }: { content: SummaryContent }) {
           <SectionLabel text="Learn this in 5 min" />
           <ul className="space-y-2">
             {content.quickOverview.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                 <span>{item}</span>
               </li>
             ))}
@@ -474,8 +471,8 @@ function SummaryTab({ content }: { content: SummaryContent }) {
       {content.bigIdea && (
         <div>
           <SectionLabel text="Big Idea" />
-          <div className="rounded-xl bg-indigo-500/10 border border-indigo-500/20 px-4 py-3">
-            <p className="text-indigo-100 text-sm leading-relaxed">{content.bigIdea}</p>
+          <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
+            <p className="text-blue-800 text-sm leading-relaxed">{content.bigIdea}</p>
           </div>
         </div>
       )}
@@ -485,10 +482,10 @@ function SummaryTab({ content }: { content: SummaryContent }) {
           <SectionLabel text="Key Concepts" />
           <div className="space-y-2">
             {content.keyConcepts.map((kc, i) => (
-              <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
-                <p className="text-white font-semibold text-sm">{kc.term}</p>
-                <p className="text-zinc-300 text-sm mt-1 leading-relaxed">{kc.explanation}</p>
-                <p className="text-indigo-400 text-xs mt-1.5 italic">{kc.whyItMatters}</p>
+              <div key={i} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <p className="text-slate-900 font-semibold text-sm">{kc.term}</p>
+                <p className="text-slate-600 text-sm mt-1 leading-relaxed">{kc.explanation}</p>
+                <p className="text-blue-600 text-xs mt-1.5 italic">{kc.whyItMatters}</p>
               </div>
             ))}
           </div>
@@ -501,9 +498,9 @@ function SummaryTab({ content }: { content: SummaryContent }) {
           <div className="space-y-2">
             {content.ideaConnections.map((conn, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap">
-                <span className="rounded-lg bg-zinc-800 border border-zinc-700 px-2.5 py-1 text-zinc-200 font-medium text-xs">{conn.from}</span>
-                <span className="text-zinc-500 text-xs">── {conn.relationship} ──▶</span>
-                <span className="rounded-lg bg-zinc-800 border border-zinc-700 px-2.5 py-1 text-zinc-200 font-medium text-xs">{conn.to}</span>
+                <span className="rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1 text-slate-700 font-medium text-xs">{conn.from}</span>
+                <span className="text-slate-400 text-xs">── {conn.relationship} ──▶</span>
+                <span className="rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1 text-slate-700 font-medium text-xs">{conn.to}</span>
               </div>
             ))}
           </div>
@@ -515,9 +512,9 @@ function SummaryTab({ content }: { content: SummaryContent }) {
           <SectionLabel text="Exam Traps" />
           <div className="space-y-2">
             {content.examTraps.map((trap, i) => (
-              <div key={i} className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 border-l-[3px] border-l-amber-500/60">
-                <p className="text-red-400 text-sm">✗ {trap.trap}</p>
-                <p className="text-green-400 text-sm mt-1.5">✓ {trap.correction}</p>
+              <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 border-l-[3px] border-l-amber-400">
+                <p className="text-red-600 text-sm">✗ {trap.trap}</p>
+                <p className="text-green-600 text-sm mt-1.5">✓ {trap.correction}</p>
               </div>
             ))}
           </div>
@@ -529,20 +526,20 @@ function SummaryTab({ content }: { content: SummaryContent }) {
           <SectionLabel text="Quick Check" />
           <div className="space-y-2">
             {content.quickCheck.map((qc, i) => (
-              <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
-                <p className="text-white text-sm font-medium">{qc.question}</p>
+              <div key={i} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <p className="text-slate-900 text-sm font-medium">{qc.question}</p>
                 {revealedChecks.has(i) ? (
                   <motion.p
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-zinc-300 text-sm mt-2 leading-relaxed"
+                    className="text-slate-600 text-sm mt-2 leading-relaxed"
                   >
                     {qc.answer}
                   </motion.p>
                 ) : (
                   <button
                     onClick={() => toggleCheck(i)}
-                    className="text-indigo-400 text-xs mt-2 hover:text-indigo-300 transition"
+                    className="text-blue-600 text-xs mt-2 hover:text-blue-700 transition"
                   >
                     Show Answer ▾
                   </button>
@@ -557,7 +554,7 @@ function SummaryTab({ content }: { content: SummaryContent }) {
         <div>
           <button
             onClick={() => setShowNotes(v => !v)}
-            className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition"
+            className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hover:text-slate-700 transition"
           >
             Detailed Notes <span>{showNotes ? '▲' : '▾'}</span>
           </button>
@@ -582,8 +579,8 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
   if (!nodes?.length || !relationships?.length) {
     return (
       <div className="flex flex-col items-center justify-center h-40 gap-3">
-        <p className="text-zinc-500 text-sm">Concept map could not be loaded.</p>
-        <button onClick={onRetry} className="text-indigo-400 text-sm hover:text-indigo-300 transition">
+        <p className="text-slate-500 text-sm">Concept map could not be loaded.</p>
+        <button onClick={onRetry} className="text-blue-600 text-sm hover:text-blue-700 transition">
           Retry ↺
         </button>
       </div>
@@ -603,7 +600,6 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
     relMap.set(`${r.from}:${r.to}`, r.label)
   })
 
-  // R3: root fallback — if no roots, pick highest-importance concept node
   const rootIds = nodes.filter(n => (inDeg.get(n.id) ?? 0) === 0).map(n => n.id)
   let fallbackRoot: string | undefined
   if (!rootIds.length && nodes.length) {
@@ -650,8 +646,8 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl bg-gradient-to-r from-indigo-600/20 to-violet-600/10 border border-indigo-500/30 px-4 py-3">
-        <p className="text-indigo-200 font-bold text-sm">{title}</p>
+      <div className="rounded-xl bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 px-4 py-3">
+        <p className="text-blue-800 font-bold text-sm">{title}</p>
       </div>
 
       {levels.map((level, li) => {
@@ -673,9 +669,9 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
                     </span>
                     <p className={cn('font-semibold mt-1.5', cls.text,
                       (node as any).importance === 'primary' ? 'text-sm font-bold' :
-                      (node as any).importance === 'supporting' ? 'text-xs text-zinc-400' : 'text-sm'
+                      (node as any).importance === 'supporting' ? 'text-xs opacity-70' : 'text-sm'
                     )}>{node.label}</p>
-                    <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{node.detail}</p>
+                    <p className="text-slate-500 text-xs mt-1 leading-relaxed">{node.detail}</p>
                   </div>
                 )
               })}
@@ -683,11 +679,11 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
 
             {connector && (
               <div className="flex flex-col items-center py-1.5 gap-0.5">
-                <div className="w-px h-3 bg-zinc-700" />
-                <span className="rounded-full bg-zinc-800/80 border border-zinc-700 px-2.5 py-0.5 text-zinc-400 text-[11px]">
+                <div className="w-px h-3 bg-slate-300" />
+                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-0.5 text-slate-500 text-[11px]">
                   {connector}
                 </span>
-                <div className="w-px h-3 bg-zinc-700" />
+                <div className="w-px h-3 bg-slate-300" />
               </div>
             )}
           </div>
@@ -707,9 +703,9 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
                   </span>
                   <p className={cn('font-semibold mt-1.5', cls.text,
                     (node as any).importance === 'primary' ? 'text-sm font-bold' :
-                    (node as any).importance === 'supporting' ? 'text-xs text-zinc-400' : 'text-sm'
+                    (node as any).importance === 'supporting' ? 'text-xs opacity-70' : 'text-sm'
                   )}>{node.label}</p>
-                  <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{node.detail}</p>
+                  <p className="text-slate-500 text-xs mt-1 leading-relaxed">{node.detail}</p>
                 </div>
               )
             })}
@@ -721,7 +717,6 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
 }
 
 function MarkdownBlocks({ text }: { text: string }) {
-  // Split out fenced code blocks first so \n\n inside them isn't treated as paragraph breaks
   const segments = text.split(/(```[\s\S]*?```)/g)
   const elements: React.ReactNode[] = []
 
@@ -729,7 +724,7 @@ function MarkdownBlocks({ text }: { text: string }) {
     if (segment.startsWith('```')) {
       const code = segment.replace(/^```\w*\n?/, '').replace(/\n?```$/, '')
       elements.push(
-        <pre key={`code-${si}`} className="bg-zinc-800/80 border border-zinc-700 rounded-lg px-4 py-3 text-xs text-indigo-300 font-mono overflow-x-auto whitespace-pre-wrap">
+        <pre key={`code-${si}`} className="bg-slate-100 border border-slate-200 rounded-lg px-4 py-3 text-xs text-blue-700 font-mono overflow-x-auto whitespace-pre-wrap">
           {code.trim()}
         </pre>
       )
@@ -741,7 +736,6 @@ function MarkdownBlocks({ text }: { text: string }) {
       if (!trimmed) return
       const key = `${si}-${bi}`
 
-      // ### heading — may have content after the heading line
       if (trimmed.startsWith('### ') || trimmed.startsWith('## ')) {
         const isH3 = trimmed.startsWith('### ')
         const lines = trimmed.split('\n')
@@ -750,11 +744,11 @@ function MarkdownBlocks({ text }: { text: string }) {
         elements.push(
           <div key={key}>
             <div className="flex items-center gap-2 mt-3 mb-1">
-              <span className={`w-1 rounded-full shrink-0 ${isH3 ? 'h-4 bg-indigo-500' : 'h-5 bg-violet-500'}`} />
-              <h3 className="text-white font-semibold text-sm">{heading}</h3>
+              <span className={`w-1 rounded-full shrink-0 ${isH3 ? 'h-4 bg-blue-500' : 'h-5 bg-violet-500'}`} />
+              <h3 className="text-slate-900 font-semibold text-sm">{heading}</h3>
             </div>
             {rest && (
-              <p className="text-zinc-300 text-sm leading-relaxed"
+              <p className="text-slate-600 text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: renderInline(rest.replace(/\n/g, ' ')) }} />
             )}
           </div>
@@ -762,14 +756,13 @@ function MarkdownBlocks({ text }: { text: string }) {
         return
       }
 
-      // Bullet list
       const lines = trimmed.split('\n')
       if (lines.length >= 1 && lines.every(l => /^[-*]\s/.test(l.trim()))) {
         elements.push(
           <ul key={key} className="space-y-1.5">
             {lines.map((line, j) => (
-              <li key={j} className="flex items-start gap-2 text-sm text-zinc-300">
-                <span className="mt-[6px] w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+              <li key={j} className="flex items-start gap-2 text-sm text-slate-600">
+                <span className="mt-[6px] w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                 <span dangerouslySetInnerHTML={{ __html: renderInline(line.replace(/^[-*]\s+/, '')) }} />
               </li>
             ))}
@@ -779,7 +772,7 @@ function MarkdownBlocks({ text }: { text: string }) {
       }
 
       elements.push(
-        <p key={key} className="text-zinc-300 text-sm leading-relaxed"
+        <p key={key} className="text-slate-600 text-sm leading-relaxed"
           dangerouslySetInnerHTML={{ __html: renderInline(trimmed.replace(/\n/g, ' ')) }} />
       )
     })
@@ -803,7 +796,7 @@ function TabContent({
   if (!item) {
     return (
       <div className="flex flex-col items-center justify-center h-48 gap-2">
-        <p className="text-zinc-500 text-sm">Switch tabs to generate content</p>
+        <p className="text-slate-400 text-sm">Switch tabs to generate content</p>
       </div>
     )
   }
@@ -819,15 +812,15 @@ function TabContent({
     const idx = cardIndex % cards.length
     const card = cards[idx]
 
-    if (!card) return <p className="text-zinc-500 text-sm text-center">No flashcards generated.</p>
+    if (!card) return <p className="text-slate-400 text-sm text-center">No flashcards generated.</p>
 
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-zinc-500">Card {idx + 1} of {cards.length}</p>
+          <p className="text-xs text-slate-400">Card {idx + 1} of {cards.length}</p>
           <div className="flex gap-0.5">
             {cards.map((_, ci) => (
-              <span key={ci} className={cn('w-1.5 h-1.5 rounded-full transition-colors', ci === idx ? 'bg-indigo-400' : 'bg-zinc-700')} />
+              <span key={ci} className={cn('w-1.5 h-1.5 rounded-full transition-colors', ci === idx ? 'bg-blue-500' : 'bg-slate-300')} />
             ))}
           </div>
         </div>
@@ -839,20 +832,20 @@ function TabContent({
           className={cn(
             'cursor-pointer rounded-xl border min-h-[180px] flex flex-col items-center justify-center p-6 text-center transition-colors',
             flipped
-              ? 'border-indigo-500/40 bg-indigo-500/10'
-              : 'border-zinc-700 bg-zinc-900 hover:border-zinc-600'
+              ? 'border-blue-300 bg-blue-50'
+              : 'border-slate-200 bg-white hover:border-slate-300 shadow-sm'
           )}
           onClick={onCardFlip}
         >
           {!flipped ? (
             <>
-              <p className="text-white text-base font-semibold leading-snug">{card.front}</p>
-              <p className="text-zinc-600 text-xs mt-3">tap to reveal →</p>
+              <p className="text-slate-900 text-base font-semibold leading-snug">{card.front}</p>
+              <p className="text-slate-400 text-xs mt-3">tap to reveal →</p>
             </>
           ) : (
             <>
-              <p className="text-xs font-medium text-indigo-400 uppercase tracking-wide mb-3">Answer</p>
-              <p className="text-zinc-200 text-sm leading-relaxed">{card.back}</p>
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-3">Answer</p>
+              <p className="text-slate-700 text-sm leading-relaxed">{card.back}</p>
             </>
           )}
         </motion.div>
@@ -862,10 +855,10 @@ function TabContent({
             animate={{ opacity: 1, y: 0 }}
             className="flex gap-3"
           >
-            <button onClick={onCardAgain} className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition border border-zinc-700">
+            <button onClick={onCardAgain} className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition border border-slate-200">
               ↺ Again
             </button>
-            <button onClick={onCardGotIt} className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 transition">
+            <button onClick={onCardGotIt} className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition">
               ✓ Got it
             </button>
           </motion.div>
@@ -901,9 +894,9 @@ function QuestionCard({
     const content = question.content as unknown as RecallContent
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="text-xs font-medium text-indigo-400 uppercase tracking-wide mb-2">Active recall</p>
-          <p className="text-white font-medium">{content.prompt}</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-2">Active recall</p>
+          <p className="text-slate-900 font-medium">{content.prompt}</p>
         </div>
 
         {!showFeedback ? (
@@ -913,12 +906,12 @@ function QuestionCard({
               value={currentAnswer}
               onChange={e => onAnswerChange(e.target.value)}
               placeholder="Type your answer from memory…"
-              className="w-full rounded-xl bg-zinc-900 border border-zinc-700 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
             <button
               onClick={onSubmitRecall}
               disabled={scoring || !currentAnswer.trim()}
-              className="w-full rounded-lg py-2.5 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 transition flex items-center justify-center gap-2"
+              className="w-full rounded-lg py-2.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
             >
               {scoring ? <><Spinner className="w-4 h-4" /> Checking…</> : 'Submit →'}
             </button>
@@ -934,20 +927,20 @@ function QuestionCard({
     const content = question.content as unknown as MCQContent
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="text-xs font-medium text-indigo-400 uppercase tracking-wide mb-2">Multiple choice</p>
-          <p className="text-white font-medium">{content.question}</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-2">Multiple choice</p>
+          <p className="text-slate-900 font-medium">{content.question}</p>
         </div>
 
         <div className="space-y-2">
           {content.options.map((option, i) => {
-            let style = 'border-zinc-700 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800'
+            let style = 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
             if (showFeedback && mcqSelected !== null) {
-              if (i === content.correct_index) style = 'border-green-500 bg-green-500/15 text-green-300'
-              else if (i === mcqSelected && i !== content.correct_index) style = 'border-red-500 bg-red-500/15 text-red-300'
-              else style = 'border-zinc-800 bg-zinc-900 opacity-50'
+              if (i === content.correct_index) style = 'border-green-400 bg-green-50 text-green-700'
+              else if (i === mcqSelected && i !== content.correct_index) style = 'border-red-400 bg-red-50 text-red-700'
+              else style = 'border-slate-100 bg-slate-50 opacity-50'
             } else if (mcqSelected === i) {
-              style = 'border-indigo-500 bg-indigo-500/15'
+              style = 'border-blue-400 bg-blue-50'
             }
 
             return (
@@ -956,11 +949,11 @@ function QuestionCard({
                 disabled={showFeedback}
                 onClick={() => onSubmitMCQ(i)}
                 className={cn(
-                  'w-full text-left rounded-lg border px-4 py-3 text-sm text-white transition',
+                  'w-full text-left rounded-lg border px-4 py-3 text-sm text-slate-900 transition shadow-sm',
                   style
                 )}
               >
-                <span className="text-zinc-500 mr-2">{String.fromCharCode(65 + i)}.</span>
+                <span className="text-slate-400 mr-2">{String.fromCharCode(65 + i)}.</span>
                 {option}
               </button>
             )
@@ -968,10 +961,10 @@ function QuestionCard({
         </div>
 
         {showFeedback && (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-2">
-            <p className="text-xs font-medium text-zinc-400">Explanation</p>
-            <p className="text-zinc-300 text-sm">{content.explanation}</p>
-            <button onClick={onNext} className="w-full mt-2 rounded-lg py-2 text-sm font-medium bg-zinc-800 text-white hover:bg-zinc-700 transition">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-sm">
+            <p className="text-xs font-medium text-slate-500">Explanation</p>
+            <p className="text-slate-600 text-sm">{content.explanation}</p>
+            <button onClick={onNext} className="w-full mt-2 rounded-lg py-2 text-sm font-medium bg-slate-100 text-slate-900 hover:bg-slate-200 transition">
               Continue →
             </button>
           </div>
@@ -986,9 +979,9 @@ function QuestionCard({
 function RecallFeedback({ answer, idealAnswer, onNext }: { answer: QuizAnswer | null; idealAnswer: string; onNext: () => void }) {
   if (!answer) return null
   const scoreConfig = {
-    correct: { color: 'text-green-400', label: '✓ Correct', border: 'border-green-500/30 bg-green-500/10' },
-    partial: { color: 'text-yellow-400', label: '◑ Partially correct', border: 'border-yellow-500/30 bg-yellow-500/10' },
-    wrong:   { color: 'text-red-400',   label: '✗ Needs work', border: 'border-red-500/30 bg-red-500/10' },
+    correct: { color: 'text-green-600', label: '✓ Correct', border: 'border-green-200 bg-green-50' },
+    partial: { color: 'text-yellow-600', label: '◑ Partially correct', border: 'border-yellow-200 bg-yellow-50' },
+    wrong:   { color: 'text-red-600',   label: '✗ Needs work', border: 'border-red-200 bg-red-50' },
   }
   const cfg = scoreConfig[answer.score]
 
@@ -998,10 +991,10 @@ function RecallFeedback({ answer, idealAnswer, onNext }: { answer: QuizAnswer | 
 
       {answer.feedback?.correct_parts?.length ? (
         <div>
-          <p className="text-xs text-zinc-500 mb-1">You got right:</p>
+          <p className="text-xs text-slate-400 mb-1">You got right:</p>
           <ul className="space-y-0.5">
             {answer.feedback.correct_parts.map((p, i) => (
-              <li key={i} className="text-green-300 text-xs flex gap-1.5"><span>✓</span>{p}</li>
+              <li key={i} className="text-green-700 text-xs flex gap-1.5"><span>✓</span>{p}</li>
             ))}
           </ul>
         </div>
@@ -1009,22 +1002,22 @@ function RecallFeedback({ answer, idealAnswer, onNext }: { answer: QuizAnswer | 
 
       {answer.feedback?.missing_parts?.length ? (
         <div>
-          <p className="text-xs text-zinc-500 mb-1">You missed:</p>
+          <p className="text-xs text-slate-400 mb-1">You missed:</p>
           <ul className="space-y-0.5">
             {answer.feedback.missing_parts.map((p, i) => (
-              <li key={i} className="text-red-300 text-xs flex gap-1.5"><span>✗</span>{p}</li>
+              <li key={i} className="text-red-700 text-xs flex gap-1.5"><span>✗</span>{p}</li>
             ))}
           </ul>
         </div>
       ) : null}
 
       {answer.feedback?.source_quote && (
-        <div className="border-l-2 border-zinc-600 pl-3">
-          <p className="text-zinc-400 text-xs italic">{answer.feedback.source_quote}</p>
+        <div className="border-l-2 border-slate-300 pl-3">
+          <p className="text-slate-500 text-xs italic">{answer.feedback.source_quote}</p>
         </div>
       )}
 
-      <button onClick={onNext} className="w-full rounded-lg py-2 text-sm font-medium bg-zinc-800 text-white hover:bg-zinc-700 transition">
+      <button onClick={onNext} className="w-full rounded-lg py-2 text-sm font-medium bg-slate-100 text-slate-900 hover:bg-slate-200 transition">
         Continue →
       </button>
     </div>

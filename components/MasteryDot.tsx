@@ -5,7 +5,7 @@ const config: Record<MasteryLevel, { bg: string; label: string }> = {
   green:  { bg: 'bg-green-500',  label: 'Solid' },
   yellow: { bg: 'bg-yellow-400', label: 'Shaky' },
   red:    { bg: 'bg-red-500',    label: 'Weak' },
-  grey:   { bg: 'bg-zinc-600',   label: 'Not started' },
+  grey:   { bg: 'bg-slate-400',  label: 'Not started' },
 }
 
 export function MasteryDot({ level, size = 'sm' }: { level: MasteryLevel; size?: 'sm' | 'md' }) {

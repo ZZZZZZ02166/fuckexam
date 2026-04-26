@@ -50,8 +50,8 @@ function MasteryView() {
   }, [id])
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <Spinner className="text-indigo-400 w-5 h-5" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <Spinner className="text-blue-500 w-5 h-5" />
     </div>
   )
   if (!data) return null
@@ -68,16 +68,22 @@ function MasteryView() {
   return (
     <>
       <Head><title>Mastery — {subject.name} — fuckexam</title></Head>
-      <div className="min-h-screen bg-zinc-950 px-4 py-10">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="min-h-screen bg-slate-50">
+        {/* Nav */}
+        <div className="bg-white border-b border-slate-200 px-4 py-3">
+          <div className="max-w-2xl mx-auto">
+            <Link href={`/subjects/${id}/path`} className="text-slate-400 hover:text-slate-700 text-sm transition">← Study path</Link>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Link href={`/subjects/${id}/path`} className="text-zinc-500 hover:text-zinc-300 text-xs transition">← Study path</Link>
-              <h1 className="text-xl font-bold text-white mt-1">{subject.name}</h1>
+              <h1 className="text-xl font-bold text-slate-900">{subject.name}</h1>
               {days !== null && (
-                <p className={cn('text-sm mt-0.5', days <= 7 ? 'text-red-400' : days <= 14 ? 'text-yellow-400' : 'text-zinc-400')}>
+                <p className={cn('text-sm mt-0.5', days <= 7 ? 'text-red-600' : days <= 14 ? 'text-yellow-600' : 'text-slate-400')}>
                   {days > 0 ? `Exam in ${days} day${days !== 1 ? 's' : ''}` : 'Exam today!'}
                 </p>
               )}
@@ -85,9 +91,9 @@ function MasteryView() {
           </div>
 
           {/* Readiness score */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <ReadinessBar score={score} size="lg" />
-            <p className="text-zinc-500 text-xs mt-3">
+            <p className="text-slate-400 text-xs mt-3">
               {greenCount} of {attempted} attempted topics solid
               {topics.length - attempted > 0 && ` · ${topics.length - attempted} not yet started`}
             </p>
@@ -98,7 +104,7 @@ function MasteryView() {
 
           {/* Mastery map */}
           <div>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Mastery map</h2>
+            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Mastery map</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {topics.map(topic => {
                 const level: MasteryLevel = (masteryMap.get(topic.id) as MasteryLevel) ?? 'grey'
@@ -111,9 +117,9 @@ function MasteryView() {
                     )}
                   >
                     <div className="min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{topic.name}</p>
+                      <p className="text-slate-900 text-sm font-medium truncate">{topic.name}</p>
                       {topic.description && (
-                        <p className="text-zinc-500 text-xs truncate mt-0.5">{topic.description}</p>
+                        <p className="text-slate-500 text-xs truncate mt-0.5">{topic.description}</p>
                       )}
                     </div>
                     <MasteryBadge level={level} />
@@ -124,14 +130,14 @@ function MasteryView() {
           </div>
 
           {/* Mastery legend */}
-          <div className="flex flex-wrap gap-4 text-xs text-zinc-400">
+          <div className="flex flex-wrap gap-4 text-xs text-slate-500">
             {(['green', 'yellow', 'red', 'grey'] as MasteryLevel[]).map(level => (
               <span key={level} className="flex items-center gap-1.5">
                 <span className={cn('w-2 h-2 rounded-full', {
                   green: 'bg-green-500',
                   yellow: 'bg-yellow-400',
                   red: 'bg-red-500',
-                  grey: 'bg-zinc-600',
+                  grey: 'bg-slate-400',
                 }[level])} />
                 {{ green: 'Solid', yellow: 'Shaky', red: 'Weak', grey: 'Not started' }[level]}
               </span>
@@ -141,19 +147,19 @@ function MasteryView() {
           {/* Mistake log */}
           {mistakes.length > 0 && (
             <div>
-              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Mistake log</h2>
+              <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Mistake log</h2>
               <div className="space-y-2">
                 {mistakes.slice(0, 5).map((m, i) => (
-                  <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+                  <div key={i} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
                     <div className="flex items-start gap-2">
-                      <span className={cn('text-xs mt-0.5 shrink-0', m.score === 'partial' ? 'text-yellow-400' : 'text-red-400')}>
+                      <span className={cn('text-xs mt-0.5 shrink-0', m.score === 'partial' ? 'text-yellow-600' : 'text-red-600')}>
                         {m.score === 'partial' ? '◑' : '✗'}
                       </span>
                       <div className="min-w-0">
-                        <p className="text-white text-sm">{m.question_text}</p>
-                        <p className="text-zinc-500 text-xs mt-0.5">{m.topic_name}</p>
+                        <p className="text-slate-900 text-sm">{m.question_text}</p>
+                        <p className="text-slate-400 text-xs mt-0.5">{m.topic_name}</p>
                         {m.missing_parts?.length > 0 && (
-                          <p className="text-zinc-400 text-xs mt-1">
+                          <p className="text-slate-500 text-xs mt-1">
                             Missed: {m.missing_parts.join(' · ')}
                           </p>
                         )}
@@ -172,10 +178,10 @@ function MasteryView() {
 
 function MasteryBadge({ level }: { level: MasteryLevel }) {
   const config: Record<MasteryLevel, { label: string; cls: string }> = {
-    green:  { label: 'Solid',        cls: 'text-green-400 bg-green-500/20' },
-    yellow: { label: 'Shaky',        cls: 'text-yellow-400 bg-yellow-500/20' },
-    red:    { label: 'Weak',         cls: 'text-red-400 bg-red-500/20' },
-    grey:   { label: 'Not started',  cls: 'text-zinc-500 bg-zinc-700/50' },
+    green:  { label: 'Solid',        cls: 'text-green-700 bg-green-100' },
+    yellow: { label: 'Shaky',        cls: 'text-yellow-700 bg-yellow-100' },
+    red:    { label: 'Weak',         cls: 'text-red-700 bg-red-100' },
+    grey:   { label: 'Not started',  cls: 'text-slate-500 bg-slate-100' },
   }
   const { label, cls } = config[level] ?? config.grey
   return (

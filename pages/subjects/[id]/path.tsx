@@ -44,14 +44,14 @@ function PathView() {
   }, [id])
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <Spinner className="text-indigo-400 w-5 h-5" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <Spinner className="text-blue-500 w-5 h-5" />
     </div>
   )
 
   if (error || !data) return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <p className="text-red-400">{error || 'Subject not found'}</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <p className="text-red-600">{error || 'Subject not found'}</p>
     </div>
   )
 
@@ -62,7 +62,6 @@ function PathView() {
 
   const masteryMap = new Map(mastery.map(m => [m.topic_id, m.level]))
 
-  // Quick mastery summary for each stage
   function stageMasteryLevel(stage: StudyStage) {
     if (!stage.topic_ids?.length) return 'grey'
     const levels = stage.topic_ids.map(tid => masteryMap.get(tid) ?? 'grey')
@@ -76,26 +75,33 @@ function PathView() {
   return (
     <>
       <Head><title>{subject.name} — fuckexam</title></Head>
-      <div className="min-h-screen bg-zinc-950 px-4 py-10">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="min-h-screen bg-slate-50">
+        {/* Nav */}
+        <div className="bg-white border-b border-slate-200 px-4 py-3">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
+            <Link href="/" className="text-slate-400 hover:text-slate-700 text-sm transition">← Dashboard</Link>
+            <Link href={`/subjects/${id}/mastery`} className="text-sm text-blue-600 hover:text-blue-700 font-medium transition">Mastery →</Link>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Link href="/" className="text-zinc-500 hover:text-zinc-300 text-xs transition">← Dashboard</Link>
-              <h1 className="text-xl font-bold text-white mt-1">{subject.name}</h1>
+              <h1 className="text-xl font-bold text-slate-900">{subject.name}</h1>
               {days !== null && (
                 <p className={cn(
                   'text-sm mt-0.5',
-                  days <= 7 ? 'text-red-400' : days <= 14 ? 'text-yellow-400' : 'text-zinc-400'
+                  days <= 7 ? 'text-red-600' : days <= 14 ? 'text-yellow-600' : 'text-slate-400'
                 )}>
                   {days > 0 ? `Exam in ${days} day${days !== 1 ? 's' : ''}` : 'Exam today!'}
                 </p>
               )}
             </div>
             <div className="text-right shrink-0">
-              <p className="text-3xl font-bold text-white tabular-nums">{score}%</p>
-              <p className="text-zinc-500 text-xs">ready</p>
+              <p className="text-3xl font-bold text-slate-900 tabular-nums">{score}%</p>
+              <p className="text-slate-400 text-xs">ready</p>
             </div>
           </div>
 
@@ -104,11 +110,9 @@ function PathView() {
 
           {/* Study Path */}
           <div>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Study path</h2>
+            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Study path</h2>
             <div className="space-y-2">
               {stages.map((stage, i) => {
-                const isLocked = stage.status === 'not_started' &&
-                  i > 0 && stages[i - 1].status !== 'complete'
                 const ml = stageMasteryLevel(stage)
 
                 return (
@@ -118,10 +122,10 @@ function PathView() {
                     className={cn(
                       'w-full text-left rounded-xl border p-4 transition',
                       stage.status === 'in_progress'
-                        ? 'border-indigo-500/50 bg-indigo-500/10'
+                        ? 'border-blue-300 bg-blue-50'
                         : stage.status === 'complete'
-                        ? 'border-zinc-700 bg-zinc-900/50 opacity-80'
-                        : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'
+                        ? 'border-slate-200 bg-slate-50 opacity-80'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm shadow-sm'
                     )}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -129,16 +133,16 @@ function PathView() {
                         <span className={cn(
                           'shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
                           stage.status === 'complete' ? 'bg-green-500 text-white' :
-                          stage.status === 'in_progress' ? 'bg-indigo-500 text-white' :
-                          'bg-zinc-800 text-zinc-400'
+                          stage.status === 'in_progress' ? 'bg-blue-500 text-white' :
+                          'bg-slate-100 text-slate-400'
                         )}>
                           {stage.status === 'complete' ? '✓' : stage.stage_order}
                         </span>
                         <div className="min-w-0">
-                          <p className={cn('font-medium text-sm truncate', stage.status === 'complete' ? 'text-zinc-400' : 'text-white')}>
+                          <p className={cn('font-medium text-sm truncate', stage.status === 'complete' ? 'text-slate-400' : 'text-slate-900')}>
                             {stage.name}
                           </p>
-                          <p className="text-zinc-500 text-xs">~{stage.estimated_minutes} min</p>
+                          <p className="text-slate-400 text-xs">~{stage.estimated_minutes} min</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -156,8 +160,8 @@ function PathView() {
           {topics.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Mastery</h2>
-                <Link href={`/subjects/${id}/mastery`} className="text-xs text-indigo-400 hover:text-indigo-300 transition">View all →</Link>
+                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Mastery</h2>
+                <Link href={`/subjects/${id}/mastery`} className="text-xs text-blue-600 hover:text-blue-700 transition">View all →</Link>
               </div>
               <div className="flex flex-wrap gap-2">
                 {topics.map(topic => {
@@ -167,10 +171,10 @@ function PathView() {
                       key={topic.id}
                       className={cn(
                         'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs border',
-                        level === 'green' ? 'bg-green-500/15 border-green-500/30 text-green-300' :
-                        level === 'yellow' ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-300' :
-                        level === 'red' ? 'bg-red-500/15 border-red-500/30 text-red-300' :
-                        'bg-zinc-800 border-zinc-700 text-zinc-400'
+                        level === 'green' ? 'bg-green-50 border-green-200 text-green-700' :
+                        level === 'yellow' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' :
+                        level === 'red' ? 'bg-red-50 border-red-200 text-red-700' :
+                        'bg-slate-100 border-slate-200 text-slate-500'
                       )}
                     >
                       <MasteryDot level={level as any} />
@@ -189,10 +193,10 @@ function PathView() {
 
 function StatusChip({ status }: { status: string }) {
   const map: Record<string, string> = {
-    not_started: 'text-zinc-500',
-    in_progress: 'text-indigo-400',
-    complete: 'text-green-400',
-    needs_review: 'text-yellow-400',
+    not_started: 'text-slate-400',
+    in_progress: 'text-blue-600',
+    complete: 'text-green-600',
+    needs_review: 'text-yellow-600',
   }
   const label: Record<string, string> = {
     not_started: 'Not started',
@@ -200,5 +204,5 @@ function StatusChip({ status }: { status: string }) {
     complete: 'Complete',
     needs_review: 'Review',
   }
-  return <span className={cn('text-xs font-medium', map[status] ?? 'text-zinc-500')}>{label[status] ?? status}</span>
+  return <span className={cn('text-xs font-medium', map[status] ?? 'text-slate-400')}>{label[status] ?? status}</span>
 }

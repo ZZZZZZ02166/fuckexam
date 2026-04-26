@@ -47,7 +47,6 @@ export default function LoginPage() {
       setError(error.message)
       setGoogleLoading(false)
     }
-    // on success the browser redirects — no state cleanup needed
   }
 
   if (loading) return null
@@ -57,31 +56,30 @@ export default function LoginPage() {
       <Head>
         <title>fuckexam — log in</title>
       </Head>
-      <div className="min-h-screen flex items-center justify-center px-4 bg-zinc-950">
+      <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50">
         <div className="w-full max-w-sm">
           <div className="mb-10 text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-white mb-1">fuckexam</h1>
-            <p className="text-zinc-400 text-sm">your personal exam readiness coach</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1">fuckexam</h1>
+            <p className="text-slate-500 text-sm">your personal exam readiness coach</p>
           </div>
 
           {sent ? (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-center">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
               <div className="text-3xl mb-3">📬</div>
-              <p className="text-white font-medium mb-1">Check your email</p>
-              <p className="text-zinc-400 text-sm">
-                We sent a magic link to <span className="text-white">{email}</span>.
+              <p className="text-slate-900 font-medium mb-1">Check your email</p>
+              <p className="text-slate-500 text-sm">
+                We sent a magic link to <span className="text-slate-900 font-medium">{email}</span>.
                 Click it to sign in — no password needed.
               </p>
             </div>
           ) : (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 space-y-4">
-              {/* Google */}
+            <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
               <button
                 onClick={handleGoogle}
                 disabled={googleLoading}
                 className={cn(
                   'w-full flex items-center justify-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition',
-                  'bg-white text-zinc-900 hover:bg-zinc-100',
+                  'bg-white text-slate-900 hover:bg-slate-50 border border-slate-200',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >
@@ -90,15 +88,14 @@ export default function LoginPage() {
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-zinc-800" />
-                <span className="text-zinc-600 text-xs">or</span>
-                <div className="flex-1 h-px bg-zinc-800" />
+                <div className="flex-1 h-px bg-slate-200" />
+                <span className="text-slate-400 text-xs">or</span>
+                <div className="flex-1 h-px bg-slate-200" />
               </div>
 
-              {/* Magic link */}
               <form onSubmit={handleMagicLink} className="space-y-3">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
                     Email address
                   </label>
                   <input
@@ -108,12 +105,12 @@ export default function LoginPage() {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="you@student.unimelb.edu.au"
-                    className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className="w-full rounded-lg bg-white border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
 
                 {error && (
-                  <p className="text-red-400 text-sm">{error}</p>
+                  <p className="text-red-600 text-sm">{error}</p>
                 )}
 
                 <button
@@ -121,7 +118,7 @@ export default function LoginPage() {
                   disabled={submitting || !email}
                   className={cn(
                     'w-full rounded-lg px-4 py-2.5 text-sm font-medium transition',
-                    'bg-indigo-600 text-white hover:bg-indigo-500',
+                    'bg-blue-600 text-white hover:bg-blue-700',
                     'disabled:opacity-50 disabled:cursor-not-allowed'
                   )}
                 >
