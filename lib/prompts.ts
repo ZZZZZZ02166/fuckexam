@@ -1,4 +1,55 @@
 export const PROMPTS = {
+  buildSubject: (materialSample: string, examFormat: string, subjectName: string) => `
+You are a curriculum designer building a university exam study system.
+
+Subject: ${subjectName}
+Exam format: ${examFormat}
+
+STEP 1 — Extract 5–12 topics from the material sample below:
+- name: 2–5 words, precise and distinct
+- description: 1–2 sentences on what this topic covers
+- weight: 0.0–1.0 based on how much emphasis the material places on it
+
+STEP 2 — Create an ordered study path from EXACTLY those topics.
+Think of each stage as a CHAPTER in a well-structured textbook.
+
+CRITICAL CURRICULUM RULES:
+1. Every concept belongs to EXACTLY ONE stage — the first stage where it is needed
+2. Later stages ASSUME mastery of all earlier stages. Never re-introduce, re-define, or revisit a concept from a previous stage
+3. Order stages so that no stage requires knowledge from a later stage
+4. Stage names must describe WHAT IS NEW in that stage — not restate general themes
+5. 1–3 tightly scoped NEW concepts per stage — narrow is better than broad
+6. Every topic_name in stages must exactly match a name from Step 1
+
+Settings per stage:
+- material_types: choose from ["summary", "flashcards", "concept_map"]
+- test_types: always include ["recall", "mcq"]
+- estimated_minutes: realistic study time 15–60 min per stage
+
+Material sample:
+${materialSample}
+`.trim(),
+
+  generateQuizBundle: (topicNames: string, examFormat: string, context: string) => `
+Generate a quiz bundle for: ${topicNames}
+Exam type: ${examFormat}
+
+Return:
+- mcqs: exactly 5 multiple-choice questions, each with:
+  - question, options (array of exactly 4 strings), correct_index (0–3), explanation
+  - Test understanding and application, not memorisation
+  - Distractors should reflect common misconceptions
+- recalls: exactly 1 active recall prompt:
+  - prompt: a short open-ended question requiring retrieval from memory (not just recognition)
+  - ideal_answer: the complete ideal answer
+  - key_points: 3–5 specific points required for full marks
+
+Use only the provided source material.
+
+Source material:
+${context}
+`.trim(),
+
   extractTopics: (materialText: string) => `
 You are an expert at analyzing university course materials.
 Extract the key topics a student needs to study for an exam from this material.
@@ -149,7 +200,7 @@ ${context}
 `.trim(),
 
   generateMCQ: (topicNames: string, examFormat: string, context: string) => `
-Generate exactly 3 multiple-choice questions for: ${topicNames}
+Generate exactly 5 multiple-choice questions for: ${topicNames}
 Exam type: ${examFormat}
 
 Requirements:
@@ -163,11 +214,11 @@ ${context}
 `.trim(),
 
   generateRecallPrompts: (topicNames: string, context: string) => `
-Generate 3 active recall prompts for a student studying: ${topicNames}
+Generate 1 active recall prompt for a student studying: ${topicNames}
 
-Each prompt should:
+The prompt should:
 - Require the student to retrieve information from memory (not just recognize it)
-- Target the most important exam concepts
+- Target the single most important exam concept for this topic
 - Include an ideal answer and 3-5 key points that must be mentioned for full marks
 
 Source material:

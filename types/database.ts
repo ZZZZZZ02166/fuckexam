@@ -51,10 +51,16 @@ export type Database = {
         Update: { computed_at?: string | null; id?: string; score?: number | null; subject_id?: string; user_id?: string }
         Relationships: [{ foreignKeyName: "readiness_snapshots_subject_id_fkey"; columns: ["subject_id"]; isOneToOne: false; referencedRelation: "subjects"; referencedColumns: ["id"] }]
       }
+      stage_context_cache: {
+        Row: { context_text: string; created_at: string | null; id: string; stage_id: string }
+        Insert: { context_text: string; created_at?: string | null; id?: string; stage_id: string }
+        Update: { context_text?: string; created_at?: string | null; id?: string; stage_id?: string }
+        Relationships: [{ foreignKeyName: "stage_context_cache_stage_id_fkey"; columns: ["stage_id"]; isOneToOne: true; referencedRelation: "study_stages"; referencedColumns: ["id"] }]
+      }
       student_answers: {
-        Row: { answer_text: string | null; answered_at: string | null; feedback: Json | null; id: string; question_id: string; score: string | null; user_id: string }
-        Insert: { answer_text?: string | null; answered_at?: string | null; feedback?: Json | null; id?: string; question_id: string; score?: string | null; user_id: string }
-        Update: { answer_text?: string | null; answered_at?: string | null; feedback?: Json | null; id?: string; question_id?: string; score?: string | null; user_id?: string }
+        Row: { answer_hash: string | null; answer_text: string | null; answered_at: string | null; feedback: Json | null; id: string; question_id: string; score: string | null; user_id: string }
+        Insert: { answer_hash?: string | null; answer_text?: string | null; answered_at?: string | null; feedback?: Json | null; id?: string; question_id: string; score?: string | null; user_id: string }
+        Update: { answer_hash?: string | null; answer_text?: string | null; answered_at?: string | null; feedback?: Json | null; id?: string; question_id?: string; score?: string | null; user_id?: string }
         Relationships: [{ foreignKeyName: "student_answers_question_id_fkey"; columns: ["question_id"]; isOneToOne: false; referencedRelation: "questions"; referencedColumns: ["id"] }]
       }
       study_stages: {

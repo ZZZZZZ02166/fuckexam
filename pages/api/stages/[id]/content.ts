@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin, getUserFromRequest } from '@/lib/supabase/server'
-import { openai, embedText } from '@/lib/openai'
+import { openai } from '@/lib/openai'
+import { getStageContext } from '@/lib/stageContext'
 import { PROMPTS } from '@/lib/prompts'
 import type { MaterialType, SummaryContent, FlashcardsContent, ConceptMapContent, Json } from '@/types/database'
 import { z } from 'zod'
@@ -53,47 +54,13 @@ const ConceptMapSchema = z.object({
   })),
 })
 
-async function getStageContext(stageId: string, topicNames: string[], previousTopicNames: string[] = [], futureTopicNames: string[] = []): Promise<string> {
-  // Build a discriminative query that pulls chunks specific to THIS stage's concepts
-  // Naming both previous and future topics helps the embedding steer toward stage-specific chunks
-  const exclusions = [...previousTopicNames, ...futureTopicNames]
-  const query = exclusions.length
-    ? `${topicNames.join(', ')} (not about: ${exclusions.join(', ')})`
-    : topicNames.join(', ')
-  const queryEmbedding = await embedText(query)
-
-  // Vector similarity search via RPC
-  const { data: chunks } = await supabaseAdmin.rpc('match_chunks_for_stage', {
-    stage_id_input: stageId,
-    query_embedding: JSON.stringify(queryEmbedding),
-    match_count: 8,
-  })
-
-  if (!chunks?.length) {
-    // Fallback: get any chunks from the subject's materials
-    const { data: stage } = await supabaseAdmin
-      .from('study_stages')
-      .select('subject_id')
-      .eq('id', stageId)
-      .single()
-
-    if (!stage) return ''
-
-    const { data: fallbackChunks } = await supabaseAdmin
-      .from('chunks')
-      .select('content, metadata')
-      .in('material_id',
-        supabaseAdmin
-          .from('materials')
-          .select('id')
-          .eq('subject_id', stage.subject_id) as any
-      )
-      .limit(8)
-
-    return (fallbackChunks ?? []).map((c: any) => c.content).join('\n\n')
-  }
-
-  return (chunks as any[]).map((c: any) => c.content).join('\n\n')
+function summaryPassesQualityCheck(content: SummaryContent): boolean {
+  return (
+    (content.quickOverview?.length ?? 0) >= 3 &&
+    (content.bigIdea?.trim().length ?? 0) >= 60 &&
+    (content.keyConcepts?.length ?? 0) >= 3 &&
+    (content.detailedNotes?.trim().length ?? 0) >= 100
+  )
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -106,13 +73,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
   const { id: stage_id } = req.query as { id: string }
-  const { type } = req.body as { type: MaterialType }
+  const { type, force } = req.body as { type: MaterialType; force?: boolean }
 
   if (!['summary', 'flashcards', 'concept_map'].includes(type)) {
     return res.status(400).json({ error: 'type must be summary | flashcards | concept_map' })
   }
 
-  // Verify user owns this stage's subject
   const { data: stage } = await supabaseAdmin
     .from('study_stages')
     .select('*, subjects!inner(user_id, exam_format_text)')
@@ -122,6 +88,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Stage not found' })
   }
 
+  // Force regeneration: delete existing item first
+  if (force) {
+    await supabaseAdmin
+      .from('generated_items')
+      .delete()
+      .eq('stage_id', stage_id)
+      .eq('type', type)
+  }
+
   // Check cache
   const { data: existing } = await supabaseAdmin
     .from('generated_items')
@@ -129,9 +104,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .eq('stage_id', stage_id)
     .eq('type', type)
     .single()
-  if (existing) return res.status(200).json(existing)
+  if (existing) {
+    console.log('[ai] content', type, 'cache_hit stage=', stage_id)
+    return res.status(200).json(existing)
+  }
 
-  // Get topic names for this stage
   const { data: topics } = await supabaseAdmin
     .from('topics')
     .select('name')
@@ -139,8 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const topicNames = topics?.map(t => t.name).join(', ') ?? stage.name
   const examFormat = (stage as any).subjects.exam_format_text ?? 'university written exam'
 
-  // Build full curriculum map so the AI knows the exact scope of THIS stage
-  // and what belongs to previous vs future stages
+  // Build full curriculum map for scope enforcement
   const { data: allStages } = await supabaseAdmin
     .from('study_stages')
     .select('id, name, stage_order, topic_ids')
@@ -148,8 +124,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .order('stage_order')
 
   const currentOrder: number = stage.stage_order
-
-  // Collect all topic IDs across all stages for a single bulk fetch
   const allTopicIds = [...new Set((allStages ?? []).flatMap((s: any) => s.topic_ids ?? []))]
   let allTopicMap = new Map<string, string>()
   if (allTopicIds.length > 0) {
@@ -177,9 +151,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     curriculumContext = lines.join('\n')
   }
 
-  const context = await getStageContext(stage_id, topics?.map(t => t.name) ?? [stage.name], previousTopicNames, futureTopicNames)
+  const context = await getStageContext(
+    stage_id,
+    stage.subject_id,
+    topics?.map(t => t.name) ?? [stage.name],
+    previousTopicNames,
+    futureTopicNames,
+  )
 
-  // Build forbidden concept set for programmatic post-filter on keyConcepts
   const forbiddenTerms = new Set(
     [...previousTopicNames, ...futureTopicNames].map(n => n.toLowerCase().trim())
   )
@@ -192,29 +171,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let content: SummaryContent | FlashcardsContent | ConceptMapContent
 
   if (type === 'summary') {
-    // Use gpt-4o for summaries: far better at following strict multi-constraint instructions
     const forbiddenList = [...previousTopicNames, ...futureTopicNames].join(', ')
     const systemMsg = forbiddenList
       ? `You are a curriculum designer writing stage-specific study content. This stage covers ONLY: ${topicNames}. You must NOT define or create concept entries for any of the following — they are covered in other stages: ${forbiddenList}. If these appear in the source material, reference them only as forward/backward context in prose, never as key concept definitions.`
       : 'You are a curriculum designer. Write stage-specific study content for exactly the assigned topics.'
-    const r = await openai.chat.completions.parse({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemMsg },
-        { role: 'user', content: PROMPTS.generateSummary(topicNames, examFormat, context, curriculumContext || undefined) },
-      ],
-      response_format: zodResponseFormat(SummarySchema, 'summary'),
-    })
-    const parsed = r.choices[0].message.parsed as SummaryContent
+    const messages: Parameters<typeof openai.chat.completions.parse>[0]['messages'] = [
+      { role: 'system', content: systemMsg },
+      { role: 'user', content: PROMPTS.generateSummary(topicNames, examFormat, context, curriculumContext || undefined) },
+    ]
+
+    let parsed: SummaryContent | null = null
+
+    try {
+      console.log('[ai] content summary model=gpt-4o-mini stage=', stage_id)
+      const r = await openai.chat.completions.parse({
+        model: 'gpt-4o-mini',
+        messages,
+        response_format: zodResponseFormat(SummarySchema, 'summary'),
+      })
+      const candidate = r.choices[0].message.parsed as SummaryContent
+      if (!candidate || !summaryPassesQualityCheck(candidate)) throw new Error('quality_fail')
+      parsed = candidate
+    } catch {
+      console.log('[ai] content summary fallback model=gpt-4o stage=', stage_id)
+      const r = await openai.chat.completions.parse({
+        model: 'gpt-4o',
+        messages,
+        response_format: zodResponseFormat(SummarySchema, 'summary'),
+      })
+      parsed = r.choices[0].message.parsed as SummaryContent
+    }
+
     if (parsed && forbiddenTerms.size) {
       parsed.keyConcepts = (parsed.keyConcepts ?? []).filter(kc => isAllowedConcept(kc.term))
     }
     if (parsed) {
       parsed.masteryTerms = (parsed.keyConcepts ?? []).map(kc => kc.term)
     }
-    content = parsed
+    content = parsed!
 
   } else if (type === 'flashcards') {
+    console.log('[ai] content flashcards model=gpt-4o-mini stage=', stage_id)
     const r = await openai.chat.completions.parse({
       model: 'gpt-4o-mini',
       messages: [
@@ -226,6 +223,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     content = r.choices[0].message.parsed as FlashcardsContent
 
   } else {
+    console.log('[ai] content concept_map model=gpt-4o-mini stage=', stage_id)
     const r = await openai.chat.completions.parse({
       model: 'gpt-4o-mini',
       messages: [
@@ -244,7 +242,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .single()
   if (error) return res.status(500).json({ error: error.message })
 
-  // Mark stage in_progress if it was not_started
   if (stage.status === 'not_started') {
     await supabaseAdmin
       .from('study_stages')

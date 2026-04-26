@@ -78,19 +78,11 @@ function NewSubjectForm() {
       if (uploadErr) throw new Error(uploadErr.message)
       completeStatus()
 
-      // 3. Process material (parse + embed + extract topics)
-      updateStatus('Extracting topics from your materials…')
+      // 3. Process material (parse + embed + extract topics + build study path)
+      updateStatus('Analysing material and building your study path…')
       await apiJson('/api/process-material', {
         method: 'POST',
         body: JSON.stringify({ subject_id: subject.id, storage_path: storagePath, file_name: file.name }),
-      })
-      completeStatus()
-
-      // 4. Generate study path
-      updateStatus('Building your study path…')
-      await apiJson('/api/generate-path', {
-        method: 'POST',
-        body: JSON.stringify({ subject_id: subject.id }),
       })
       completeStatus()
 

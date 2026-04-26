@@ -1,25 +1,23 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin, getUserFromRequest } from '@/lib/supabase/server'
-import { openai, embedText } from '@/lib/openai'
+import { openai } from '@/lib/openai'
+import { getStageContext } from '@/lib/stageContext'
 import { PROMPTS } from '@/lib/prompts'
 import { z } from 'zod'
 import { zodResponseFormat } from 'openai/helpers/zod'
 
-const MCQListSchema = z.object({
-  questions: z.array(z.object({
+const QuizBundleSchema = z.object({
+  mcqs: z.array(z.object({
     question: z.string(),
     options: z.array(z.string()).length(4),
     correct_index: z.number().int().min(0).max(3),
     explanation: z.string(),
-  }))
-})
-
-const RecallListSchema = z.object({
-  prompts: z.array(z.object({
+  })),
+  recalls: z.array(z.object({
     prompt: z.string(),
     ideal_answer: z.string(),
     key_points: z.array(z.string()),
-  }))
+  })),
 })
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -38,7 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'GET') {
-    // Return cached questions
     const { data } = await supabaseAdmin
       .from('questions')
       .select('*')
@@ -48,13 +45,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    // Generate questions (called once; cached forever)
     const existing = await supabaseAdmin
       .from('questions')
       .select('id')
       .eq('stage_id', stage_id)
       .limit(1)
     if (existing.data?.length) {
+      console.log('[ai] quiz cache_hit stage=', stage_id)
       const { data } = await supabaseAdmin.from('questions').select('*').eq('stage_id', stage_id)
       return res.status(200).json(data)
     }
@@ -66,39 +63,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const topicNames = topics?.map(t => t.name).join(', ') ?? stage.name
     const examFormat = (stage as any).subjects.exam_format_text ?? 'university written exam'
 
-    // Get context via embedding search
-    const queryEmbedding = await embedText(topicNames)
-    const chunkResult = await supabaseAdmin.rpc('match_chunks_for_stage', {
-      stage_id_input: stage_id,
-      query_embedding: JSON.stringify(queryEmbedding),
-      match_count: 6,
-    })
-    const chunks = chunkResult.data
-    const context = (chunks as any[] ?? []).map((c: any) => c.content).join('\n\n')
+    const context = await getStageContext(
+      stage_id,
+      stage.subject_id,
+      topics?.map(t => t.name) ?? [stage.name],
+    )
 
-    // Generate MCQs
-    const mcqResponse = await openai.chat.completions.parse({
+    console.log('[ai] quiz bundle model=gpt-4o-mini stage=', stage_id)
+    const r = await openai.chat.completions.parse({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'Generate exam-style multiple choice questions.' },
-        { role: 'user', content: PROMPTS.generateMCQ(topicNames, examFormat, context) },
+        { role: 'system', content: 'Generate exam quiz content: MCQs and one active recall prompt. Use only the provided source material.' },
+        { role: 'user', content: PROMPTS.generateQuizBundle(topicNames, examFormat, context) },
       ],
-      response_format: zodResponseFormat(MCQListSchema, 'mcq_list'),
+      response_format: zodResponseFormat(QuizBundleSchema, 'quiz_bundle'),
     })
-    const mcqs = mcqResponse.choices[0].message.parsed?.questions ?? []
+    const mcqs = r.choices[0].message.parsed?.mcqs ?? []
+    const recalls = r.choices[0].message.parsed?.recalls ?? []
 
-    // Generate recall prompts
-    const recallResponse = await openai.chat.completions.parse({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: 'Generate active recall prompts for exam preparation.' },
-        { role: 'user', content: PROMPTS.generateRecallPrompts(topicNames, context) },
-      ],
-      response_format: zodResponseFormat(RecallListSchema, 'recall_list'),
-    })
-    const recalls = recallResponse.choices[0].message.parsed?.prompts ?? []
-
-    // Map topics to question rows
     const topicIds = topics?.map(t => t.id) ?? []
     const questionRows = [
       ...mcqs.map((q, i) => ({

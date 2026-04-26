@@ -108,17 +108,18 @@ function StageView() {
     }
   }
 
-  async function generateContent(type: Tab) {
+  async function generateContent(type: Tab, force = false) {
     if (!data) return
     const existing = data.generated.find(g => g.type === type)
-    if (existing) return
+    if (existing && !force) return
     setGenerating(true)
+    if (force) setData(prev => prev ? { ...prev, generated: prev.generated.filter(g => g.type !== type) } : prev)
     try {
       const item = await apiJson<GeneratedItem>(`/api/stages/${stageId}/content`, {
         method: 'POST',
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ type, force }),
       })
-      setData(prev => prev ? { ...prev, generated: [...prev.generated, item] } : prev)
+      setData(prev => prev ? { ...prev, generated: [...prev.generated.filter(g => g.type !== type), item] } : prev)
     } finally {
       setGenerating(false)
     }
@@ -797,7 +798,7 @@ function TabContent({
   onCardFlip: () => void
   onCardGotIt: () => void
   onCardAgain: () => void
-  onGenerateContent: (type: MaterialType) => void
+  onGenerateContent: (type: MaterialType, force?: boolean) => void
 }) {
   if (!item) {
     return (
@@ -875,7 +876,7 @@ function TabContent({
 
   if (tab === 'concept_map') {
     const content = item.content as unknown as ConceptMapContent
-    return <ConceptFlowMap content={content} onRetry={() => onGenerateContent('concept_map')} />
+    return <ConceptFlowMap content={content} onRetry={() => onGenerateContent('concept_map', true)} />
   }
 
   return null
