@@ -4,13 +4,15 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RequireAuth } from '@/components/RequireAuth'
+import { Layout } from '@/components/Layout'
+import { MasteryDot, MasteryChip } from '@/components/MasteryDot'
 import { Spinner } from '@/components/Spinner'
 import { apiJson } from '@/lib/apiFetch'
 import { cn } from '@/lib/utils'
 import type {
   StudyStage, Topic, GeneratedItem, Question,
   SummaryContent, FlashcardsContent, ConceptMapContent,
-  MCQContent, RecallContent, MasteryLevel, MaterialType,
+  MCQContent, RecallContent, MasteryLevel, MaterialType, MasteryRecord,
 } from '@/types/database'
 
 type Tab = 'summary' | 'flashcards' | 'concept_map'
@@ -31,6 +33,12 @@ interface QuizAnswer {
   answer_text: string
 }
 
+const TAB_LABELS: Record<Tab, string> = {
+  summary: 'Summary',
+  flashcards: 'Flashcards',
+  concept_map: 'Concept Map',
+}
+
 export default function StagePage() {
   return <RequireAuth><StageView /></RequireAuth>
 }
@@ -44,6 +52,8 @@ function StageView() {
   const [activeTab, setActiveTab] = useState<Tab>('summary')
   const [generating, setGenerating] = useState(false)
   const [mode, setMode] = useState<Mode>('study')
+  const [masteryMap, setMasteryMap] = useState<Map<string, string>>(new Map())
+  const [totalStages, setTotalStages] = useState(0)
 
   const [questions, setQuestions] = useState<Question[]>([])
   const [qIndex, setQIndex] = useState(0)
@@ -71,9 +81,14 @@ function StageView() {
       const stage = subjectData.stages.find((s: StudyStage) => s.id === stageId)
       if (!stage) { router.replace(`/subjects/${subjectId}/path`); return }
 
+      setTotalStages(subjectData.stages.length)
+
       const stageTopics = subjectData.topics.filter((t: Topic) =>
         (stage.topic_ids ?? []).includes(t.id)
       )
+
+      const masteryRecords: MasteryRecord[] = subjectData.mastery ?? []
+      setMasteryMap(new Map(masteryRecords.map(m => [m.topic_id, m.level ?? 'grey'])))
 
       const [genRes, qRes] = await Promise.allSettled([
         apiJson<GeneratedItem[]>(`/api/stages/${stageId}/content-list`).catch(() => []),
@@ -100,7 +115,7 @@ function StageView() {
           body: JSON.stringify({ type: 'summary' }),
         })
         setData(prev => prev ? { ...prev, generated: [...prev.generated, item] } : prev)
-      } catch { /* silently fail — user can click tab to retry */ }
+      } catch { /* silently fail */ }
       setGenerating(false)
     }
   }
@@ -217,37 +232,58 @@ function StageView() {
   const partialCount = answers.filter(a => a.score === 'partial').length
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-[#F0F4FF]">
       <Spinner className="text-blue-500 w-5 h-5" />
     </div>
   )
   if (!data) return null
 
   const { stage, topics, generated } = data
-  const topicLabel = topics.map(t => t.name).join(', ')
+
+  const statusLabel = (s: string) => ({
+    not_started: 'Not started',
+    in_progress: 'In progress',
+    complete: 'Complete',
+    needs_review: 'Needs review',
+  }[s] ?? s)
 
   return (
     <>
       <Head><title>{stage.name} — fuckexam</title></Head>
-      <div className="min-h-screen bg-slate-50">
-        {/* Header */}
-        <div className="border-b border-slate-200 bg-white px-4 py-3">
-          <div className="max-w-2xl mx-auto flex items-center gap-3">
-            <Link href={`/subjects/${subjectId}/path`} className="text-slate-400 hover:text-slate-700 text-sm transition">←</Link>
-            <div className="min-w-0">
-              <p className="text-xs text-slate-400 truncate">{stage.subjects.name}</p>
-              <p className="text-sm font-semibold text-slate-900 truncate">{stage.name}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-2xl mx-auto px-4 py-6">
-
-          {/* STUDY MODE */}
-          {mode === 'study' && (
+      <Layout
+        backHref={`/subjects/${subjectId}/path`}
+        backLabel="Study Path"
+        title="Stage View"
+      >
+        {/* STUDY MODE */}
+        {mode === 'study' && (
+          <div className="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
+            {/* Left column */}
             <div className="space-y-5">
+              {/* Stage heading */}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B] mb-1.5">
+                  Stage {stage.stage_order} · {stage.subjects.name}
+                </p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <h1 className="text-xl font-extrabold text-[#0F172A] leading-tight">{stage.name}</h1>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[12px] font-bold text-[#64748B] bg-[#F1F5F9] border border-[#E2E8F0] px-3 py-1.5 rounded-full">
+                      ~{stage.estimated_minutes} min
+                    </span>
+                    <button
+                      onClick={startQuiz}
+                      disabled={generating}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold px-4 py-2 rounded-xl transition active:scale-95"
+                    >
+                      Test myself →
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Tabs */}
-              <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+              <div className="flex gap-1 bg-[#F0F4FF] rounded-xl p-1 border border-[#E2E8F0]">
                 {(['summary', 'flashcards', 'concept_map'] as Tab[]).map(tab => (
                   <button
                     key={tab}
@@ -258,23 +294,25 @@ function StageView() {
                       }
                     }}
                     className={cn(
-                      'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition capitalize',
+                      'flex-1 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-bold transition',
                       activeTab === tab
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-[#64748B] hover:text-[#0F172A]'
                     )}
                   >
-                    {tab === 'concept_map' ? 'Map' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {TAB_LABELS[tab]}
                   </button>
                 ))}
               </div>
 
-              {/* Content area */}
+              {/* Content */}
               <div className="min-h-[320px]">
                 {generating && !generated.find(g => g.type === activeTab) ? (
                   <div className="flex flex-col items-center justify-center h-48 gap-3">
-                    <Spinner className="text-blue-500 w-5 h-5" />
-                    <p className="text-slate-500 text-sm">Generating {activeTab.replace('_', ' ')}…</p>
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                      <Spinner className="text-blue-500 w-5 h-5" />
+                    </div>
+                    <p className="text-[#64748B] text-sm font-medium">Generating {TAB_LABELS[activeTab].toLowerCase()}…</p>
                   </div>
                 ) : (
                   <TabContent
@@ -289,103 +327,39 @@ function StageView() {
                   />
                 )}
               </div>
-
-              {/* Test Me */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center justify-between gap-4 shadow-sm">
-                <div>
-                  <p className="text-slate-900 text-sm font-medium">Test yourself on this stage</p>
-                  <p className="text-slate-400 text-xs mt-0.5">Active recall + quiz</p>
-                </div>
-                <button
-                  onClick={startQuiz}
-                  disabled={generating}
-                  className="shrink-0 rounded-lg px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition"
-                >
-                  Test me →
-                </button>
-              </div>
             </div>
-          )}
 
-          {/* QUIZ MODE */}
-          {mode === 'quiz' && (
-            <div className="space-y-5">
-              {generating ? (
-                <div className="flex flex-col items-center justify-center h-48 gap-3">
-                  <Spinner className="text-blue-500 w-5 h-5" />
-                  <p className="text-slate-500 text-sm">Generating questions…</p>
+            {/* Right panel */}
+            <div className="space-y-4 lg:sticky lg:top-[78px]">
+              {/* Stage info */}
+              <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+                <h3 className="font-extrabold text-[#0F172A] text-sm mb-4">Stage info</h3>
+                <div className="space-y-0">
+                  {[
+                    ['Estimated time', `~${stage.estimated_minutes} min`],
+                    ['Status', statusLabel(stage.status ?? 'not_started')],
+                    ['Order', `Stage ${stage.stage_order} of ${totalStages || '?'}`],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex justify-between py-2.5 border-b border-[#F1F5F9] last:border-0">
+                      <span className="text-[13px] text-[#64748B] font-medium">{label}</span>
+                      <span className="text-[13px] font-bold text-[#0F172A]">{value}</span>
+                    </div>
+                  ))}
                 </div>
-              ) : questions.length > 0 ? (
-                <>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-slate-400">Question {qIndex + 1} of {questions.length}</p>
-                    <button onClick={() => setMode('study')} className="text-xs text-slate-400 hover:text-slate-700 transition">
-                      Exit quiz
-                    </button>
-                  </div>
-
-                  <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-blue-500 transition-all"
-                      style={{ width: `${((qIndex) / questions.length) * 100}%` }}
-                    />
-                  </div>
-
-                  <QuestionCard
-                    question={questions[qIndex]}
-                    showFeedback={showFeedback}
-                    lastFeedback={lastFeedback}
-                    mcqSelected={mcqSelected}
-                    currentAnswer={currentAnswer}
-                    scoring={scoring}
-                    onAnswerChange={setCurrentAnswer}
-                    onSubmitRecall={submitRecall}
-                    onSubmitMCQ={submitMCQ}
-                    onNext={nextQuestion}
-                  />
-                </>
-              ) : null}
-            </div>
-          )}
-
-          {/* RESULTS MODE */}
-          {mode === 'results' && (
-            <div className="space-y-5">
-              <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-                <p className="text-4xl mb-3">
-                  {correctCount + partialCount * 0.5 >= answers.length * 0.7 ? '🎉' : '📚'}
-                </p>
-                <p className="text-slate-900 font-bold text-xl mb-1">
-                  {correctCount} / {answers.length} correct
-                </p>
-                <p className="text-slate-500 text-sm">
-                  {partialCount > 0 && `${partialCount} partial · `}
-                  {answers.filter(a => a.score === 'wrong').length} missed
-                </p>
               </div>
 
-              {answers.filter(a => a.score !== 'correct').length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Review</p>
+              {/* Topics in this stage */}
+              {topics.length > 0 && (
+                <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5">
+                  <h3 className="font-extrabold text-[#0F172A] text-sm mb-4">Topics in this stage</h3>
                   <div className="space-y-2">
-                    {answers.filter(a => a.score !== 'correct').map(a => {
-                      const q = questions.find(q => q.id === a.question_id)
-                      if (!q) return null
+                    {topics.map(t => {
+                      const level = (masteryMap.get(t.id) ?? 'grey') as MasteryLevel
                       return (
-                        <div key={a.question_id} className="rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={a.score === 'partial' ? 'text-yellow-600' : 'text-red-600'}>
-                              {a.score === 'partial' ? '◑' : '✗'}
-                            </span>
-                            <p className="text-slate-900 font-medium">
-                              {q.type === 'recall'
-                                ? (q.content as unknown as RecallContent).prompt
-                                : (q.content as unknown as MCQContent).question}
-                            </p>
-                          </div>
-                          {a.feedback?.missing_parts?.length ? (
-                            <p className="text-slate-500 text-xs">Missed: {a.feedback.missing_parts.join(', ')}</p>
-                          ) : null}
+                        <div key={t.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-[#F1F5F9] bg-[#F8FAFC]">
+                          <MasteryDot level={level} />
+                          <span className="flex-1 text-[13px] font-medium text-[#0F172A] truncate">{t.name}</span>
+                          <MasteryChip level={level} />
                         </div>
                       )
                     })}
@@ -393,53 +367,197 @@ function StageView() {
                 </div>
               )}
 
-              {submittingResults ? (
-                <div className="flex items-center justify-center gap-2 py-2">
-                  <Spinner className="text-blue-500 w-4 h-4" />
-                  <span className="text-slate-500 text-sm">Saving results…</span>
-                </div>
-              ) : (
-                <button
-                  onClick={() => router.push(`/subjects/${subjectId}/path`)}
-                  className="w-full rounded-lg px-4 py-2.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
-                >
-                  Continue →
-                </button>
-              )}
+              {/* Test myself button */}
+              <button
+                onClick={startQuiz}
+                disabled={generating}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition active:scale-95 text-sm"
+              >
+                Test myself →
+              </button>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+
+        {/* QUIZ MODE */}
+        {mode === 'quiz' && (
+          <div className="max-w-2xl mx-auto space-y-5">
+            {generating ? (
+              <div className="flex flex-col items-center justify-center h-48 gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <Spinner className="text-blue-500 w-5 h-5" />
+                </div>
+                <p className="text-[#64748B] text-sm font-medium">Generating questions…</p>
+              </div>
+            ) : questions.length > 0 ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-[#64748B] font-bold">
+                    Question {qIndex + 1} <span className="text-[#CBD5E1]">/ {questions.length}</span>
+                  </p>
+                  <button onClick={() => setMode('study')} className="text-xs text-[#64748B] hover:text-[#0F172A] transition font-medium">
+                    Exit
+                  </button>
+                </div>
+
+                {/* Progress bar */}
+                <div className="flex gap-1.5">
+                  {questions.map((_, qi) => {
+                    const ans = answers[qi]
+                    return (
+                      <div
+                        key={qi}
+                        className={cn(
+                          'flex-1 h-1.5 rounded-full transition-all',
+                          qi < qIndex
+                            ? ans?.score === 'correct' ? 'bg-green-500'
+                            : ans?.score === 'partial' ? 'bg-amber-400'
+                            : 'bg-red-400'
+                            : qi === qIndex ? 'bg-blue-500'
+                            : 'bg-[#E2E8F0]'
+                        )}
+                      />
+                    )
+                  })}
+                </div>
+
+                <QuestionCard
+                  question={questions[qIndex]}
+                  showFeedback={showFeedback}
+                  lastFeedback={lastFeedback}
+                  mcqSelected={mcqSelected}
+                  currentAnswer={currentAnswer}
+                  scoring={scoring}
+                  onAnswerChange={setCurrentAnswer}
+                  onSubmitRecall={submitRecall}
+                  onSubmitMCQ={submitMCQ}
+                  onNext={nextQuestion}
+                />
+              </>
+            ) : null}
+          </div>
+        )}
+
+        {/* RESULTS MODE */}
+        {mode === 'results' && (
+          <div className="max-w-xl mx-auto space-y-5">
+            <ResultsCard
+              correctCount={correctCount}
+              partialCount={partialCount}
+              total={answers.length}
+            />
+
+            {answers.filter(a => a.score !== 'correct').length > 0 && (
+              <div>
+                <p className="text-[11px] font-bold text-[#64748B] uppercase tracking-[0.12em] mb-3">Missed questions</p>
+                <div className="space-y-2">
+                  {answers.filter(a => a.score !== 'correct').map(a => {
+                    const q = questions.find(q => q.id === a.question_id)
+                    if (!q) return null
+                    return (
+                      <div key={a.question_id} className="bg-white rounded-xl border border-[#E2E8F0] px-4 py-3 text-sm">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={a.score === 'partial' ? 'text-amber-500' : 'text-red-500'}>
+                            {a.score === 'partial' ? '◑' : '✗'}
+                          </span>
+                          <p className="text-[#0F172A] font-medium text-sm">
+                            {q.type === 'recall'
+                              ? (q.content as unknown as RecallContent).prompt
+                              : (q.content as unknown as MCQContent).question}
+                          </p>
+                        </div>
+                        {a.feedback?.missing_parts?.length ? (
+                          <p className="text-[#64748B] text-xs pl-5">Missed: {a.feedback.missing_parts.join(', ')}</p>
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {submittingResults ? (
+              <div className="flex items-center justify-center gap-2 py-2">
+                <Spinner className="text-blue-500 w-4 h-4" />
+                <span className="text-[#64748B] text-sm">Saving…</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => router.push(`/subjects/${subjectId}/path`)}
+                className="w-full rounded-xl px-4 py-3.5 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95"
+              >
+                Back to study path →
+              </button>
+            )}
+          </div>
+        )}
+      </Layout>
     </>
+  )
+}
+
+function ResultsCard({ correctCount, partialCount, total }: { correctCount: number; partialCount: number; total: number }) {
+  const score = total > 0 ? Math.round(((correctCount + partialCount * 0.5) / total) * 100) : 0
+  const stars = score >= 80 ? 3 : score >= 50 ? 2 : score >= 20 ? 1 : 0
+  const isGreat = score >= 70
+
+  return (
+    <div className={cn(
+      'rounded-2xl border p-8 text-center',
+      isGreat ? 'border-green-200 bg-green-50' : 'border-[#E2E8F0] bg-white'
+    )}>
+      <div className="flex justify-center gap-1 mb-4">
+        {[1, 2, 3].map(s => (
+          <span key={s} className={cn('text-3xl transition-all', s <= stars ? 'opacity-100' : 'opacity-15 grayscale')}>⭐</span>
+        ))}
+      </div>
+      <div className={cn(
+        'w-24 h-24 rounded-full border-4 flex flex-col items-center justify-center mx-auto mb-5',
+        isGreat ? 'border-green-500 bg-green-100' : 'border-blue-400 bg-blue-50'
+      )}>
+        <p className={cn('font-extrabold text-3xl tabular-nums leading-none', isGreat ? 'text-green-700' : 'text-blue-700')}>
+          {score}%
+        </p>
+      </div>
+      <p className="text-[#64748B] text-sm">
+        {correctCount} correct · {partialCount} partial · {total - correctCount - partialCount} missed
+      </p>
+    </div>
   )
 }
 
 function renderInline(text: string): string {
   return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 font-semibold">$1</strong>')
-    .replace(/`([^`]+)`/g, '<code class="bg-slate-100 text-blue-600 px-1 py-0.5 rounded text-xs font-mono">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-800 font-semibold">$1</strong>')
+    .replace(/`([^`]+)`/g, '<code class="bg-slate-100 text-blue-700 px-1 py-0.5 rounded text-xs font-mono">$1</code>')
 }
 
 const NODE_TYPE_CLASSES: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-  concept:      { bg: 'bg-blue-50',    border: 'border-blue-200',    text: 'text-blue-800',    badge: 'bg-blue-100 text-blue-600' },
-  definition:   { bg: 'bg-violet-50',  border: 'border-violet-200',  text: 'text-violet-800',  badge: 'bg-violet-100 text-violet-600' },
-  process:      { bg: 'bg-sky-50',     border: 'border-sky-200',     text: 'text-sky-800',     badge: 'bg-sky-100 text-sky-600' },
-  solution:     { bg: 'bg-green-50',   border: 'border-green-200',   text: 'text-green-800',   badge: 'bg-green-100 text-green-600' },
-  problem:      { bg: 'bg-red-50',     border: 'border-red-200',     text: 'text-red-800',     badge: 'bg-red-100 text-red-600' },
-  exam_trap:    { bg: 'bg-amber-50',   border: 'border-amber-200',   text: 'text-amber-800',   badge: 'bg-amber-100 text-amber-600' },
-  limitation:   { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-800',  badge: 'bg-orange-100 text-orange-600' },
-  comparison:   { bg: 'bg-cyan-50',    border: 'border-cyan-200',    text: 'text-cyan-800',    badge: 'bg-cyan-100 text-cyan-600' },
-  evidence:     { bg: 'bg-teal-50',    border: 'border-teal-200',    text: 'text-teal-800',    badge: 'bg-teal-100 text-teal-600' },
-  formula:      { bg: 'bg-purple-50',  border: 'border-purple-200',  text: 'text-purple-800',  badge: 'bg-purple-100 text-purple-600' },
-  example:      { bg: 'bg-slate-50',   border: 'border-slate-200',   text: 'text-slate-700',   badge: 'bg-slate-100 text-slate-500' },
-  code_example: { bg: 'bg-slate-100',  border: 'border-slate-200',   text: 'text-emerald-700', badge: 'bg-slate-200 text-emerald-600' },
+  concept:      { bg: 'bg-violet-50',   border: 'border-violet-200',  text: 'text-violet-900',   badge: 'bg-violet-100 text-violet-700' },
+  definition:   { bg: 'bg-purple-50',   border: 'border-purple-200',  text: 'text-purple-900',   badge: 'bg-purple-100 text-purple-700' },
+  process:      { bg: 'bg-sky-50',      border: 'border-sky-200',     text: 'text-sky-900',      badge: 'bg-sky-100 text-sky-700' },
+  solution:     { bg: 'bg-emerald-50',  border: 'border-emerald-200', text: 'text-emerald-900',  badge: 'bg-emerald-100 text-emerald-700' },
+  problem:      { bg: 'bg-red-50',      border: 'border-red-200',     text: 'text-red-900',      badge: 'bg-red-100 text-red-700' },
+  exam_trap:    { bg: 'bg-amber-50',    border: 'border-amber-200',   text: 'text-amber-900',    badge: 'bg-amber-100 text-amber-700' },
+  limitation:   { bg: 'bg-orange-50',   border: 'border-orange-200',  text: 'text-orange-900',   badge: 'bg-orange-100 text-orange-700' },
+  comparison:   { bg: 'bg-cyan-50',     border: 'border-cyan-200',    text: 'text-cyan-900',     badge: 'bg-cyan-100 text-cyan-700' },
+  evidence:     { bg: 'bg-teal-50',     border: 'border-teal-200',    text: 'text-teal-900',     badge: 'bg-teal-100 text-teal-700' },
+  formula:      { bg: 'bg-pink-50',     border: 'border-pink-200',    text: 'text-pink-900',     badge: 'bg-pink-100 text-pink-700' },
+  example:      { bg: 'bg-slate-50',    border: 'border-slate-200',   text: 'text-slate-700',    badge: 'bg-slate-100 text-slate-600' },
+  code_example: { bg: 'bg-zinc-50',     border: 'border-emerald-200', text: 'text-emerald-700',  badge: 'bg-zinc-100 text-emerald-600' },
 }
+
 function nodeTypeClasses(type: string) {
   return NODE_TYPE_CLASSES[type] ?? NODE_TYPE_CLASSES.concept
 }
 
-function SectionLabel({ text }: { text: string }) {
-  return <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">{text}</p>
+function SectionLabel({ icon, text }: { icon: string; text: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-sm">{icon}</span>
+      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{text}</p>
+    </div>
+  )
 }
 
 function SummaryTab({ content }: { content: SummaryContent }) {
@@ -456,22 +574,24 @@ function SummaryTab({ content }: { content: SummaryContent }) {
     <div className="space-y-6">
       {content.quickOverview?.length > 0 && (
         <div>
-          <SectionLabel text="Learn this in 5 min" />
-          <ul className="space-y-2">
-            {content.quickOverview.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <SectionLabel icon="⚡" text="Learn this in 5 min" />
+          <div className="bg-blue-50 rounded-xl px-4 py-3 border border-blue-100">
+            <ul className="space-y-2">
+              {content.quickOverview.map((item, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-sm text-[#1E293B]">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
 
       {content.bigIdea && (
         <div>
-          <SectionLabel text="Big Idea" />
-          <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
+          <SectionLabel icon="💡" text="Big Idea" />
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
             <p className="text-blue-800 text-sm leading-relaxed">{content.bigIdea}</p>
           </div>
         </div>
@@ -479,12 +599,12 @@ function SummaryTab({ content }: { content: SummaryContent }) {
 
       {content.keyConcepts?.length > 0 && (
         <div>
-          <SectionLabel text="Key Concepts" />
+          <SectionLabel icon="🎯" text="Key Concepts" />
           <div className="space-y-2">
             {content.keyConcepts.map((kc, i) => (
-              <div key={i} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <p className="text-slate-900 font-semibold text-sm">{kc.term}</p>
-                <p className="text-slate-600 text-sm mt-1 leading-relaxed">{kc.explanation}</p>
+              <div key={i} className="bg-white rounded-xl border border-[#E2E8F0] border-l-2 border-l-blue-600 px-4 py-3">
+                <p className="text-[#0F172A] font-bold text-sm">{kc.term}</p>
+                <p className="text-[#64748B] text-sm mt-1 leading-relaxed">{kc.explanation}</p>
                 <p className="text-blue-600 text-xs mt-1.5 italic">{kc.whyItMatters}</p>
               </div>
             ))}
@@ -494,7 +614,7 @@ function SummaryTab({ content }: { content: SummaryContent }) {
 
       {content.ideaConnections?.length > 0 && (
         <div>
-          <SectionLabel text="How It Connects" />
+          <SectionLabel icon="🔗" text="How It Connects" />
           <div className="space-y-2">
             {content.ideaConnections.map((conn, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap">
@@ -509,12 +629,12 @@ function SummaryTab({ content }: { content: SummaryContent }) {
 
       {content.examTraps?.length > 0 && (
         <div>
-          <SectionLabel text="Exam Traps" />
+          <SectionLabel icon="⚠️" text="Exam Traps" />
           <div className="space-y-2">
             {content.examTraps.map((trap, i) => (
-              <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 border-l-[3px] border-l-amber-400">
+              <div key={i} className="bg-amber-50 rounded-xl border border-amber-200 border-l-2 border-l-red-500 px-4 py-3">
                 <p className="text-red-600 text-sm">✗ {trap.trap}</p>
-                <p className="text-green-600 text-sm mt-1.5">✓ {trap.correction}</p>
+                <p className="text-green-700 text-sm mt-1.5 font-medium">✓ {trap.correction}</p>
               </div>
             ))}
           </div>
@@ -523,23 +643,23 @@ function SummaryTab({ content }: { content: SummaryContent }) {
 
       {content.quickCheck?.length > 0 && (
         <div>
-          <SectionLabel text="Quick Check" />
+          <SectionLabel icon="✅" text="Quick Check" />
           <div className="space-y-2">
             {content.quickCheck.map((qc, i) => (
-              <div key={i} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <p className="text-slate-900 text-sm font-medium">{qc.question}</p>
+              <div key={i} className="bg-white rounded-xl border border-[#E2E8F0] px-4 py-3">
+                <p className="text-[#0F172A] text-sm font-medium">{qc.question}</p>
                 {revealedChecks.has(i) ? (
                   <motion.p
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-slate-600 text-sm mt-2 leading-relaxed"
+                    className="text-[#64748B] text-sm mt-2 leading-relaxed"
                   >
                     {qc.answer}
                   </motion.p>
                 ) : (
                   <button
                     onClick={() => toggleCheck(i)}
-                    className="text-blue-600 text-xs mt-2 hover:text-blue-700 transition"
+                    className="text-blue-600 text-xs mt-2 hover:text-blue-700 transition font-medium"
                   >
                     Show Answer ▾
                   </button>
@@ -554,9 +674,9 @@ function SummaryTab({ content }: { content: SummaryContent }) {
         <div>
           <button
             onClick={() => setShowNotes(v => !v)}
-            className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hover:text-slate-700 transition"
+            className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#94A3B8] hover:text-[#64748B] transition"
           >
-            Detailed Notes <span>{showNotes ? '▲' : '▾'}</span>
+            📄 Detailed Notes <span>{showNotes ? '▲' : '▾'}</span>
           </button>
           {showNotes && (
             <motion.div
@@ -579,7 +699,7 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
   if (!nodes?.length || !relationships?.length) {
     return (
       <div className="flex flex-col items-center justify-center h-40 gap-3">
-        <p className="text-slate-500 text-sm">Concept map could not be loaded.</p>
+        <p className="text-[#94A3B8] text-sm">Concept map could not be loaded.</p>
         <button onClick={onRetry} className="text-blue-600 text-sm hover:text-blue-700 transition">
           Retry ↺
         </button>
@@ -646,7 +766,7 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 px-4 py-3">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
         <p className="text-blue-800 font-bold text-sm">{title}</p>
       </div>
 
@@ -664,7 +784,7 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
                 const cls = nodeTypeClasses(node.type)
                 return (
                   <div key={id} className={cn('rounded-xl border px-4 py-3', cls.bg, cls.border)}>
-                    <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide', cls.badge)}>
+                    <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide', cls.badge)}>
                       {node.type.replace(/_/g, ' ')}
                     </span>
                     <p className={cn('font-semibold mt-1.5', cls.text,
@@ -680,7 +800,7 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
             {connector && (
               <div className="flex flex-col items-center py-1.5 gap-0.5">
                 <div className="w-px h-3 bg-slate-300" />
-                <span className="rounded-full bg-white border border-slate-200 px-2.5 py-0.5 text-slate-500 text-[11px]">
+                <span className="rounded-full bg-white border border-slate-300 px-2.5 py-0.5 text-slate-500 text-[11px]">
                   {connector}
                 </span>
                 <div className="w-px h-3 bg-slate-300" />
@@ -692,19 +812,16 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
 
       {orphans.length > 0 && (
         <div className="pt-2">
-          <SectionLabel text="Also see" />
+          <SectionLabel icon="↗" text="Also see" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {orphans.map(node => {
               const cls = nodeTypeClasses(node.type)
               return (
                 <div key={node.id} className={cn('rounded-xl border px-4 py-3', cls.bg, cls.border)}>
-                  <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide', cls.badge)}>
+                  <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide', cls.badge)}>
                     {node.type.replace(/_/g, ' ')}
                   </span>
-                  <p className={cn('font-semibold mt-1.5', cls.text,
-                    (node as any).importance === 'primary' ? 'text-sm font-bold' :
-                    (node as any).importance === 'supporting' ? 'text-xs opacity-70' : 'text-sm'
-                  )}>{node.label}</p>
+                  <p className={cn('font-semibold mt-1.5 text-sm', cls.text)}>{node.label}</p>
                   <p className="text-slate-500 text-xs mt-1 leading-relaxed">{node.detail}</p>
                 </div>
               )
@@ -724,7 +841,7 @@ function MarkdownBlocks({ text }: { text: string }) {
     if (segment.startsWith('```')) {
       const code = segment.replace(/^```\w*\n?/, '').replace(/\n?```$/, '')
       elements.push(
-        <pre key={`code-${si}`} className="bg-slate-100 border border-slate-200 rounded-lg px-4 py-3 text-xs text-blue-700 font-mono overflow-x-auto whitespace-pre-wrap">
+        <pre key={`code-${si}`} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-blue-700 font-mono overflow-x-auto whitespace-pre-wrap">
           {code.trim()}
         </pre>
       )
@@ -744,11 +861,11 @@ function MarkdownBlocks({ text }: { text: string }) {
         elements.push(
           <div key={key}>
             <div className="flex items-center gap-2 mt-3 mb-1">
-              <span className={`w-1 rounded-full shrink-0 ${isH3 ? 'h-4 bg-blue-500' : 'h-5 bg-violet-500'}`} />
-              <h3 className="text-slate-900 font-semibold text-sm">{heading}</h3>
+              <span className={`w-1 rounded-full shrink-0 ${isH3 ? 'h-4 bg-blue-500' : 'h-5 bg-sky-400'}`} />
+              <h3 className="text-[#0F172A] font-bold text-sm">{heading}</h3>
             </div>
             {rest && (
-              <p className="text-slate-600 text-sm leading-relaxed"
+              <p className="text-[#64748B] text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: renderInline(rest.replace(/\n/g, ' ')) }} />
             )}
           </div>
@@ -761,7 +878,7 @@ function MarkdownBlocks({ text }: { text: string }) {
         elements.push(
           <ul key={key} className="space-y-1.5">
             {lines.map((line, j) => (
-              <li key={j} className="flex items-start gap-2 text-sm text-slate-600">
+              <li key={j} className="flex items-start gap-2 text-sm text-[#64748B]">
                 <span className="mt-[6px] w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                 <span dangerouslySetInnerHTML={{ __html: renderInline(line.replace(/^[-*]\s+/, '')) }} />
               </li>
@@ -772,7 +889,7 @@ function MarkdownBlocks({ text }: { text: string }) {
       }
 
       elements.push(
-        <p key={key} className="text-slate-600 text-sm leading-relaxed"
+        <p key={key} className="text-[#64748B] text-sm leading-relaxed"
           dangerouslySetInnerHTML={{ __html: renderInline(trimmed.replace(/\n/g, ' ')) }} />
       )
     })
@@ -796,7 +913,7 @@ function TabContent({
   if (!item) {
     return (
       <div className="flex flex-col items-center justify-center h-48 gap-2">
-        <p className="text-slate-400 text-sm">Switch tabs to generate content</p>
+        <p className="text-[#94A3B8] text-sm">Switch tabs to generate content</p>
       </div>
     )
   }
@@ -812,15 +929,15 @@ function TabContent({
     const idx = cardIndex % cards.length
     const card = cards[idx]
 
-    if (!card) return <p className="text-slate-400 text-sm text-center">No flashcards generated.</p>
+    if (!card) return <p className="text-[#94A3B8] text-sm text-center">No flashcards generated.</p>
 
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-slate-400">Card {idx + 1} of {cards.length}</p>
-          <div className="flex gap-0.5">
+          <p className="text-xs text-[#64748B] font-bold">Card {idx + 1} of {cards.length}</p>
+          <div className="flex gap-1">
             {cards.map((_, ci) => (
-              <span key={ci} className={cn('w-1.5 h-1.5 rounded-full transition-colors', ci === idx ? 'bg-blue-500' : 'bg-slate-300')} />
+              <span key={ci} className={cn('w-1.5 h-1.5 rounded-full transition-colors', ci === idx ? 'bg-blue-500' : 'bg-[#E2E8F0]')} />
             ))}
           </div>
         </div>
@@ -830,22 +947,22 @@ function TabContent({
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.15 }}
           className={cn(
-            'cursor-pointer rounded-xl border min-h-[180px] flex flex-col items-center justify-center p-6 text-center transition-colors',
+            'cursor-pointer rounded-2xl border-2 min-h-[200px] flex flex-col items-center justify-center p-8 text-center transition-all',
             flipped
-              ? 'border-blue-300 bg-blue-50'
-              : 'border-slate-200 bg-white hover:border-slate-300 shadow-sm'
+              ? 'border-blue-600 bg-blue-600'
+              : 'border-[#E2E8F0] bg-white hover:border-blue-200 hover:shadow-sm'
           )}
           onClick={onCardFlip}
         >
           {!flipped ? (
             <>
-              <p className="text-slate-900 text-base font-semibold leading-snug">{card.front}</p>
-              <p className="text-slate-400 text-xs mt-3">tap to reveal →</p>
+              <p className="text-[#0F172A] text-base font-bold leading-snug">{card.front}</p>
+              <p className="text-[#94A3B8] text-xs mt-3">Click to reveal answer</p>
             </>
           ) : (
             <>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-3">Answer</p>
-              <p className="text-slate-700 text-sm leading-relaxed">{card.back}</p>
+              <p className="text-[11px] font-bold text-white/70 uppercase tracking-[0.15em] mb-3">Answer</p>
+              <p className="text-white text-sm leading-relaxed">{card.back}</p>
             </>
           )}
         </motion.div>
@@ -855,10 +972,16 @@ function TabContent({
             animate={{ opacity: 1, y: 0 }}
             className="flex gap-3"
           >
-            <button onClick={onCardAgain} className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition border border-slate-200">
+            <button
+              onClick={onCardAgain}
+              className="flex-1 rounded-xl py-3 text-sm font-bold bg-white text-[#0F172A] hover:bg-[#F8FAFC] transition border border-[#E2E8F0]"
+            >
               ↺ Again
             </button>
-            <button onClick={onCardGotIt} className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition">
+            <button
+              onClick={onCardGotIt}
+              className="flex-1 rounded-xl py-3 text-sm font-bold bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition"
+            >
               ✓ Got it
             </button>
           </motion.div>
@@ -894,9 +1017,10 @@ function QuestionCard({
     const content = question.content as unknown as RecallContent
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-2">Active recall</p>
-          <p className="text-slate-900 font-medium">{content.prompt}</p>
+        <div className="relative bg-white rounded-2xl border border-[#E2E8F0] p-5 overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l-2xl" />
+          <p className="text-[11px] font-bold text-blue-600 uppercase tracking-[0.12em] mb-2">Active Recall</p>
+          <p className="text-[#0F172A] font-semibold leading-snug">{content.prompt}</p>
         </div>
 
         {!showFeedback ? (
@@ -906,14 +1030,14 @@ function QuestionCard({
               value={currentAnswer}
               onChange={e => onAnswerChange(e.target.value)}
               placeholder="Type your answer from memory…"
-              className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] px-4 py-3 text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 resize-none transition"
             />
             <button
               onClick={onSubmitRecall}
               disabled={scoring || !currentAnswer.trim()}
-              className="w-full rounded-lg py-2.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
+              className="w-full rounded-xl py-3 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40 transition flex items-center justify-center gap-2 active:scale-95"
             >
-              {scoring ? <><Spinner className="w-4 h-4" /> Checking…</> : 'Submit →'}
+              {scoring ? <><Spinner className="w-4 h-4" /> Checking…</> : 'Submit answer →'}
             </button>
           </>
         ) : (
@@ -927,20 +1051,21 @@ function QuestionCard({
     const content = question.content as unknown as MCQContent
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-2">Multiple choice</p>
-          <p className="text-slate-900 font-medium">{content.question}</p>
+        <div className="relative bg-white rounded-2xl border border-[#E2E8F0] p-5 overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-400 rounded-l-2xl" />
+          <p className="text-[11px] font-bold text-sky-600 uppercase tracking-[0.12em] mb-2">Multiple Choice</p>
+          <p className="text-[#0F172A] font-semibold leading-snug">{content.question}</p>
         </div>
 
         <div className="space-y-2">
           {content.options.map((option, i) => {
-            let style = 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+            let cls = 'border-[#E2E8F0] bg-white hover:border-blue-300 hover:bg-blue-50 text-[#0F172A]'
             if (showFeedback && mcqSelected !== null) {
-              if (i === content.correct_index) style = 'border-green-400 bg-green-50 text-green-700'
-              else if (i === mcqSelected && i !== content.correct_index) style = 'border-red-400 bg-red-50 text-red-700'
-              else style = 'border-slate-100 bg-slate-50 opacity-50'
+              if (i === content.correct_index) cls = 'border-green-400 bg-green-50 text-green-800'
+              else if (i === mcqSelected && i !== content.correct_index) cls = 'border-red-400 bg-red-50 text-red-800'
+              else cls = 'border-[#F1F5F9] bg-[#F8FAFC] text-[#94A3B8] opacity-40'
             } else if (mcqSelected === i) {
-              style = 'border-blue-400 bg-blue-50'
+              cls = 'border-blue-400 bg-blue-50 text-blue-800'
             }
 
             return (
@@ -948,12 +1073,9 @@ function QuestionCard({
                 key={i}
                 disabled={showFeedback}
                 onClick={() => onSubmitMCQ(i)}
-                className={cn(
-                  'w-full text-left rounded-lg border px-4 py-3 text-sm text-slate-900 transition shadow-sm',
-                  style
-                )}
+                className={cn('w-full text-left rounded-xl border px-4 py-3 text-sm transition', cls)}
               >
-                <span className="text-slate-400 mr-2">{String.fromCharCode(65 + i)}.</span>
+                <span className="text-[#94A3B8] font-bold mr-2">{String.fromCharCode(65 + i)}.</span>
                 {option}
               </button>
             )
@@ -961,10 +1083,13 @@ function QuestionCard({
         </div>
 
         {showFeedback && (
-          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 shadow-sm">
-            <p className="text-xs font-medium text-slate-500">Explanation</p>
-            <p className="text-slate-600 text-sm">{content.explanation}</p>
-            <button onClick={onNext} className="w-full mt-2 rounded-lg py-2 text-sm font-medium bg-slate-100 text-slate-900 hover:bg-slate-200 transition">
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 space-y-2">
+            <p className="text-[11px] font-bold text-[#64748B] uppercase tracking-[0.1em]">Explanation</p>
+            <p className="text-[#0F172A] text-sm leading-relaxed">{content.explanation}</p>
+            <button
+              onClick={onNext}
+              className="w-full mt-2 rounded-xl py-2.5 text-sm font-bold bg-[#F0F4FF] text-[#0F172A] hover:bg-[#E8EEFF] transition border border-[#E2E8F0]"
+            >
               Continue →
             </button>
           </div>
@@ -979,19 +1104,19 @@ function QuestionCard({
 function RecallFeedback({ answer, idealAnswer, onNext }: { answer: QuizAnswer | null; idealAnswer: string; onNext: () => void }) {
   if (!answer) return null
   const scoreConfig = {
-    correct: { color: 'text-green-600', label: '✓ Correct', border: 'border-green-200 bg-green-50' },
-    partial: { color: 'text-yellow-600', label: '◑ Partially correct', border: 'border-yellow-200 bg-yellow-50' },
-    wrong:   { color: 'text-red-600',   label: '✗ Needs work', border: 'border-red-200 bg-red-50' },
+    correct: { label: '✓ Correct',           cls: 'border-green-200 bg-green-50', head: 'text-green-700' },
+    partial: { label: '◑ Partially correct',  cls: 'border-amber-200 bg-amber-50', head: 'text-amber-700' },
+    wrong:   { label: '✗ Needs work',         cls: 'border-red-200 bg-red-50',     head: 'text-red-700' },
   }
   const cfg = scoreConfig[answer.score]
 
   return (
-    <div className={cn('rounded-xl border p-4 space-y-3', cfg.border)}>
-      <p className={cn('font-medium text-sm', cfg.color)}>{cfg.label}</p>
+    <div className={cn('rounded-xl border p-4 space-y-3', cfg.cls)}>
+      <p className={cn('font-bold text-sm', cfg.head)}>{cfg.label}</p>
 
       {answer.feedback?.correct_parts?.length ? (
         <div>
-          <p className="text-xs text-slate-400 mb-1">You got right:</p>
+          <p className="text-xs text-[#64748B] mb-1">You got right:</p>
           <ul className="space-y-0.5">
             {answer.feedback.correct_parts.map((p, i) => (
               <li key={i} className="text-green-700 text-xs flex gap-1.5"><span>✓</span>{p}</li>
@@ -1002,10 +1127,10 @@ function RecallFeedback({ answer, idealAnswer, onNext }: { answer: QuizAnswer | 
 
       {answer.feedback?.missing_parts?.length ? (
         <div>
-          <p className="text-xs text-slate-400 mb-1">You missed:</p>
+          <p className="text-xs text-[#64748B] mb-1">You missed:</p>
           <ul className="space-y-0.5">
             {answer.feedback.missing_parts.map((p, i) => (
-              <li key={i} className="text-red-700 text-xs flex gap-1.5"><span>✗</span>{p}</li>
+              <li key={i} className="text-red-600 text-xs flex gap-1.5"><span>✗</span>{p}</li>
             ))}
           </ul>
         </div>
@@ -1013,11 +1138,19 @@ function RecallFeedback({ answer, idealAnswer, onNext }: { answer: QuizAnswer | 
 
       {answer.feedback?.source_quote && (
         <div className="border-l-2 border-slate-300 pl-3">
-          <p className="text-slate-500 text-xs italic">{answer.feedback.source_quote}</p>
+          <p className="text-[#64748B] text-xs italic">{answer.feedback.source_quote}</p>
         </div>
       )}
 
-      <button onClick={onNext} className="w-full rounded-lg py-2 text-sm font-medium bg-slate-100 text-slate-900 hover:bg-slate-200 transition">
+      <div className="border-l-2 border-[#E2E8F0] pl-3 py-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#94A3B8] mb-1">Ideal answer</p>
+        <p className="text-[#0F172A] text-xs leading-relaxed">{idealAnswer}</p>
+      </div>
+
+      <button
+        onClick={onNext}
+        className="w-full rounded-xl py-2.5 text-sm font-bold bg-white text-[#0F172A] hover:bg-[#F8FAFC] transition border border-[#E2E8F0]"
+      >
         Continue →
       </button>
     </div>

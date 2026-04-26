@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
 import { RequireAuth } from '@/components/RequireAuth'
+import { Layout } from '@/components/Layout'
 import { NextBestTaskCard } from '@/components/NextBestTaskCard'
 import { MasteryDot } from '@/components/MasteryDot'
 import { ReadinessBar } from '@/components/ReadinessBar'
@@ -44,14 +45,14 @@ function PathView() {
   }, [id])
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-[#F0F4FF]">
       <Spinner className="text-blue-500 w-5 h-5" />
     </div>
   )
 
   if (error || !data) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <p className="text-red-600">{error || 'Subject not found'}</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#F0F4FF]">
+      <p className="text-red-500">{error || 'Subject not found'}</p>
     </div>
   )
 
@@ -59,8 +60,8 @@ function PathView() {
   const score = readiness_history[0]?.score ?? computeReadinessScore(topics, mastery)
   const nextTask: NextBestTask = computeNextBestTask(stages, topics, mastery, subject.exam_date)
   const days = daysUntil(subject.exam_date)
-
   const masteryMap = new Map(mastery.map(m => [m.topic_id, m.level]))
+  const stagesComplete = stages.filter(s => s.status === 'complete').length
 
   function stageMasteryLevel(stage: StudyStage) {
     if (!stage.topic_ids?.length) return 'grey'
@@ -75,134 +76,153 @@ function PathView() {
   return (
     <>
       <Head><title>{subject.name} — fuckexam</title></Head>
-      <div className="min-h-screen bg-slate-50">
-        {/* Nav */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3">
-          <div className="max-w-2xl mx-auto flex items-center justify-between">
-            <Link href="/" className="text-slate-400 hover:text-slate-700 text-sm transition">← Dashboard</Link>
-            <Link href={`/subjects/${id}/mastery`} className="text-sm text-blue-600 hover:text-blue-700 font-medium transition">Mastery →</Link>
-          </div>
-        </div>
-
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">{subject.name}</h1>
-              {days !== null && (
+      <Layout
+        backHref="/"
+        backLabel="Dashboard"
+        title="Study Path"
+        actions={
+          <Link
+            href={`/subjects/${id}/mastery`}
+            className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-xl transition"
+          >
+            Mastery map →
+          </Link>
+        }
+      >
+        <div className="space-y-6">
+          {/* Page header */}
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B] mb-1.5">Study path</p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-extrabold text-[#0F172A] leading-tight">{subject.name}</h1>
+                {days !== null && (
+                  <p className={cn('text-sm mt-1 font-medium', days <= 7 ? 'text-red-500' : days <= 14 ? 'text-amber-500' : 'text-[#64748B]')}>
+                    Exam {days > 0 ? `in ${days} day${days !== 1 ? 's' : ''}` : 'today'}{subject.exam_date && ` · ${new Date(subject.exam_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}`}
+                  </p>
+                )}
+              </div>
+              <div className="shrink-0 text-right">
                 <p className={cn(
-                  'text-sm mt-0.5',
-                  days <= 7 ? 'text-red-600' : days <= 14 ? 'text-yellow-600' : 'text-slate-400'
+                  'text-4xl font-extrabold tabular-nums leading-none',
+                  score >= 70 ? 'text-green-600' : score >= 40 ? 'text-amber-500' : 'text-[#0F172A]'
                 )}>
-                  {days > 0 ? `Exam in ${days} day${days !== 1 ? 's' : ''}` : 'Exam today!'}
+                  {score}<span className="text-lg font-bold">%</span>
                 </p>
-              )}
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-3xl font-bold text-slate-900 tabular-nums">{score}%</p>
-              <p className="text-slate-400 text-xs">ready</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#64748B] mt-1">Readiness</p>
+              </div>
             </div>
           </div>
 
-          {/* Next Best Task */}
+          {/* Progress card */}
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] px-5 py-4 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-[#64748B] uppercase tracking-[0.1em]">Progress</span>
+              <span className="font-bold text-[#0F172A]">{stagesComplete} / {stages.length} stages complete</span>
+            </div>
+            <ReadinessBar score={score} showLabel={false} />
+            <div className="flex gap-1 pt-0.5">
+              {stages.map((s, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'h-1.5 flex-1 rounded-full transition-all',
+                    s.status === 'complete'    ? 'bg-green-500' :
+                    s.status === 'in_progress' ? 'bg-blue-500' :
+                    'bg-[#E2E8F0]'
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Next best task */}
           <NextBestTaskCard task={nextTask} subjectId={id} />
 
-          {/* Study Path */}
+          {/* Stage list */}
           <div>
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Study path</h2>
-            <div className="space-y-2">
-              {stages.map((stage, i) => {
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B] mb-4">Study stages</h2>
+            <div className="space-y-0">
+              {stages.map((stage, index) => {
                 const ml = stageMasteryLevel(stage)
+                const isComplete = stage.status === 'complete'
+                const isActive = stage.status === 'in_progress'
 
                 return (
-                  <button
-                    key={stage.id}
-                    onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
-                    className={cn(
-                      'w-full text-left rounded-xl border p-4 transition',
-                      stage.status === 'in_progress'
-                        ? 'border-blue-300 bg-blue-50'
-                        : stage.status === 'complete'
-                        ? 'border-slate-200 bg-slate-50 opacity-80'
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm shadow-sm'
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className={cn(
-                          'shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
-                          stage.status === 'complete' ? 'bg-green-500 text-white' :
-                          stage.status === 'in_progress' ? 'bg-blue-500 text-white' :
-                          'bg-slate-100 text-slate-400'
-                        )}>
-                          {stage.status === 'complete' ? '✓' : stage.stage_order}
-                        </span>
+                  <div key={stage.id} className="flex gap-3 sm:gap-4">
+                    {/* Badge + connector */}
+                    <div className="flex flex-col items-center w-9 sm:w-10 shrink-0">
+                      <button
+                        onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
+                        className={cn(
+                          'w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-sm font-extrabold z-10 shrink-0 border-2 transition-all',
+                          isComplete
+                            ? 'bg-green-50 border-green-400 text-green-700'
+                            : isActive
+                            ? 'bg-blue-600 border-blue-600 text-white'
+                            : 'bg-white border-[#CBD5E1] text-[#94A3B8]'
+                        )}
+                      >
+                        {isComplete ? '✓' : stage.stage_order}
+                      </button>
+                      {index < stages.length - 1 && (
+                        <div className={cn(
+                          'w-0.5 flex-1 my-1.5 rounded-full min-h-[16px]',
+                          isComplete ? 'bg-green-300' : 'bg-[#E2E8F0]'
+                        )} />
+                      )}
+                    </div>
+
+                    {/* Stage card */}
+                    <button
+                      onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
+                      className={cn(
+                        'flex-1 text-left rounded-xl border px-4 py-3.5 mb-3 transition-all group',
+                        isActive
+                          ? 'border-blue-300 bg-blue-50 hover:border-blue-400'
+                          : isComplete
+                          ? 'border-[#E2E8F0] bg-white opacity-60 hover:opacity-100 hover:border-green-200'
+                          : 'border-[#E2E8F0] bg-white hover:border-blue-200 hover:shadow-sm'
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className={cn('font-medium text-sm truncate', stage.status === 'complete' ? 'text-slate-400' : 'text-slate-900')}>
+                          <p className={cn(
+                            'font-bold text-sm truncate',
+                            isComplete ? 'text-[#64748B]' : 'text-[#0F172A]'
+                          )}>
                             {stage.name}
                           </p>
-                          <p className="text-slate-400 text-xs">~{stage.estimated_minutes} min</p>
+                          <p className="text-[#94A3B8] text-xs mt-0.5">~{stage.estimated_minutes} min</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <MasteryDot level={ml as any} />
+                          <StatusChip status={stage.status ?? 'not_started'} />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <MasteryDot level={ml as any} />
-                        <StatusChip status={stage.status ?? 'not_started'} />
-                      </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 )
               })}
             </div>
           </div>
-
-          {/* Mastery quick view */}
-          {topics.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Mastery</h2>
-                <Link href={`/subjects/${id}/mastery`} className="text-xs text-blue-600 hover:text-blue-700 transition">View all →</Link>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {topics.map(topic => {
-                  const level = masteryMap.get(topic.id) ?? 'grey'
-                  return (
-                    <div
-                      key={topic.id}
-                      className={cn(
-                        'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs border',
-                        level === 'green' ? 'bg-green-50 border-green-200 text-green-700' :
-                        level === 'yellow' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' :
-                        level === 'red' ? 'bg-red-50 border-red-200 text-red-700' :
-                        'bg-slate-100 border-slate-200 text-slate-500'
-                      )}
-                    >
-                      <MasteryDot level={level as any} />
-                      {topic.name}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      </Layout>
     </>
   )
 }
 
 function StatusChip({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    not_started: 'text-slate-400',
-    in_progress: 'text-blue-600',
-    complete: 'text-green-600',
-    needs_review: 'text-yellow-600',
+  const cfg: Record<string, { label: string; cls: string }> = {
+    not_started:  { label: 'Not started', cls: 'bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]' },
+    in_progress:  { label: 'In progress', cls: 'bg-blue-50 text-blue-600 border border-blue-200' },
+    complete:     { label: 'Complete',    cls: 'bg-green-50 text-green-700 border border-green-200' },
+    needs_review: { label: 'Review',      cls: 'bg-amber-50 text-amber-600 border border-amber-200' },
   }
-  const label: Record<string, string> = {
-    not_started: 'Not started',
-    in_progress: 'In progress',
-    complete: 'Complete',
-    needs_review: 'Review',
-  }
-  return <span className={cn('text-xs font-medium', map[status] ?? 'text-slate-400')}>{label[status] ?? status}</span>
+  const { label, cls } = cfg[status] ?? cfg.not_started
+  return (
+    <span className={cn('text-[11px] font-bold rounded-full px-2.5 py-0.5 whitespace-nowrap', cls)}>
+      {label}
+    </span>
+  )
 }

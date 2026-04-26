@@ -7,18 +7,22 @@ interface Props {
 }
 
 export function ReadinessBar({ score, size = 'sm', showLabel = true }: Props) {
-  const color = score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-400' : 'bg-red-500'
+  const fillClass = score >= 70
+    ? 'bg-green-600'
+    : score >= 40
+    ? 'bg-amber-500'
+    : 'bg-red-500'
 
   if (size === 'lg') {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-end gap-3">
-          <span className="text-5xl font-bold text-slate-900 tabular-nums">{score}%</span>
-          <span className="text-slate-500 text-sm pb-1">exam ready</span>
+          <span className="text-5xl font-extrabold text-[#0F172A] tabular-nums leading-none">{score}%</span>
+          <span className="text-[#64748B] text-sm pb-1">exam ready</span>
         </div>
-        <div className="h-3 w-full rounded-full bg-slate-200 overflow-hidden">
+        <div className="h-3 w-full rounded-full bg-[#E2E8F0] overflow-hidden">
           <div
-            className={cn('h-full rounded-full transition-all duration-700', color)}
+            className={cn('h-full rounded-full transition-all duration-700', fillClass)}
             style={{ width: `${score}%` }}
           />
         </div>
@@ -27,17 +31,17 @@ export function ReadinessBar({ score, size = 'sm', showLabel = true }: Props) {
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {showLabel && (
         <div className="flex items-center justify-between text-xs">
-          <span className="text-slate-400">Readiness</span>
-          <span className="text-slate-900 font-medium tabular-nums">{score}%</span>
+          <span className="text-[#64748B] font-medium">Readiness</span>
+          <span className="text-[#0F172A] font-bold tabular-nums">{score}%</span>
         </div>
       )}
-      <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-[#E2E8F0] overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all duration-500', color)}
-          style={{ width: `${score}%` }}
+          className={cn('h-full rounded-full transition-all duration-500', fillClass)}
+          style={{ width: `${Math.max(score, score > 0 ? 3 : 0)}%` }}
         />
       </div>
     </div>

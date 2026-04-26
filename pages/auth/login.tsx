@@ -56,30 +56,37 @@ export default function LoginPage() {
       <Head>
         <title>fuckexam — log in</title>
       </Head>
-      <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#F0F4FF]">
         <div className="w-full max-w-sm">
-          <div className="mb-10 text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1">fuckexam</h1>
-            <p className="text-slate-500 text-sm">your personal exam readiness coach</p>
+          {/* Logo */}
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 mb-4">
+              <span className="text-white text-2xl font-extrabold">f</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-[#0F172A] mb-1">
+              fuckexam
+            </h1>
+            <p className="text-[#64748B] text-sm">AI study companion. Pass smarter.</p>
           </div>
 
           {sent ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-              <div className="text-3xl mb-3">📬</div>
-              <p className="text-slate-900 font-medium mb-1">Check your email</p>
-              <p className="text-slate-500 text-sm">
-                We sent a magic link to <span className="text-slate-900 font-medium">{email}</span>.
-                Click it to sign in — no password needed.
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-8 text-center">
+              <div className="text-4xl mb-4">📬</div>
+              <p className="text-[#0F172A] font-bold text-lg mb-2">Check your inbox</p>
+              <p className="text-[#64748B] text-sm leading-relaxed">
+                Magic link sent to{' '}
+                <span className="text-[#0F172A] font-medium">{email}</span>.
+                {' '}Click it to start your session.
               </p>
             </div>
           ) : (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-6 space-y-4">
               <button
                 onClick={handleGoogle}
                 disabled={googleLoading}
                 className={cn(
-                  'w-full flex items-center justify-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition',
-                  'bg-white text-slate-900 hover:bg-slate-50 border border-slate-200',
+                  'w-full flex items-center justify-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition',
+                  'bg-white text-[#0F172A] hover:bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#CBD5E1]',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >
@@ -88,14 +95,14 @@ export default function LoginPage() {
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-slate-200" />
-                <span className="text-slate-400 text-xs">or</span>
-                <div className="flex-1 h-px bg-slate-200" />
+                <div className="flex-1 h-px bg-[#E2E8F0]" />
+                <span className="text-[#94A3B8] text-xs font-medium">or</span>
+                <div className="flex-1 h-px bg-[#E2E8F0]" />
               </div>
 
               <form onSubmit={handleMagicLink} className="space-y-3">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label htmlFor="email" className="block text-[11px] font-bold text-[#64748B] uppercase tracking-[0.1em] mb-2">
                     Email address
                   </label>
                   <input
@@ -104,25 +111,25 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="you@student.unimelb.edu.au"
-                    className="w-full rounded-lg bg-white border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="you@student.edu"
+                    className="w-full rounded-xl bg-white border border-[#E2E8F0] px-4 py-3 text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
                   />
                 </div>
 
                 {error && (
-                  <p className="text-red-600 text-sm">{error}</p>
+                  <p className="text-red-500 text-sm">{error}</p>
                 )}
 
                 <button
                   type="submit"
                   disabled={submitting || !email}
                   className={cn(
-                    'w-full rounded-lg px-4 py-2.5 text-sm font-medium transition',
+                    'w-full rounded-xl px-4 py-3 text-sm font-bold transition',
                     'bg-blue-600 text-white hover:bg-blue-700',
-                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                    'disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]'
                   )}
                 >
-                  {submitting ? 'Sending…' : 'Send magic link'}
+                  {submitting ? 'Sending…' : 'Send magic link →'}
                 </button>
               </form>
             </div>
