@@ -40,10 +40,13 @@ Write a focused study summary for a university student preparing for: ${examForm
 Topics to cover: ${topicNames}
 
 Requirements:
-- 350-500 words
+- 350-500 words total
 - Bold key terms using **term** syntax
-- Only include exam-relevant information
-- Direct, clear language — not textbook prose
+- Use "- " bullet points for lists of mechanisms, properties, or steps
+- Short clear paragraphs — NO markdown headings (no ##, ###)
+- One concept per paragraph, blank line between paragraphs
+- Only exam-relevant information
+- Direct language — not textbook prose
 
 Source material (use only this):
 ${context}

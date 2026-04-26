@@ -67,8 +67,8 @@ function StageView() {
 
   async function loadStage() {
     setLoading(true)
+    let genItems: GeneratedItem[] = []
     try {
-      // Load stage + topics from subject data
       const subjectData = await apiJson<any>(`/api/subjects/${subjectId}`)
       const stage = subjectData.stages.find((s: StudyStage) => s.id === stageId)
       if (!stage) { router.replace(`/subjects/${subjectId}/path`); return }
@@ -77,20 +77,34 @@ function StageView() {
         (stage.topic_ids ?? []).includes(t.id)
       )
 
-      // Load cached generated items + questions in parallel
       const [genRes, qRes] = await Promise.allSettled([
         apiJson<GeneratedItem[]>(`/api/stages/${stageId}/content-list`).catch(() => []),
         apiJson<Question[]>(`/api/stages/${stageId}/quiz`).catch(() => []),
       ])
 
+      genItems = genRes.status === 'fulfilled' ? genRes.value : []
+
       setData({
         stage: { ...stage, subjects: { name: subjectData.subject.name, exam_format_text: subjectData.subject.exam_format_text, user_id: subjectData.subject.user_id } },
         topics: stageTopics,
-        generated: genRes.status === 'fulfilled' ? genRes.value : [],
+        generated: genItems,
         questions: qRes.status === 'fulfilled' ? qRes.value : [],
       })
     } finally {
       setLoading(false)
+    }
+
+    // Auto-generate summary if not cached — fires after page is visible
+    if (!genItems.find(g => g.type === 'summary')) {
+      setGenerating(true)
+      try {
+        const item = await apiJson<GeneratedItem>(`/api/stages/${stageId}/content`, {
+          method: 'POST',
+          body: JSON.stringify({ type: 'summary' }),
+        })
+        setData(prev => prev ? { ...prev, generated: [...prev.generated, item] } : prev)
+      } catch { /* silently fail — user can click tab to retry */ }
+      setGenerating(false)
     }
   }
 
@@ -401,6 +415,80 @@ function StageView() {
   )
 }
 
+function renderInline(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+    .replace(/`([^`]+)`/g, '<code class="bg-zinc-800 text-indigo-300 px-1 py-0.5 rounded text-xs font-mono">$1</code>')
+}
+
+function MarkdownBlocks({ text }: { text: string }) {
+  // Split out fenced code blocks first so \n\n inside them isn't treated as paragraph breaks
+  const segments = text.split(/(```[\s\S]*?```)/g)
+  const elements: React.ReactNode[] = []
+
+  segments.forEach((segment, si) => {
+    if (segment.startsWith('```')) {
+      const code = segment.replace(/^```\w*\n?/, '').replace(/\n?```$/, '')
+      elements.push(
+        <pre key={`code-${si}`} className="bg-zinc-800/80 border border-zinc-700 rounded-lg px-4 py-3 text-xs text-indigo-300 font-mono overflow-x-auto whitespace-pre-wrap">
+          {code.trim()}
+        </pre>
+      )
+      return
+    }
+
+    segment.split(/\n\n+/).forEach((block, bi) => {
+      const trimmed = block.trim()
+      if (!trimmed) return
+      const key = `${si}-${bi}`
+
+      // ### heading — may have content after the heading line
+      if (trimmed.startsWith('### ') || trimmed.startsWith('## ')) {
+        const isH3 = trimmed.startsWith('### ')
+        const lines = trimmed.split('\n')
+        const heading = lines[0].slice(isH3 ? 4 : 3).trim()
+        const rest = lines.slice(1).join('\n').trim()
+        elements.push(
+          <div key={key}>
+            <div className="flex items-center gap-2 mt-3 mb-1">
+              <span className={`w-1 rounded-full shrink-0 ${isH3 ? 'h-4 bg-indigo-500' : 'h-5 bg-violet-500'}`} />
+              <h3 className="text-white font-semibold text-sm">{heading}</h3>
+            </div>
+            {rest && (
+              <p className="text-zinc-300 text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderInline(rest.replace(/\n/g, ' ')) }} />
+            )}
+          </div>
+        )
+        return
+      }
+
+      // Bullet list
+      const lines = trimmed.split('\n')
+      if (lines.length >= 1 && lines.every(l => /^[-*]\s/.test(l.trim()))) {
+        elements.push(
+          <ul key={key} className="space-y-1.5">
+            {lines.map((line, j) => (
+              <li key={j} className="flex items-start gap-2 text-sm text-zinc-300">
+                <span className="mt-[6px] w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                <span dangerouslySetInnerHTML={{ __html: renderInline(line.replace(/^[-*]\s+/, '')) }} />
+              </li>
+            ))}
+          </ul>
+        )
+        return
+      }
+
+      elements.push(
+        <p key={key} className="text-zinc-300 text-sm leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: renderInline(trimmed.replace(/\n/g, ' ')) }} />
+      )
+    })
+  })
+
+  return <>{elements}</>
+}
+
 function TabContent({
   tab, item, cardIndex, flipped, onCardFlip, onCardGotIt, onCardAgain
 }: {
@@ -414,28 +502,29 @@ function TabContent({
 }) {
   if (!item) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <p className="text-zinc-500 text-sm">Click the tab to generate</p>
+      <div className="flex flex-col items-center justify-center h-48 gap-2">
+        <p className="text-zinc-500 text-sm">Switch tabs to generate content</p>
       </div>
     )
   }
 
   if (tab === 'summary') {
     const content = item.content as unknown as SummaryContent
-    const rendered = content.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     return (
       <div className="space-y-4">
-        <div
-          className="text-zinc-300 text-sm leading-relaxed prose prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: rendered }}
-        />
+        <div className="space-y-3">
+          <MarkdownBlocks text={content.text} />
+        </div>
         {content.key_terms?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {content.key_terms.map(term => (
-              <span key={term} className="rounded-md bg-indigo-500/15 border border-indigo-500/25 text-indigo-300 px-2 py-0.5 text-xs">
-                {term}
-              </span>
-            ))}
+          <div className="pt-2 border-t border-zinc-800">
+            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Key terms</p>
+            <div className="flex flex-wrap gap-1.5">
+              {content.key_terms.map(term => (
+                <span key={term} className="rounded-full bg-indigo-500/15 border border-indigo-500/25 text-indigo-300 px-2.5 py-0.5 text-xs font-medium">
+                  {term}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -452,31 +541,52 @@ function TabContent({
 
     return (
       <div className="space-y-4">
-        <p className="text-xs text-zinc-500 text-center">Card {idx + 1} of {cards.length}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-zinc-500">Card {idx + 1} of {cards.length}</p>
+          <div className="flex gap-0.5">
+            {cards.map((_, ci) => (
+              <span key={ci} className={cn('w-1.5 h-1.5 rounded-full transition-colors', ci === idx ? 'bg-indigo-400' : 'bg-zinc-700')} />
+            ))}
+          </div>
+        </div>
         <motion.div
           key={`${idx}-${flipped}`}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 min-h-[160px] flex items-center justify-center p-6 text-center"
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.15 }}
+          className={cn(
+            'cursor-pointer rounded-xl border min-h-[180px] flex flex-col items-center justify-center p-6 text-center transition-colors',
+            flipped
+              ? 'border-indigo-500/40 bg-indigo-500/10'
+              : 'border-zinc-700 bg-zinc-900 hover:border-zinc-600'
+          )}
           onClick={onCardFlip}
         >
           {!flipped ? (
-            <p className="text-white text-base font-medium">{card.front}</p>
+            <>
+              <p className="text-white text-base font-semibold leading-snug">{card.front}</p>
+              <p className="text-zinc-600 text-xs mt-3">tap to reveal →</p>
+            </>
           ) : (
-            <p className="text-zinc-300 text-sm leading-relaxed">{card.back}</p>
+            <>
+              <p className="text-xs font-medium text-indigo-400 uppercase tracking-wide mb-3">Answer</p>
+              <p className="text-zinc-200 text-sm leading-relaxed">{card.back}</p>
+            </>
           )}
         </motion.div>
-        {!flipped ? (
-          <p className="text-zinc-600 text-xs text-center">Tap to reveal</p>
-        ) : (
-          <div className="flex gap-3">
-            <button onClick={onCardAgain} className="flex-1 rounded-lg py-2 text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition">
+        {flipped && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex gap-3"
+          >
+            <button onClick={onCardAgain} className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition border border-zinc-700">
               ↺ Again
             </button>
-            <button onClick={onCardGotIt} className="flex-1 rounded-lg py-2 text-sm font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 transition">
+            <button onClick={onCardGotIt} className="flex-1 rounded-lg py-2.5 text-sm font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 transition">
               ✓ Got it
             </button>
-          </div>
+          </motion.div>
         )}
       </div>
     )
@@ -485,20 +595,35 @@ function TabContent({
   if (tab === 'concept_map') {
     const content = item.content as unknown as ConceptMapContent
     return (
-      <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-4 text-sm font-mono overflow-auto">
-        <p className="text-indigo-400 font-bold mb-2">{content.root}</p>
-        {(content.tree ?? []).map((node, i) => (
-          <div key={i} className="ml-2 mb-2">
-            <p className="text-white">├── {node.label}</p>
-            {node.detail && <p className="text-zinc-400 ml-6 text-xs">{node.detail}</p>}
-            {node.children?.map((child, j) => (
-              <div key={j} className="ml-4">
-                <p className="text-zinc-300">│   └── {child.label}</p>
-                {child.detail && <p className="text-zinc-500 ml-10 text-xs">{child.detail}</p>}
+      <div className="space-y-3">
+        <div className="rounded-xl bg-gradient-to-r from-indigo-600/25 to-violet-600/15 border border-indigo-500/35 px-4 py-3 flex items-center gap-3">
+          <div className="w-2.5 h-2.5 rounded-full bg-indigo-400 shrink-0" />
+          <p className="text-indigo-200 font-bold text-sm">{content.root}</p>
+        </div>
+        <div className="space-y-2 ml-2">
+          {(content.tree ?? []).map((node, i) => (
+            <div key={i} className="relative pl-4 border-l-2 border-zinc-800">
+              <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3 hover:border-zinc-600 transition-colors">
+                <p className="text-white text-sm font-semibold">{node.label}</p>
+                {node.detail && (
+                  <p className="text-zinc-400 text-xs mt-0.5 leading-relaxed">{node.detail}</p>
+                )}
+                {node.children && node.children.length > 0 && (
+                  <div className="mt-2.5 space-y-1.5 pl-3 border-l border-zinc-700/50">
+                    {node.children.map((child, j) => (
+                      <div key={j} className="rounded-md bg-zinc-800/70 border border-zinc-700/40 px-2.5 py-2">
+                        <p className="text-zinc-200 text-xs font-medium">{child.label}</p>
+                        {child.detail && (
+                          <p className="text-zinc-500 text-xs mt-0.5 leading-relaxed">{child.detail}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
