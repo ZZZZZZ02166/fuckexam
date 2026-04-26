@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import type {
   StudyStage, Topic, GeneratedItem, Question,
   SummaryContent, FlashcardsContent, ConceptMapContent,
-  MCQContent, RecallContent, MasteryLevel,
+  MCQContent, RecallContent, MasteryLevel, MaterialType,
 } from '@/types/database'
 
 type Tab = 'summary' | 'flashcards' | 'concept_map'
@@ -287,6 +287,7 @@ function StageView() {
                     onCardFlip={() => setFlipped(f => !f)}
                     onCardGotIt={() => { setFlipped(false); setCardIndex(i => i + 1) }}
                     onCardAgain={() => setFlipped(false)}
+                    onGenerateContent={generateContent}
                   />
                 )}
               </div>
@@ -421,6 +422,303 @@ function renderInline(text: string): string {
     .replace(/`([^`]+)`/g, '<code class="bg-zinc-800 text-indigo-300 px-1 py-0.5 rounded text-xs font-mono">$1</code>')
 }
 
+const NODE_TYPE_CLASSES: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+  concept:      { bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', text: 'text-indigo-200',  badge: 'bg-indigo-500/20 text-indigo-300' },
+  definition:   { bg: 'bg-violet-500/10', border: 'border-violet-500/30', text: 'text-violet-200',  badge: 'bg-violet-500/20 text-violet-300' },
+  process:      { bg: 'bg-blue-500/10',   border: 'border-blue-500/30',   text: 'text-blue-200',    badge: 'bg-blue-500/20 text-blue-300' },
+  solution:     { bg: 'bg-green-500/10',  border: 'border-green-500/30',  text: 'text-green-200',   badge: 'bg-green-500/20 text-green-300' },
+  problem:      { bg: 'bg-red-500/10',    border: 'border-red-500/30',    text: 'text-red-200',     badge: 'bg-red-500/20 text-red-300' },
+  exam_trap:    { bg: 'bg-amber-500/10',  border: 'border-amber-500/30',  text: 'text-amber-200',   badge: 'bg-amber-500/20 text-amber-300' },
+  limitation:   { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-200',  badge: 'bg-orange-500/20 text-orange-300' },
+  comparison:   { bg: 'bg-cyan-500/10',   border: 'border-cyan-500/30',   text: 'text-cyan-200',    badge: 'bg-cyan-500/20 text-cyan-300' },
+  evidence:     { bg: 'bg-teal-500/10',   border: 'border-teal-500/30',   text: 'text-teal-200',    badge: 'bg-teal-500/20 text-teal-300' },
+  formula:      { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-200',  badge: 'bg-purple-500/20 text-purple-300' },
+  example:      { bg: 'bg-zinc-800',      border: 'border-zinc-700',      text: 'text-zinc-300',    badge: 'bg-zinc-700 text-zinc-300' },
+  code_example: { bg: 'bg-zinc-900',      border: 'border-zinc-700',      text: 'text-green-400',   badge: 'bg-zinc-800 text-green-400' },
+}
+function nodeTypeClasses(type: string) {
+  return NODE_TYPE_CLASSES[type] ?? NODE_TYPE_CLASSES.concept
+}
+
+function SectionLabel({ text }: { text: string }) {
+  return <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-2">{text}</p>
+}
+
+function SummaryTab({ content }: { content: SummaryContent }) {
+  const [revealedChecks, setRevealedChecks] = useState<Set<number>>(new Set())
+  const [showNotes, setShowNotes] = useState(false)
+
+  const toggleCheck = (i: number) => setRevealedChecks(prev => {
+    const next = new Set(prev)
+    next.has(i) ? next.delete(i) : next.add(i)
+    return next
+  })
+
+  return (
+    <div className="space-y-6">
+      {content.quickOverview?.length > 0 && (
+        <div>
+          <SectionLabel text="Learn this in 5 min" />
+          <ul className="space-y-2">
+            {content.quickOverview.map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {content.bigIdea && (
+        <div>
+          <SectionLabel text="Big Idea" />
+          <div className="rounded-xl bg-indigo-500/10 border border-indigo-500/20 px-4 py-3">
+            <p className="text-indigo-100 text-sm leading-relaxed">{content.bigIdea}</p>
+          </div>
+        </div>
+      )}
+
+      {content.keyConcepts?.length > 0 && (
+        <div>
+          <SectionLabel text="Key Concepts" />
+          <div className="space-y-2">
+            {content.keyConcepts.map((kc, i) => (
+              <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
+                <p className="text-white font-semibold text-sm">{kc.term}</p>
+                <p className="text-zinc-300 text-sm mt-1 leading-relaxed">{kc.explanation}</p>
+                <p className="text-indigo-400 text-xs mt-1.5 italic">{kc.whyItMatters}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {content.ideaConnections?.length > 0 && (
+        <div>
+          <SectionLabel text="How It Connects" />
+          <div className="space-y-2">
+            {content.ideaConnections.map((conn, i) => (
+              <div key={i} className="flex items-center gap-2 flex-wrap">
+                <span className="rounded-lg bg-zinc-800 border border-zinc-700 px-2.5 py-1 text-zinc-200 font-medium text-xs">{conn.from}</span>
+                <span className="text-zinc-500 text-xs">── {conn.relationship} ──▶</span>
+                <span className="rounded-lg bg-zinc-800 border border-zinc-700 px-2.5 py-1 text-zinc-200 font-medium text-xs">{conn.to}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {content.examTraps?.length > 0 && (
+        <div>
+          <SectionLabel text="Exam Traps" />
+          <div className="space-y-2">
+            {content.examTraps.map((trap, i) => (
+              <div key={i} className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 border-l-[3px] border-l-amber-500/60">
+                <p className="text-red-400 text-sm">✗ {trap.trap}</p>
+                <p className="text-green-400 text-sm mt-1.5">✓ {trap.correction}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {content.quickCheck?.length > 0 && (
+        <div>
+          <SectionLabel text="Quick Check" />
+          <div className="space-y-2">
+            {content.quickCheck.map((qc, i) => (
+              <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
+                <p className="text-white text-sm font-medium">{qc.question}</p>
+                {revealedChecks.has(i) ? (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-zinc-300 text-sm mt-2 leading-relaxed"
+                  >
+                    {qc.answer}
+                  </motion.p>
+                ) : (
+                  <button
+                    onClick={() => toggleCheck(i)}
+                    className="text-indigo-400 text-xs mt-2 hover:text-indigo-300 transition"
+                  >
+                    Show Answer ▾
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {content.detailedNotes && (
+        <div>
+          <button
+            onClick={() => setShowNotes(v => !v)}
+            className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition"
+          >
+            Detailed Notes <span>{showNotes ? '▲' : '▾'}</span>
+          </button>
+          {showNotes && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-3 space-y-3"
+            >
+              <MarkdownBlocks text={content.detailedNotes} />
+            </motion.div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRetry: () => void }) {
+  const { nodes, relationships, title } = content
+
+  if (!nodes?.length || !relationships?.length) {
+    return (
+      <div className="flex flex-col items-center justify-center h-40 gap-3">
+        <p className="text-zinc-500 text-sm">Concept map could not be loaded.</p>
+        <button onClick={onRetry} className="text-indigo-400 text-sm hover:text-indigo-300 transition">
+          Retry ↺
+        </button>
+      </div>
+    )
+  }
+
+  const nodeMap = new Map(nodes.map(n => [n.id, n]))
+  const adj = new Map<string, string[]>()
+  const inDeg = new Map<string, number>()
+  const relMap = new Map<string, string>()
+
+  nodes.forEach(n => { adj.set(n.id, []); inDeg.set(n.id, 0) })
+  relationships.forEach(r => {
+    if (!nodeMap.has(r.from) || !nodeMap.has(r.to)) return
+    adj.get(r.from)!.push(r.to)
+    inDeg.set(r.to, (inDeg.get(r.to) ?? 0) + 1)
+    relMap.set(`${r.from}:${r.to}`, r.label)
+  })
+
+  // R3: root fallback — if no roots, pick highest-importance concept node
+  const rootIds = nodes.filter(n => (inDeg.get(n.id) ?? 0) === 0).map(n => n.id)
+  let fallbackRoot: string | undefined
+  if (!rootIds.length && nodes.length) {
+    const importanceOrder = ['primary', 'secondary', 'supporting']
+    const sorted = [...nodes].sort((a, b) => {
+      const ai = importanceOrder.indexOf((a as any).importance ?? 'supporting')
+      const bi = importanceOrder.indexOf((b as any).importance ?? 'supporting')
+      if (ai !== bi) return ai - bi
+      if (a.type === 'concept' && b.type !== 'concept') return -1
+      if (b.type === 'concept' && a.type !== 'concept') return 1
+      return 0
+    })
+    fallbackRoot = sorted[0]?.id
+  }
+  const visited = new Set<string>()
+  const levels: string[][] = []
+  let frontier = rootIds.length ? rootIds : (fallbackRoot ? [fallbackRoot] : [])
+
+  while (frontier.length) {
+    const current = frontier.filter(id => !visited.has(id))
+    if (!current.length) break
+    current.forEach(id => visited.add(id))
+    levels.push(current)
+    const next: string[] = []
+    current.forEach(id => {
+      ;(adj.get(id) ?? []).forEach(child => {
+        if (!visited.has(child) && !next.includes(child)) next.push(child)
+      })
+    })
+    frontier = next
+  }
+
+  const orphans = nodes.filter(n => !visited.has(n.id))
+
+  function getLevelConnector(fromIds: string[], toIds: string[]): string | null {
+    for (const from of fromIds) {
+      for (const to of toIds) {
+        const label = relMap.get(`${from}:${to}`)
+        if (label) return label
+      }
+    }
+    return null
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl bg-gradient-to-r from-indigo-600/20 to-violet-600/10 border border-indigo-500/30 px-4 py-3">
+        <p className="text-indigo-200 font-bold text-sm">{title}</p>
+      </div>
+
+      {levels.map((level, li) => {
+        const connector = li < levels.length - 1 ? getLevelConnector(level, levels[li + 1]) : null
+        return (
+          <div key={li}>
+            <div className={cn(
+              'grid gap-2',
+              level.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+            )}>
+              {level.map(id => {
+                const node = nodeMap.get(id)
+                if (!node) return null
+                const cls = nodeTypeClasses(node.type)
+                return (
+                  <div key={id} className={cn('rounded-xl border px-4 py-3', cls.bg, cls.border)}>
+                    <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide', cls.badge)}>
+                      {node.type.replace(/_/g, ' ')}
+                    </span>
+                    <p className={cn('font-semibold mt-1.5', cls.text,
+                      (node as any).importance === 'primary' ? 'text-sm font-bold' :
+                      (node as any).importance === 'supporting' ? 'text-xs text-zinc-400' : 'text-sm'
+                    )}>{node.label}</p>
+                    <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{node.detail}</p>
+                  </div>
+                )
+              })}
+            </div>
+
+            {connector && (
+              <div className="flex flex-col items-center py-1.5 gap-0.5">
+                <div className="w-px h-3 bg-zinc-700" />
+                <span className="rounded-full bg-zinc-800/80 border border-zinc-700 px-2.5 py-0.5 text-zinc-400 text-[11px]">
+                  {connector}
+                </span>
+                <div className="w-px h-3 bg-zinc-700" />
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {orphans.length > 0 && (
+        <div className="pt-2">
+          <SectionLabel text="Also see" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {orphans.map(node => {
+              const cls = nodeTypeClasses(node.type)
+              return (
+                <div key={node.id} className={cn('rounded-xl border px-4 py-3', cls.bg, cls.border)}>
+                  <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide', cls.badge)}>
+                    {node.type.replace(/_/g, ' ')}
+                  </span>
+                  <p className={cn('font-semibold mt-1.5', cls.text,
+                    (node as any).importance === 'primary' ? 'text-sm font-bold' :
+                    (node as any).importance === 'supporting' ? 'text-xs text-zinc-400' : 'text-sm'
+                  )}>{node.label}</p>
+                  <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{node.detail}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function MarkdownBlocks({ text }: { text: string }) {
   // Split out fenced code blocks first so \n\n inside them isn't treated as paragraph breaks
   const segments = text.split(/(```[\s\S]*?```)/g)
@@ -490,7 +788,7 @@ function MarkdownBlocks({ text }: { text: string }) {
 }
 
 function TabContent({
-  tab, item, cardIndex, flipped, onCardFlip, onCardGotIt, onCardAgain
+  tab, item, cardIndex, flipped, onCardFlip, onCardGotIt, onCardAgain, onGenerateContent
 }: {
   tab: Tab
   item: GeneratedItem | null
@@ -499,6 +797,7 @@ function TabContent({
   onCardFlip: () => void
   onCardGotIt: () => void
   onCardAgain: () => void
+  onGenerateContent: (type: MaterialType) => void
 }) {
   if (!item) {
     return (
@@ -510,25 +809,7 @@ function TabContent({
 
   if (tab === 'summary') {
     const content = item.content as unknown as SummaryContent
-    return (
-      <div className="space-y-4">
-        <div className="space-y-3">
-          <MarkdownBlocks text={content.text} />
-        </div>
-        {content.key_terms?.length > 0 && (
-          <div className="pt-2 border-t border-zinc-800">
-            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Key terms</p>
-            <div className="flex flex-wrap gap-1.5">
-              {content.key_terms.map(term => (
-                <span key={term} className="rounded-full bg-indigo-500/15 border border-indigo-500/25 text-indigo-300 px-2.5 py-0.5 text-xs font-medium">
-                  {term}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )
+    return <SummaryTab content={content} />
   }
 
   if (tab === 'flashcards') {
@@ -594,38 +875,7 @@ function TabContent({
 
   if (tab === 'concept_map') {
     const content = item.content as unknown as ConceptMapContent
-    return (
-      <div className="space-y-3">
-        <div className="rounded-xl bg-gradient-to-r from-indigo-600/25 to-violet-600/15 border border-indigo-500/35 px-4 py-3 flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-indigo-400 shrink-0" />
-          <p className="text-indigo-200 font-bold text-sm">{content.root}</p>
-        </div>
-        <div className="space-y-2 ml-2">
-          {(content.tree ?? []).map((node, i) => (
-            <div key={i} className="relative pl-4 border-l-2 border-zinc-800">
-              <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3 hover:border-zinc-600 transition-colors">
-                <p className="text-white text-sm font-semibold">{node.label}</p>
-                {node.detail && (
-                  <p className="text-zinc-400 text-xs mt-0.5 leading-relaxed">{node.detail}</p>
-                )}
-                {node.children && node.children.length > 0 && (
-                  <div className="mt-2.5 space-y-1.5 pl-3 border-l border-zinc-700/50">
-                    {node.children.map((child, j) => (
-                      <div key={j} className="rounded-md bg-zinc-800/70 border border-zinc-700/40 px-2.5 py-2">
-                        <p className="text-zinc-200 text-xs font-medium">{child.label}</p>
-                        {child.detail && (
-                          <p className="text-zinc-500 text-xs mt-0.5 leading-relaxed">{child.detail}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
+    return <ConceptFlowMap content={content} onRetry={() => onGenerateContent('concept_map')} />
   }
 
   return null

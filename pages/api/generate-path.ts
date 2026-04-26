@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const pathResponse = await openai.chat.completions.parse({
     model: 'gpt-4o',
     messages: [
-      { role: 'system', content: 'You design study paths for university students preparing for exams.' },
+      { role: 'system', content: 'You are a curriculum designer. Your study paths are structured like textbook chapters: each stage covers ONLY new concepts not introduced in any previous stage. Later stages assume mastery of earlier ones.' },
       {
         role: 'user',
         content: PROMPTS.generatePath(

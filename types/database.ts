@@ -106,11 +106,30 @@ export type MaterialType = 'summary' | 'flashcards' | 'concept_map'
 export type TestType = 'recall' | 'mcq'
 export type MasteryLevel = 'grey' | 'green' | 'yellow' | 'red'
 
-export interface SummaryContent { text: string; key_terms: string[] }
+export interface SummaryContent {
+  quickOverview: string[]
+  bigIdea: string
+  keyConcepts: Array<{ term: string; explanation: string; whyItMatters: string }>
+  ideaConnections: Array<{ from: string; to: string; relationship: string }>
+  examTraps: Array<{ trap: string; correction: string }>
+  quickCheck: Array<{ question: string; answer: string }>
+  detailedNotes: string
+  masteryTerms?: string[]
+}
 export interface FlashcardsContent { cards: Array<{ front: string; back: string }> }
+export type NodeType =
+  'concept' | 'problem' | 'solution' | 'exam_trap' | 'code_example' |
+  'process' | 'definition' | 'comparison' | 'limitation' | 'evidence' | 'formula' | 'example'
+export type NodeImportance = 'primary' | 'secondary' | 'supporting'
+export type RelationshipLabel =
+  'leads to' | 'solves' | 'causes' | 'enables' | 'contrasts with' |
+  'is part of' | 'requires' | 'produces' | 'defines' | 'exemplifies'
+export interface ConceptMapNode { id: string; label: string; detail: string; type: NodeType; importance: NodeImportance }
+export interface ConceptMapRelationship { from: string; to: string; label: RelationshipLabel }
 export interface ConceptMapContent {
-  root: string
-  tree: Array<{ label: string; detail?: string; children?: Array<{ label: string; detail?: string }> }>
+  title: string
+  nodes: ConceptMapNode[]
+  relationships: ConceptMapRelationship[]
 }
 export interface MCQContent { question: string; options: string[]; correct_index: number; explanation: string }
 export interface RecallContent { prompt: string; ideal_answer: string; key_points: string[] }
