@@ -3,7 +3,7 @@ import { supabaseAdmin, getUserFromRequest } from '@/lib/supabase/server'
 import { openai } from '@/lib/openai'
 import { getStageContext } from '@/lib/stageContext'
 import { PROMPTS } from '@/lib/prompts'
-import type { MaterialType, SummaryContent, FlashcardsContent, ConceptMapContent, Json } from '@/types/database'
+import type { MaterialType, SummaryContent, FlashcardsContent, ConceptMapContent, AnswerCoachContent, Json } from '@/types/database'
 import { z } from 'zod'
 import { zodResponseFormat } from 'openai/helpers/zod'
 
@@ -53,6 +53,41 @@ const ConceptMapSchema = z.object({
     label: z.enum(RELATIONSHIP_LABELS),
   })),
 })
+const AnswerCoachSchema = z.object({
+  title: z.string().min(1),
+  likelyQuestions: z.array(z.object({
+    question: z.string().min(1),
+    whyLikely: z.string().min(1),
+    answerPlan: z.array(z.string()).min(4).max(6),
+    fullMarkAnswer: z.string().min(1),
+    weakAnswer: z.string().min(1),
+    whyWeak: z.string().min(1),
+    markingChecklist: z.array(z.string()).min(3).max(5),
+    commonMistake: z.string().min(1),
+  })).min(2).max(3),
+  examPhrases: z.array(z.string()).min(4).max(8),
+})
+
+const ConceptMapPlanSchema = z.object({
+  root: z.object({ label: z.string(), reason: z.string() }),
+  problemOrMotivation: z.array(z.object({ label: z.string(), detail: z.string() })),
+  causesOrRequirements: z.array(z.object({ label: z.string(), detail: z.string() })),
+  methodsOrSolutions: z.array(z.object({ label: z.string(), detail: z.string() })),
+  limitationsOrTraps: z.array(z.object({ label: z.string(), detail: z.string() })),
+  examples: z.array(z.object({ label: z.string(), detail: z.string(), illustrates: z.string() })),
+})
+type ConceptMapPlan = z.infer<typeof ConceptMapPlanSchema>
+
+function rootMatchesTopic(rootLabel: string, candidates: string[]): boolean {
+  const rootLow = rootLabel.toLowerCase()
+  const rootWords = new Set(rootLow.split(/\s+/).filter(w => w.length > 2))
+  for (const c of candidates) {
+    const cLow = c.toLowerCase()
+    if (rootLow.includes(cLow) || cLow.includes(rootLow)) return true
+    if (cLow.split(/\s+/).filter(w => w.length > 2).some(w => rootWords.has(w))) return true
+  }
+  return false
+}
 
 function summaryPassesQualityCheck(content: SummaryContent): boolean {
   return (
@@ -60,6 +95,22 @@ function summaryPassesQualityCheck(content: SummaryContent): boolean {
     (content.bigIdea?.trim().length ?? 0) >= 60 &&
     (content.keyConcepts?.length ?? 0) >= 3 &&
     (content.detailedNotes?.trim().length ?? 0) >= 100
+  )
+}
+
+function answerCoachPassesQualityCheck(content: AnswerCoachContent): boolean {
+  return (
+    (content.likelyQuestions?.length ?? 0) >= 2 &&
+    (content.examPhrases?.length ?? 0) >= 4 &&
+    content.likelyQuestions.every(q =>
+      q.question?.trim().length > 20 &&
+      (q.answerPlan?.length ?? 0) >= 4 &&
+      q.fullMarkAnswer?.trim().length > 80 &&
+      q.weakAnswer?.trim().length > 10 &&
+      q.whyWeak?.trim().length > 10 &&
+      (q.markingChecklist?.length ?? 0) >= 3 &&
+      q.commonMistake?.trim().length > 10
+    )
   )
 }
 
@@ -75,7 +126,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id: stage_id } = req.query as { id: string }
   const { type, force } = req.body as { type: MaterialType; force?: boolean }
 
-  if (!['summary', 'flashcards', 'concept_map'].includes(type)) {
+  if (!['summary', 'flashcards', 'concept_map', 'answer_coach'].includes(type)) {
     return res.status(400).json({ error: 'type must be summary | flashcards | concept_map' })
   }
 
@@ -176,7 +227,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return ![...forbiddenTerms].some(f => t.includes(f) || f.includes(t))
   }
 
-  let content: SummaryContent | FlashcardsContent | ConceptMapContent
+  let content: SummaryContent | FlashcardsContent | ConceptMapContent | AnswerCoachContent
 
   if (type === 'summary') {
     const forbiddenList = [...previousTopicNames, ...futureTopicNames].join(', ')
@@ -230,7 +281,71 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
     content = r.choices[0].message.parsed as FlashcardsContent
 
+  } else if (type === 'answer_coach') {
+    const messages: Parameters<typeof openai.chat.completions.parse>[0]['messages'] = [
+      {
+        role: 'system',
+        content: 'You are an expert university exam coach. Generate structured exam preparation content strictly grounded in the source material. Focus on answer structure, marking criteria, and common mistakes — not definitions or summaries.',
+      },
+      {
+        role: 'user',
+        content: PROMPTS.generateAnswerCoach(topicNames, examFormat, context, curriculumContext || undefined),
+      },
+    ]
+
+    let parsed: AnswerCoachContent | null = null
+    try {
+      console.log('[ai] content answer_coach model=gpt-4o-mini stage=', stage_id)
+      const r = await openai.chat.completions.parse({
+        model: 'gpt-4o-mini',
+        messages,
+        response_format: zodResponseFormat(AnswerCoachSchema, 'answer_coach'),
+      })
+      const candidate = r.choices[0].message.parsed as AnswerCoachContent
+      if (!candidate || !answerCoachPassesQualityCheck(candidate)) throw new Error('quality_fail')
+      parsed = candidate
+    } catch {
+      console.log('[ai] content answer_coach fallback model=gpt-4o stage=', stage_id)
+      const r = await openai.chat.completions.parse({
+        model: 'gpt-4o',
+        messages,
+        response_format: zodResponseFormat(AnswerCoachSchema, 'answer_coach'),
+      })
+      parsed = r.choices[0].message.parsed as AnswerCoachContent
+    }
+
+    content = parsed!
+
   } else {
+    // concept_map — backend kept for DB compatibility, no longer used in UI
+    const topicCandidates = [...(topics?.map(t => t.name) ?? []), stage.name]
+
+    // Step 1: Generate a structured teaching plan to anchor the map to the stage topic
+    console.log('[ai] concept_map plan_generating stage=', stage_id)
+    let plan: ConceptMapPlan
+    try {
+      const planResult = await openai.chat.completions.parse({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: 'You produce structured concept map plans for teaching materials. Follow root selection rules exactly — the root MUST match the stage title or topic names.' },
+          { role: 'user', content: PROMPTS.generateConceptMapPlan(stage.name, topicNames, context, curriculumContext || undefined) },
+        ],
+        response_format: zodResponseFormat(ConceptMapPlanSchema, 'concept_map_plan'),
+      })
+      plan = planResult.choices[0].message.parsed!
+      if (!rootMatchesTopic(plan.root.label, topicCandidates)) {
+        console.log('[ai] concept_map plan_root_overridden was=', plan.root.label, 'stage=', stage_id)
+        plan = { ...plan, root: { label: topicNames, reason: 'Overridden: plan root did not match stage topic' } }
+      } else {
+        console.log('[ai] concept_map plan_root=', plan.root.label, 'stage=', stage_id)
+      }
+    } catch {
+      // If plan generation fails, create a minimal fallback plan from topic names
+      console.log('[ai] concept_map plan_failed_using_fallback stage=', stage_id)
+      plan = { root: { label: topicNames, reason: 'Fallback plan' }, problemOrMotivation: [], causesOrRequirements: [], methodsOrSolutions: [], limitationsOrTraps: [], examples: [] }
+    }
+
+    // Step 2: Generate final concept map guided by the plan
     console.log('[ai] content concept_map model=gpt-4o stage=', stage_id)
     const r = await openai.chat.completions.parse({
       model: 'gpt-4o',
@@ -240,14 +355,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           content: [
             'You are a semantic concept-map builder. Your output must form a single connected directed acyclic graph with exactly one root.',
             '',
-            'CRITICAL — ROOT SELECTION RULE:',
-            `The root is the TOPIC BEING STUDIED in this stage — it is what the stage is ABOUT. The root node must directly match the stage topic: "${topicNames}".`,
-            'Do NOT make a prerequisite or cause the root just because it has no prerequisites itself. The topic is the starting point for learning, not the starting point of causal chains.',
-            'Example: For a stage about "Race Conditions", Race Conditions IS the root — not "Shared Resources" (which causes race conditions). Students are learning about race conditions; shared resources is assumed background.',
-            'Example: For a stage about "Mutex Locks", Mutex Lock IS the root — race conditions (which motivated mutexes) belong to a previous stage.',
+            'ROOT RULE: The root is already determined by the planning step — use the root from PLANNED STRUCTURE in the user message. Do not deviate from it.',
+            '',
+            'ABSOLUTE EDGE RULE: The root node MUST have ZERO incoming edges. Before returning, scan every relationship — if ANY relationship has the root node\'s id as the "to" value, remove it or reverse it into an outgoing edge from root. This is non-negotiable.',
+            '',
+            'EDGE DIRECTION FOR ROOT:',
+            '- Causes/requirements branch OUT from root: root → "requires" → [cause]. NOT [cause] → "causes" → root.',
+            '- Methods/solutions branch OUT from root: root → "leads to" → [method]. NOT [method] → "solves" → root.',
+            '- Examples attach to specific child nodes: [example] → "exemplifies" → [child]. NEVER [example] → "exemplifies" → root.',
             '',
             'STRUCTURAL RULES:',
-            `- The root MUST match "${topicNames}" in label or be the primary concept/problem node closest to that topic name.`,
             '- The root MUST have importance="primary" and type="concept" or "problem". NEVER solution, process, example, or definition.',
             '- Every primary or secondary node that is NOT the root MUST appear as the "to" target in at least one relationship.',
             '- No disconnected clusters. EVERY node must be reachable from the root via the relationships chain.',
@@ -257,13 +374,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             '- Exclude all concepts assigned to other stages.',
           ].join('\n'),
         },
-        { role: 'user', content: PROMPTS.generateConceptMap(topicNames, context, curriculumContext || undefined) },
+        { role: 'user', content: PROMPTS.generateConceptMap(topicNames, context, curriculumContext || undefined, plan) },
       ],
       response_format: zodResponseFormat(ConceptMapSchema, 'concept_map'),
     })
     let mapData = r.choices[0].message.parsed!
 
-    // Validate: build adjacency + indegree, then BFS from root to find unreachable important nodes
+    // Validate: BFS reachability + structural checks
     const adjMap = new Map<string, string[]>()
     const inDeg = new Map<string, number>()
     mapData.nodes.forEach(n => { adjMap.set(n.id, []); inDeg.set(n.id, 0) })
@@ -297,8 +414,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const multipleRoots = rootCandidates.length > 1
     const primaryNode = mapData.nodes.find(n => n.importance === 'primary')
     const primaryNotRoot = !!(primaryNode && trueRoot && primaryNode.id !== trueRoot.id && !reachable.has(primaryNode.id))
+    const rootTopicMismatch = trueRoot ? !rootMatchesTopic(trueRoot.label, topicCandidates) : false
 
-    if (unreachable.length === 0 && !rootIsWrongType && !multipleRoots && !primaryNotRoot) {
+    if (unreachable.length === 0 && !rootIsWrongType && !multipleRoots && !primaryNotRoot && !rootTopicMismatch) {
       console.log('[ai] concept_map validation_passed stage=', stage_id)
     } else {
       const reasons = [
@@ -306,8 +424,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ...(rootIsWrongType ? [`root_is_${trueRoot!.type}:${trueRoot!.label}`] : []),
         ...(multipleRoots ? [`multiple_roots(${rootCandidates.map(n => n.label).join('|')})`] : []),
         ...(primaryNotRoot ? [`primary_not_root:${primaryNode!.label}`] : []),
+        ...(rootTopicMismatch ? [`root_topic_mismatch:${trueRoot!.label}`] : []),
       ].join(', ')
       console.log('[ai] concept_map repair_triggered reasons=', reasons, 'stage=', stage_id)
+
+      const planSummary = [
+        `Root: ${plan.root.label} (${plan.root.reason})`,
+        plan.problemOrMotivation.length ? `Problems/Motivation: ${plan.problemOrMotivation.map(p => p.label).join(', ')}` : '',
+        plan.causesOrRequirements.length ? `Causes/Requirements: ${plan.causesOrRequirements.map(c => c.label).join(', ')}` : '',
+        plan.methodsOrSolutions.length ? `Methods/Solutions: ${plan.methodsOrSolutions.map(m => m.label).join(', ')}` : '',
+        plan.limitationsOrTraps.length ? `Limitations/Traps: ${plan.limitationsOrTraps.map(l => l.label).join(', ')}` : '',
+        plan.examples.length ? `Examples: ${plan.examples.map(e => `${e.label} (illustrates: ${e.illustrates})`).join(', ')}` : '',
+      ].filter(Boolean).join('\n')
 
       try {
         const repairResult = await openai.chat.completions.parse({
@@ -315,31 +443,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           messages: [
             {
               role: 'system',
-              content: 'You are a concept map expert. You restructure broken concept maps so they correctly represent the learning topic with proper node connectivity, flow direction, and root placement.',
+              content: 'You are a concept map expert. Restructure broken concept maps to match the intended teaching flow, with proper connectivity and correct root placement.',
             },
             {
               role: 'user',
               content: `This concept map is for a stage about: "${topicNames}".
 
+INTENDED STRUCTURE FROM PLAN:
+${planSummary}
+
 ISSUES TO FIX:
 ${unreachable.length > 0 ? `- DISCONNECTED NODES (unreachable from root): ${unreachable.map(n => `"${n.label}" (id: ${n.id}, type: ${n.type}, importance: ${n.importance})`).join(', ')}. These MUST be integrated into the main flow.` : ''}
 ${rootIsWrongType ? `- WRONG ROOT TYPE: "${trueRoot!.label}" is typed as "${trueRoot!.type}" but roots MUST be concept or problem nodes.` : ''}
-${multipleRoots ? `- MULTIPLE DISCONNECTED ROOTS: The map has ${rootCandidates.length} nodes with no incoming edges: ${rootCandidates.map(n => `"${n.label}" (${n.type})`).join(', ')}. This creates disconnected subgraphs. There must be EXACTLY ONE root — all other nodes must connect into the single root's reachability chain.` : ''}
-${primaryNotRoot ? `- PRIMARY NODE NOT IN FLOW: "${primaryNode!.label}" (id: ${primaryNode!.id}) is marked as primary importance but is not reachable from the root. For a stage about "${topicNames}", the primary node should be at or near the root — it IS the main subject being studied.` : ''}
-
-CRITICAL CONCEPT: The ROOT of a learning map is the TOPIC BEING STUDIED, not what causes it.
-- For a stage about "Race Conditions": Race Conditions IS the root — students are learning what race conditions are and how they work. Shared resources is background context, not the starting node.
-- For a stage about "Mutex Locks": Mutex Lock IS the root — students are learning about mutexes. Race conditions are what motivated mutexes, but they belong to a previous stage.
-- Think of the root as the CHAPTER TITLE in a textbook. Everything else explains, exemplifies, or extends the chapter topic.
+${multipleRoots ? `- MULTIPLE DISCONNECTED ROOTS: ${rootCandidates.map(n => `"${n.label}" (${n.type})`).join(', ')}. There must be EXACTLY ONE root.` : ''}
+${primaryNotRoot ? `- PRIMARY NODE NOT IN FLOW: "${primaryNode!.label}" is primary importance but unreachable from root.` : ''}
+${rootTopicMismatch ? `- ROOT TOPIC MISMATCH: root "${trueRoot!.label}" does not match stage topic "${topicNames}". Root must be "${plan.root.label}".` : ''}
 
 RESTRUCTURING RULES:
-1. The root must have importance="primary" and type="concept" or "problem".
-2. The PRIMARY node that matches "${topicNames}" must be the root OR must appear in level 1 directly reachable from the root.
-3. PROBLEM nodes belong near the root. SOLUTION nodes appear downstream of problems. EXAMPLES and LIMITATIONS at the bottom.
-4. EXACTLY ONE node must have no incoming edges (the root). Every other node must have at least one incoming edge.
-5. No cycles. This is a directed acyclic graph — relationships flow from foundational → applied.
-6. Do NOT invent connections — all relationships must be grounded in the source material.
-7. Return the COMPLETE corrected map: all existing nodes (possibly re-typed or re-prioritized) plus all relationships.
+1. Root must be "${plan.root.label}" — importance="primary", type="concept" or "problem".
+2. Root has ZERO incoming edges. Scan every relationship: if root's id appears as "to", remove it or convert to an outgoing edge from root.
+3. Causes/requirements: root → "requires" → [cause]. NOT [cause] → "causes" → root.
+4. Methods/solutions: root → "leads to" → [method]. NOT [method] → "solves" → root.
+5. Examples: [example] → "exemplifies" → [child node]. NEVER [example] → "exemplifies" → root.
+6. Follow teaching flow: root → problem/motivation → cause/requirement → method/solution → limitation/trap.
+7. EXACTLY ONE node with no incoming edges (the root). All others need at least one incoming edge.
+8. No cycles. No disconnected clusters. Ground all connections in source material.
+9. Return the COMPLETE corrected map with all nodes and relationships.
 
 Source material:
 ${context}
@@ -379,8 +508,9 @@ ${JSON.stringify(mapData)}`,
           }
           const stillUnreachable = unreachable.filter(n => !repReachable.has(n.id))
           const repPrimaryInFlow = !repPrimary || repRoot?.id === repPrimary.id || repReachable.has(repPrimary.id)
+          const repRootMatchesTopic = repRoot ? rootMatchesTopic(repRoot.label, topicCandidates) : false
 
-          if (stillUnreachable.length === 0 && repairedRootOk && repairedSingleRoot && repPrimaryInFlow) {
+          if (stillUnreachable.length === 0 && repairedRootOk && repairedSingleRoot && repPrimaryInFlow && repRootMatchesTopic) {
             mapData = repaired
             console.log('[ai] concept_map repair_succeeded stage=', stage_id)
           } else {
@@ -389,6 +519,7 @@ ${JSON.stringify(mapData)}`,
               'root_ok=', repairedRootOk,
               'single_root=', repairedSingleRoot,
               'primary_in_flow=', repPrimaryInFlow,
+              'root_matches_topic=', repRootMatchesTopic,
               'stage=', stage_id)
           }
         } else {

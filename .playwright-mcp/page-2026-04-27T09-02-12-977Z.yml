@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: f
+      - heading "fuckexam" [level=1] [ref=e8]
+      - paragraph [ref=e9]: AI study companion. Pass smarter.
+    - generic [ref=e10]:
+      - button "Continue with Google" [ref=e11]:
+        - img [ref=e12]
+        - text: Continue with Google
+      - generic [ref=e19]: or
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - generic [ref=e23]: Email address
+          - textbox "Email address" [ref=e24]:
+            - /placeholder: you@student.edu
+        - button "Send magic link →" [disabled] [ref=e25]
+  - button "Open Next.js Dev Tools" [ref=e31] [cursor=pointer]:
+    - img [ref=e32]
+  - alert [ref=e35]

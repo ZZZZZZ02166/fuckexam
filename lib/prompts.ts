@@ -164,8 +164,60 @@ Source material:
 ${context}
 `.trim(),
 
-  generateConceptMap: (topicNames: string, context: string, curriculumContext?: string) => `
-Generate a learning concept map strictly scoped to this stage's concepts.
+  generateConceptMapPlan: (stageName: string, topicNames: string, context: string, curriculumContext?: string) => `
+You are planning a concept map for a stage titled: "${stageName}"
+Stage topics: ${topicNames}
+${curriculumContext ? `\nCurriculum context:\n${curriculumContext}\n` : ''}
+CRITICAL — Root Selection Rule:
+root.label MUST come from the stage title or stage topic names — it is the TOPIC BEING STUDIED, not what causes or enables it.
+- Stage "Race Conditions" → root = "Race Conditions" (not "Shared Resources" which merely causes it)
+- Stage "Critical Regions" → root = "Critical Region" or "Critical Regions"
+- Stage "Mutex Implementation" → root = the primary mutex/locking concept
+- Stage "Deadlock Prevention" → root = "Deadlock" (the problem being studied, not "Resource Allocation")
+Do NOT choose a prerequisite, background concept, general container, or supporting mechanism as root.
+The root is the chapter title of what the student is learning RIGHT NOW.
+
+Return a structured plan:
+- root: { label: must closely match stage title/topic, reason: one sentence justifying the choice }
+- problemOrMotivation: 0–3 items — problems or motivations that explain WHY the root concept matters in this stage
+- causesOrRequirements: 0–3 items — prerequisites or conditions that help explain or give context to the root
+- methodsOrSolutions: 0–4 items — mechanisms, approaches, or algorithms that address or implement the root concept
+- limitationsOrTraps: 0–3 items — drawbacks, risks, or exam traps related to the methods/solutions
+- examples: 0–2 items — concrete examples, each with an "illustrates" field naming the SPECIFIC method or concept it demonstrates
+
+Each item has { label: 2-5 words, detail: one sentence }.
+If a category has no support in the source material, return an empty array.
+Use ONLY the source material. Do not invent.
+
+Source material:
+${context}
+`.trim(),
+
+  generateConceptMap: (topicNames: string, context: string, curriculumContext?: string, plan?: {
+    root: { label: string; reason: string }
+    problemOrMotivation: Array<{ label: string; detail: string }>
+    causesOrRequirements: Array<{ label: string; detail: string }>
+    methodsOrSolutions: Array<{ label: string; detail: string }>
+    limitationsOrTraps: Array<{ label: string; detail: string }>
+    examples: Array<{ label: string; detail: string; illustrates: string }>
+  }) => `
+${plan ? `PLANNED STRUCTURE — follow this strictly when choosing nodes and relationships:
+Root: ${plan.root.label}
+${plan.problemOrMotivation.length ? `Problems/Motivation:\n${plan.problemOrMotivation.map(p => `  - ${p.label}: ${p.detail}`).join('\n')}` : 'Problems/Motivation: none'}
+${plan.causesOrRequirements.length ? `Causes/Requirements:\n${plan.causesOrRequirements.map(c => `  - ${c.label}: ${c.detail}`).join('\n')}` : 'Causes/Requirements: none'}
+${plan.methodsOrSolutions.length ? `Methods/Solutions:\n${plan.methodsOrSolutions.map(m => `  - ${m.label}: ${m.detail}`).join('\n')}` : 'Methods/Solutions: none'}
+${plan.limitationsOrTraps.length ? `Limitations/Traps:\n${plan.limitationsOrTraps.map(l => `  - ${l.label}: ${l.detail}`).join('\n')}` : 'Limitations/Traps: none'}
+${plan.examples.length ? `Examples:\n${plan.examples.map(e => `  - ${e.label}: ${e.detail} [illustrates: ${e.illustrates}]`).join('\n')}` : 'Examples: none'}
+
+EDGE DIRECTION RULES — CRITICAL, DO NOT VIOLATE:
+- The root "${plan.root.label}" MUST have ZERO incoming edges. Never write any relationship where the root's id appears as the "to" value.
+- Causes/Requirements: write [root] → "requires" → [cause], NOT [cause] → "causes" → [root]
+- Methods/Solutions: write [root] → "leads to" → [method], NOT [method] → "solves" → [root]
+- Examples: connect via "exemplifies" ONLY to a specific child node of root, NEVER to root itself
+
+Required teaching flow: root → problem/motivation → cause/requirement → method/solution → limitation/trap
+
+` : ''}Generate a learning concept map strictly scoped to this stage's concepts.
 ${curriculumContext ? `
 CURRICULUM MAP:
 ${curriculumContext}
@@ -213,7 +265,7 @@ Node type selection — use the most specific type, never default to "definition
 Relationship label semantics — use the most semantically precise label from the allowed set:
 - "requires": ONLY for necessary prerequisites. A "requires" B means B must already exist for A to function. Do NOT use this from a concept to a problem it produces, or to a solution/method that addresses it.
 - "causes": when one concept directly produces a problem or side effect (concept → problem). Also use when something creates a risk or limitation in another thing.
-- "solves": direction is always [solution/method node] → "solves" → [problem node]. Use when a method prevents or resolves a problem.
+- "solves": direction is always [solution/method node] → "solves" → [problem node]. Use when a method prevents or resolves a problem. EXCEPTION: if the root is the problem node, never use "solves" pointing into the root — express as root → "leads to" → [solution/method] instead.
 - "enables": when one concept makes another possible or practical. Use to express "X is implemented by Y" as Y "enables" X's goal.
 - "produces": when a process or method generates an output or result.
 - "leads to": ordered causal or sequential chain (step A leads to step B in a process or sequence).
@@ -258,6 +310,42 @@ The prompt should:
 - Require the student to retrieve information from memory (not just recognize it)
 - Target the single most important exam concept for this topic
 - Include an ideal answer and 3-5 key points that must be mentioned for full marks
+
+Source material:
+${context}
+`.trim(),
+
+  generateAnswerCoach: (topicNames: string, examFormat: string, context: string, curriculumContext?: string) => `
+You are an expert university exam coach.
+
+The student is studying: ${topicNames}
+Exam format: ${examFormat}
+${curriculumContext ? `\nCurriculum scope:\n${curriculumContext}\n` : ''}
+Your task: create an Answer Coach section that teaches the student how to turn this stage into high-mark exam answers.
+
+This is NOT a summary. This is NOT flashcards.
+Focus on answer structure, marking criteria, weak vs strong answers, and common mistakes.
+
+Generate 2–3 likely exam-style questions based on the source material.
+For each question:
+- question: realistic exam-style question that requires explanation, comparison, application, or reasoning — not just "what is X?"
+- whyLikely: why this question could be assessed
+- answerPlan: 4–6 ordered bullet points showing how to structure a full answer
+- fullMarkAnswer: a strong, concise answer that would score highly in a university exam
+- weakAnswer: a common incomplete or wrong answer a student might write
+- whyWeak: exactly which marks are missing and why
+- markingChecklist: 3–5 specific points an examiner would check for full marks
+- commonMistake: one specific trap to avoid
+
+Also produce examPhrases: 4–8 reusable academic phrases students can use in written answers on this topic.
+
+Rules:
+- Use ONLY the source material below.
+- Focus on the current stage topic. The main question, answer plan, full-mark answer, and marking checklist must primarily assess this stage's concepts.
+- Previous-stage concepts may be briefly referenced as assumed background when needed to make an answer complete, but must not be re-taught as the main focus.
+- Future-stage concepts may be briefly mentioned if needed to complete an answer, but must not become the main tested idea, main marking checklist item, or main focus of the full-mark answer.
+- Do not invent details not present in the source material.
+- Keep tone clear, direct, and exam-focused.
 
 Source material:
 ${context}

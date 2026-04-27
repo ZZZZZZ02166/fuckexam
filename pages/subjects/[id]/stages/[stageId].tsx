@@ -11,11 +11,11 @@ import { apiJson } from '@/lib/apiFetch'
 import { cn } from '@/lib/utils'
 import type {
   StudyStage, Topic, GeneratedItem, Question,
-  SummaryContent, FlashcardsContent, ConceptMapContent,
+  SummaryContent, FlashcardsContent, AnswerCoachContent,
   MCQContent, RecallContent, MasteryLevel, MaterialType, MasteryRecord,
 } from '@/types/database'
 
-type Tab = 'summary' | 'flashcards' | 'concept_map'
+type Tab = 'summary' | 'flashcards' | 'answer_coach'
 type Mode = 'study' | 'quiz' | 'results'
 
 interface StagePageData {
@@ -36,7 +36,7 @@ interface QuizAnswer {
 const TAB_LABELS: Record<Tab, string> = {
   summary: 'Summary',
   flashcards: 'Flashcards',
-  concept_map: 'Concept Map',
+  answer_coach: 'Answer Coach',
 }
 
 export default function StagePage() {
@@ -288,7 +288,7 @@ function StageView() {
 
               {/* Tabs */}
               <div className="flex gap-1 bg-[#EEF2FF] rounded-xl p-1 border border-[#E2E8F0]">
-                {(['summary', 'flashcards', 'concept_map'] as Tab[]).map(tab => (
+                {(['summary', 'flashcards', 'answer_coach'] as Tab[]).map(tab => (
                   <button
                     key={tab}
                     onClick={async () => {
@@ -536,25 +536,6 @@ function renderInline(text: string): string {
     .replace(/`([^`]+)`/g, '<code class="bg-slate-100 text-blue-700 px-1 py-0.5 rounded text-xs font-mono">$1</code>')
 }
 
-const NODE_TYPE_CLASSES: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-  concept:      { bg: 'bg-violet-50',   border: 'border-violet-300',  text: 'text-violet-900',   badge: 'bg-violet-200 text-violet-800' },
-  definition:   { bg: 'bg-purple-50',   border: 'border-purple-300',  text: 'text-purple-900',   badge: 'bg-purple-200 text-purple-800' },
-  process:      { bg: 'bg-sky-50',      border: 'border-sky-300',     text: 'text-sky-900',      badge: 'bg-sky-200 text-sky-800' },
-  solution:     { bg: 'bg-emerald-50',  border: 'border-emerald-300', text: 'text-emerald-900',  badge: 'bg-emerald-200 text-emerald-800' },
-  problem:      { bg: 'bg-red-50',      border: 'border-red-300',     text: 'text-red-900',      badge: 'bg-red-200 text-red-800' },
-  exam_trap:    { bg: 'bg-amber-50',    border: 'border-amber-300',   text: 'text-amber-900',    badge: 'bg-amber-200 text-amber-800' },
-  limitation:   { bg: 'bg-orange-50',   border: 'border-orange-300',  text: 'text-orange-900',   badge: 'bg-orange-200 text-orange-800' },
-  comparison:   { bg: 'bg-cyan-50',     border: 'border-cyan-300',    text: 'text-cyan-900',     badge: 'bg-cyan-200 text-cyan-800' },
-  evidence:     { bg: 'bg-teal-50',     border: 'border-teal-300',    text: 'text-teal-900',     badge: 'bg-teal-200 text-teal-800' },
-  formula:      { bg: 'bg-pink-50',     border: 'border-pink-300',    text: 'text-pink-900',     badge: 'bg-pink-200 text-pink-800' },
-  example:      { bg: 'bg-slate-50',    border: 'border-slate-300',   text: 'text-slate-800',    badge: 'bg-slate-200 text-slate-700' },
-  code_example: { bg: 'bg-zinc-50',     border: 'border-emerald-300', text: 'text-emerald-800',  badge: 'bg-emerald-100 text-emerald-700' },
-}
-
-function nodeTypeClasses(type: string) {
-  return NODE_TYPE_CLASSES[type] ?? NODE_TYPE_CLASSES.concept
-}
-
 function SectionLabel({ icon, text }: { icon: string; text: string }) {
   return (
     <div className="flex items-center gap-2 mb-3">
@@ -702,197 +683,86 @@ function SummaryTab({ content }: { content: SummaryContent }) {
   )
 }
 
-function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRetry: () => void }) {
-  const { nodes, relationships, title } = content
-
-  if (!nodes?.length || !relationships?.length) {
+function AnswerCoachTab({ content }: { content: AnswerCoachContent }) {
+  if (!content?.likelyQuestions?.length) {
     return (
-      <div className="flex flex-col items-center justify-center h-40 gap-3">
-        <p className="text-[#94A3B8] text-sm">Concept map could not be loaded.</p>
-        <button onClick={onRetry} className="text-blue-600 text-sm hover:text-blue-700 transition">
-          Retry ↺
-        </button>
+      <div className="flex flex-col items-center justify-center h-40 gap-2">
+        <p className="text-[#94A3B8] text-sm">Answer Coach content could not be loaded.</p>
       </div>
     )
   }
 
-  const nodeMap = new Map(nodes.map(n => [n.id, n]))
-  const adj = new Map<string, string[]>()
-  const inDeg = new Map<string, number>()
-  const relMap = new Map<string, string>()
-
-  nodes.forEach(n => { adj.set(n.id, []); inDeg.set(n.id, 0) })
-  relationships.forEach(r => {
-    if (!nodeMap.has(r.from) || !nodeMap.has(r.to)) return
-    adj.get(r.from)!.push(r.to)
-    inDeg.set(r.to, (inDeg.get(r.to) ?? 0) + 1)
-    relMap.set(`${r.from}:${r.to}`, r.label)
-  })
-
-  const allRootIds = nodes.filter(n => (inDeg.get(n.id) ?? 0) === 0).map(n => n.id)
-
-  // When multiple indegree-0 nodes exist, only the most important one is the true root.
-  // The rest are initially held as extraOrphans; we try to re-integrate them before "Also see".
-  let rootIds: string[]
-  let extraOrphans: string[] = []
-  if (allRootIds.length <= 1) {
-    rootIds = allRootIds
-  } else {
-    const importanceOrder = ['primary', 'secondary', 'supporting']
-    const sorted = [...allRootIds].sort((a, b) => {
-      const na = nodeMap.get(a)!
-      const nb = nodeMap.get(b)!
-      const ai = importanceOrder.indexOf((na as any).importance ?? 'supporting')
-      const bi = importanceOrder.indexOf((nb as any).importance ?? 'supporting')
-      if (ai !== bi) return ai - bi
-      if (na.type === 'concept' && nb.type !== 'concept') return -1
-      if (nb.type === 'concept' && na.type !== 'concept') return 1
-      return 0
-    })
-    rootIds = [sorted[0]]
-    extraOrphans.push(...sorted.slice(1))
-  }
-
-  let fallbackRoot: string | undefined
-  if (!rootIds.length && nodes.length) {
-    const importanceOrder = ['primary', 'secondary', 'supporting']
-    const sorted = [...nodes].sort((a, b) => {
-      const ai = importanceOrder.indexOf((a as any).importance ?? 'supporting')
-      const bi = importanceOrder.indexOf((b as any).importance ?? 'supporting')
-      if (ai !== bi) return ai - bi
-      if (a.type === 'concept' && b.type !== 'concept') return -1
-      if (b.type === 'concept' && a.type !== 'concept') return 1
-      return 0
-    })
-    fallbackRoot = sorted[0]?.id
-  }
-  const visited = new Set<string>()
-  const levels: string[][] = []
-  let frontier = rootIds.length ? rootIds : (fallbackRoot ? [fallbackRoot] : [])
-
-  while (frontier.length) {
-    const current = frontier.filter(id => !visited.has(id))
-    if (!current.length) break
-    current.forEach(id => visited.add(id))
-    levels.push(current)
-    const next: string[] = []
-    current.forEach(id => {
-      ;(adj.get(id) ?? []).forEach(child => {
-        if (!visited.has(child) && !next.includes(child)) next.push(child)
-      })
-    })
-    frontier = next
-  }
-
-  // Safety layer: try to integrate extraOrphans that have children in the main flow.
-  // They belong upstream of their children, not in a footnote section.
-  for (const orphanId of [...extraOrphans]) {
-    const children = adj.get(orphanId) ?? []
-    let earliestChildLevel = -1
-    for (let li = 0; li < levels.length; li++) {
-      if (levels[li].some(id => children.includes(id))) {
-        earliestChildLevel = li
-        break
-      }
-    }
-    if (earliestChildLevel > 0) {
-      levels[earliestChildLevel - 1] = [...levels[earliestChildLevel - 1], orphanId]
-      visited.add(orphanId)
-      extraOrphans = extraOrphans.filter(id => id !== orphanId)
-    } else if (earliestChildLevel === 0) {
-      levels.unshift([orphanId])
-      visited.add(orphanId)
-      extraOrphans = extraOrphans.filter(id => id !== orphanId)
-    }
-    // If no children in the main flow, it stays in extraOrphans → "Also see"
-  }
-
-  // Truly unreachable nodes (not integrated above) go to "Also see"
-  const orphans = nodes.filter(n => !visited.has(n.id))
-
   return (
-    <div className="space-y-3">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-        <p className="text-blue-800 font-bold text-sm">{title}</p>
+    <div className="space-y-6">
+      <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <span className="text-xs font-semibold tracking-widest text-blue-600 uppercase">Answer Coach</span>
+        <h2 className="text-lg font-bold text-slate-800 mt-1">{content.title}</h2>
+        <p className="text-sm text-slate-500 mt-1">Practice structuring full-mark exam responses.</p>
       </div>
 
-      {levels.map((level, li) => {
-        const prevLevel = li > 0 ? levels[li - 1] : null
+      {content.likelyQuestions.map((q, i) => (
+        <div key={i} className="border border-slate-200 rounded-xl overflow-hidden">
+          <div className="bg-blue-50 border-b border-blue-100 px-5 py-4">
+            <p className="text-xs font-semibold text-blue-500 mb-1">Q{i + 1}</p>
+            <p className="font-semibold text-slate-800">{q.question}</p>
+            <p className="text-sm text-slate-500 mt-2">{q.whyLikely}</p>
+          </div>
 
-        // Compute each node's incoming edge label from the previous level
-        const incomingLabels = level.map(id => {
-          if (!prevLevel) return null
-          for (const parentId of prevLevel) {
-            const label = relMap.get(`${parentId}:${id}`)
-            if (label) return label
-          }
-          return null
-        })
+          <div className="px-5 py-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Answer Plan</p>
+            <ol className="space-y-2">
+              {q.answerPlan.map((step, j) => (
+                <li key={j} className="flex gap-3 text-sm text-slate-700">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{j + 1}</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
 
-        // Use a shared centered connector only when all edges share the same label
-        const uniqueLabels = [...new Set(incomingLabels.filter(Boolean))]
-        const sharedLabel = uniqueLabels.length === 1 ? uniqueLabels[0] : null
+          <div className="px-5 py-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">✓ Full-mark answer</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-slate-700 whitespace-pre-line">{q.fullMarkAnswer}</div>
+          </div>
 
-        return (
-          <div key={li}>
-            {sharedLabel && (
-              <div className="flex flex-col items-center py-1.5 gap-0.5">
-                <div className="w-px h-3 bg-slate-300" />
-                <span className="rounded-full bg-white border border-slate-300 px-2.5 py-0.5 text-slate-500 text-[11px]">
-                  {sharedLabel}
-                </span>
-                <div className="w-px h-3 bg-slate-300" />
+          <div className="px-5 py-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">✗ Weak answer</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-slate-700 mb-3 whitespace-pre-line">{q.weakAnswer}</div>
+            <p className="text-xs font-semibold text-slate-500 mb-1">Why this loses marks</p>
+            <p className="text-sm text-slate-600">{q.whyWeak}</p>
+          </div>
+
+          <div className="px-5 py-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Marking checklist</p>
+            <ul className="space-y-1.5">
+              {q.markingChecklist.map((item, j) => (
+                <li key={j} className="flex gap-2 text-sm text-slate-700">
+                  <span className="text-green-500 font-bold flex-shrink-0">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="px-5 py-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
+              <span className="text-amber-500 flex-shrink-0">⚠</span>
+              <div>
+                <p className="text-xs font-semibold text-amber-700 mb-0.5">Common mistake</p>
+                <p className="text-sm text-slate-700">{q.commonMistake}</p>
               </div>
-            )}
-
-            <div className={cn(
-              'grid gap-2',
-              level.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-            )}>
-              {level.map((id, idx) => {
-                const node = nodeMap.get(id)
-                if (!node) return null
-                const cls = nodeTypeClasses(node.type)
-                const incomingLabel = incomingLabels[idx]
-                const showPerCardLabel = prevLevel && !sharedLabel && incomingLabel
-
-                return (
-                  <div key={id} className={cn('rounded-xl border-[1.5px] px-4 py-3.5', cls.bg, cls.border)}>
-                    {showPerCardLabel && (
-                      <p className="text-[10px] text-slate-400 italic mb-2 -mt-0.5">↑ {incomingLabel}</p>
-                    )}
-                    <span className={cn('inline-block rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide', cls.badge)}>
-                      {node.type.replace(/_/g, ' ')}
-                    </span>
-                    <p className={cn('font-bold mt-2', cls.text,
-                      (node as any).importance === 'primary' ? 'text-sm' :
-                      (node as any).importance === 'supporting' ? 'text-xs opacity-80' : 'text-sm'
-                    )}>{node.label}</p>
-                    <p className="text-slate-600 text-xs mt-1.5 leading-relaxed">{node.detail}</p>
-                  </div>
-                )
-              })}
             </div>
           </div>
-        )
-      })}
+        </div>
+      ))}
 
-      {orphans.length > 0 && (
-        <div className="pt-2">
-          <SectionLabel icon="↗" text="Also see" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {orphans.map(node => {
-              const cls = nodeTypeClasses(node.type)
-              return (
-                <div key={node.id} className={cn('rounded-xl border-[1.5px] px-4 py-3.5', cls.bg, cls.border)}>
-                  <span className={cn('inline-block rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide', cls.badge)}>
-                    {node.type.replace(/_/g, ' ')}
-                  </span>
-                  <p className={cn('font-bold mt-2 text-sm', cls.text)}>{node.label}</p>
-                  <p className="text-slate-600 text-xs mt-1.5 leading-relaxed">{node.detail}</p>
-                </div>
-              )
-            })}
+      {content.examPhrases?.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Exam Phrases</p>
+          <div className="flex flex-wrap gap-2">
+            {content.examPhrases.map((phrase, i) => (
+              <span key={i} className="inline-block bg-slate-100 text-slate-600 text-sm rounded-full px-3 py-1">"{phrase}"</span>
+            ))}
           </div>
         </div>
       )}
@@ -975,7 +845,7 @@ function TabContent({
   onCardFlip: () => void
   onCardGotIt: () => void
   onCardAgain: () => void
-  onGenerateContent: (type: MaterialType, force?: boolean) => void
+  onGenerateContent: (type: Tab, force?: boolean) => void
 }) {
   if (!item) {
     return (
@@ -1057,9 +927,9 @@ function TabContent({
     )
   }
 
-  if (tab === 'concept_map') {
-    const content = item.content as unknown as ConceptMapContent
-    return <ConceptFlowMap content={content} onRetry={() => onGenerateContent('concept_map', true)} />
+  if (tab === 'answer_coach') {
+    const content = item.content as unknown as AnswerCoachContent
+    return <AnswerCoachTab content={content} />
   }
 
   return null

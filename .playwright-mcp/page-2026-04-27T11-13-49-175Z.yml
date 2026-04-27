@@ -1,0 +1,189 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - complementary [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: fuckexam
+        - generic [ref=e19]: AI study companion
+      - navigation [ref=e20]:
+        - paragraph [ref=e21]: Menu
+        - generic [ref=e22]:
+          - link "🏠 Dashboard" [ref=e23] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e24]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e25] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e26]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e27] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/mastery
+            - generic [ref=e28]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e29]: Subjects
+        - generic [ref=e30]:
+          - link "comp sys test 3" [ref=e31] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e33]: comp sys test 3
+          - link "computer system testing 2" [ref=e34] [cursor=pointer]:
+            - /url: /subjects/5aaffdfd-6ac7-4238-add3-eda83682e23e/path
+            - generic [ref=e36]: computer system testing 2
+          - link "computer systeme testing 1" [ref=e37] [cursor=pointer]:
+            - /url: /subjects/b45a73d6-0722-48cd-833a-cf55c500b608/path
+            - generic [ref=e39]: computer systeme testing 1
+          - link "computer systems" [ref=e40] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e42]: computer systems
+          - link "computer system" [ref=e43] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e45]: computer system
+          - link "computer system" [ref=e46] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e48]: computer system
+          - link "computer system" [ref=e49] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e51]: computer system
+        - paragraph [ref=e52]: Account
+        - link "＋ Add subject" [ref=e53] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e54]: ＋
+          - text: Add subject
+      - generic [ref=e56]:
+        - generic [ref=e57]: 🎓
+        - generic [ref=e58]:
+          - paragraph [ref=e59]: nioozhiqi
+          - button "Sign out" [ref=e60]
+    - generic [ref=e61]:
+      - banner [ref=e62]:
+        - generic [ref=e63]:
+          - link "← Study Path" [ref=e64] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+          - generic [ref=e65]: /
+          - generic [ref=e66]: Stage View
+      - main [ref=e67]:
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - generic [ref=e72]:
+                - generic [ref=e73]: Stage 2
+                - generic [ref=e74]: ·
+                - generic [ref=e75]: comp sys test 3
+              - generic [ref=e76]:
+                - heading "Understanding Race Conditions" [level=1] [ref=e77]
+                - generic [ref=e78]:
+                  - generic [ref=e79]: ~45 min
+                  - button "Test myself →" [ref=e80]
+            - generic [ref=e81]:
+              - button "Summary" [ref=e82]
+              - button "Flashcards" [ref=e83]
+              - button "Answer Coach" [ref=e84]
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - generic [ref=e89]: ⚡
+                  - paragraph [ref=e90]: Learn this in 5 min
+                - list [ref=e92]:
+                  - listitem [ref=e93]:
+                    - generic [ref=e95]: Race conditions occur when multiple threads/processes access shared resources simultaneously.
+                  - listitem [ref=e96]:
+                    - generic [ref=e98]: The timing of code execution impacts results, leading to indeterminate outcomes.
+                  - listitem [ref=e99]:
+                    - generic [ref=e101]: Critical sections need to be managed to prevent race conditions.
+                  - listitem [ref=e102]:
+                    - generic [ref=e104]: Proper synchronization mechanisms are essential to avoid race conditions.
+                  - listitem [ref=e105]:
+                    - generic [ref=e107]: Real-world examples include multi-threading applications where shared data access is common.
+              - generic [ref=e108]:
+                - generic [ref=e109]:
+                  - generic [ref=e110]: 💡
+                  - paragraph [ref=e111]: Big Idea
+                - paragraph [ref=e113]: Understanding **race conditions** is crucial in concurrent programming as it highlights the potential pitfalls that arise when multiple processes or threads access shared resources without proper synchronization. This stage lays the groundwork for recognizing the issues that can subsequently arise in critical regions, which are explored in detail in later stages.
+              - generic [ref=e114]:
+                - generic [ref=e115]:
+                  - generic [ref=e116]: 🎯
+                  - paragraph [ref=e117]: Key Concepts
+                - generic [ref=e118]:
+                  - generic [ref=e121]:
+                    - paragraph [ref=e122]: Race Conditions
+                    - paragraph [ref=e123]: A **race condition** occurs when two or more threads/processes attempt to modify shared resources concurrently, with the final outcome depending on the sequence or timing of their execution. This leads to unpredictable results and behavior in a program.
+                    - paragraph [ref=e124]: It highlights the risks associated with concurrent execution, which is a key consideration in system design.
+                  - generic [ref=e127]:
+                    - paragraph [ref=e128]: Shared Resources
+                    - paragraph [ref=e129]: "**Shared resources** refer to variables or data structures that can be accessed by multiple threads or processes, necessitating careful management to avoid race conditions."
+                    - paragraph [ref=e130]: Understanding shared resources is essential for developing robust concurrent applications.
+                  - generic [ref=e133]:
+                    - paragraph [ref=e134]: Indeterminate Outcomes
+                    - paragraph [ref=e135]: Indeterminate outcomes arise when the result of an operation varies based on the timing and order of thread execution, leading to inconsistent program behavior.
+                    - paragraph [ref=e136]: Recognizing this concept is vital for debugging and designing reliable multi-threaded applications.
+              - generic [ref=e137]:
+                - generic [ref=e138]:
+                  - generic [ref=e139]: 🔗
+                  - paragraph [ref=e140]: How It Connects
+                - generic [ref=e141]:
+                  - generic [ref=e142]:
+                    - generic [ref=e143]: Shared Resources
+                    - generic [ref=e144]: →
+                    - generic [ref=e145]: enables
+                    - generic [ref=e146]: →
+                    - generic [ref=e147]: Race Conditions
+                  - generic [ref=e148]:
+                    - generic [ref=e149]: Race Conditions
+                    - generic [ref=e150]: →
+                    - generic [ref=e151]: leads to
+                    - generic [ref=e152]: →
+                    - generic [ref=e153]: Indeterminate Outcomes
+                  - generic [ref=e154]:
+                    - generic [ref=e155]: Indeterminate Outcomes
+                    - generic [ref=e156]: →
+                    - generic [ref=e157]: is a consequence of
+                    - generic [ref=e158]: →
+                    - generic [ref=e159]: Shared Resources
+              - generic [ref=e160]:
+                - generic [ref=e161]:
+                  - generic [ref=e162]: ⚠️
+                  - paragraph [ref=e163]: Exam Traps
+                - generic [ref=e164]:
+                  - generic [ref=e165]:
+                    - paragraph [ref=e166]: ✗ Believing race conditions only occur in high-level programming languages.
+                    - paragraph [ref=e167]: ✓ Race conditions can occur in any environment where concurrent access to shared resources is present, regardless of the programming language.
+                  - generic [ref=e168]:
+                    - paragraph [ref=e169]: ✗ Thinking that proper locking mechanisms completely eliminate race conditions.
+                    - paragraph [ref=e170]: ✓ While locking mechanisms reduce the likelihood of race conditions, improper implementation can still lead to race conditions.
+              - generic [ref=e171]:
+                - generic [ref=e172]:
+                  - generic [ref=e173]: ✅
+                  - paragraph [ref=e174]: Quick Check
+                - generic [ref=e175]:
+                  - generic [ref=e176]:
+                    - paragraph [ref=e177]: What is a race condition?
+                    - button "Show Answer ▾" [ref=e178]
+                  - generic [ref=e179]:
+                    - paragraph [ref=e180]: Why do race conditions occur?
+                    - button "Show Answer ▾" [ref=e181]
+                  - generic [ref=e182]:
+                    - paragraph [ref=e183]: What is the significance of managing shared resources?
+                    - button "Show Answer ▾" [ref=e184]
+              - button "📄 Detailed Notes ▾" [ref=e186]:
+                - text: 📄 Detailed Notes
+                - generic [ref=e187]: ▾
+          - generic [ref=e188]:
+            - generic [ref=e189]:
+              - heading "Stage info" [level=3] [ref=e190]
+              - generic [ref=e191]:
+                - generic [ref=e192]:
+                  - generic [ref=e193]: Estimated time
+                  - generic [ref=e194]: ~45 min
+                - generic [ref=e195]:
+                  - generic [ref=e196]: Status
+                  - generic [ref=e197]: In progress
+                - generic [ref=e198]:
+                  - generic [ref=e199]: Order
+                  - generic [ref=e200]: Stage 2 of 7
+            - generic [ref=e201]:
+              - heading "Topics in this stage" [level=3] [ref=e202]
+              - generic [ref=e204]:
+                - generic [ref=e206]: Race Conditions
+                - generic [ref=e207]: Not started
+            - button "Test myself →" [ref=e208]
+  - button "Open Next.js Dev Tools" [ref=e10] [cursor=pointer]:
+    - img [ref=e11]
+  - alert [ref=e14]: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/stages/af99fe14-862e-4535-a5fa-65c1aac5d874

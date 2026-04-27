@@ -1,0 +1,218 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - complementary [ref=e16]:
+      - generic [ref=e257]:
+        - generic [ref=e258]: fuckexam
+        - generic [ref=e259]: AI study companion
+      - navigation [ref=e260]:
+        - paragraph [ref=e261]: Menu
+        - generic [ref=e262]:
+          - link "🏠 Dashboard" [ref=e263] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e264]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e265] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e266]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e267] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/mastery
+            - generic [ref=e268]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e269]: Subjects
+        - generic [ref=e270]:
+          - link "comp sys test 3" [ref=e271] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e273]: comp sys test 3
+          - link "computer system testing 2" [ref=e274] [cursor=pointer]:
+            - /url: /subjects/5aaffdfd-6ac7-4238-add3-eda83682e23e/path
+            - generic [ref=e276]: computer system testing 2
+          - link "computer systeme testing 1" [ref=e277] [cursor=pointer]:
+            - /url: /subjects/b45a73d6-0722-48cd-833a-cf55c500b608/path
+            - generic [ref=e279]: computer systeme testing 1
+          - link "computer systems" [ref=e280] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e282]: computer systems
+          - link "computer system" [ref=e283] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e285]: computer system
+          - link "computer system" [ref=e286] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e288]: computer system
+          - link "computer system" [ref=e289] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e291]: computer system
+        - paragraph [ref=e292]: Account
+        - link "＋ Add subject" [ref=e293] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e294]: ＋
+          - text: Add subject
+      - generic [ref=e296]:
+        - generic [ref=e297]: 🎓
+        - generic [ref=e298]:
+          - paragraph [ref=e299]: nioozhiqi
+          - button "Sign out" [ref=e300]
+    - generic [ref=e61]:
+      - banner [ref=e62]:
+        - generic [ref=e63]:
+          - link "← Study Path" [ref=e64] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+          - generic [ref=e65]: /
+          - generic [ref=e66]: Stage View
+      - main [ref=e67]:
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - generic [ref=e72]:
+                - generic [ref=e73]: Stage 2
+                - generic [ref=e74]: ·
+                - generic [ref=e75]: comp sys test 3
+              - generic [ref=e76]:
+                - heading "Understanding Race Conditions" [level=1] [ref=e77]
+                - generic [ref=e78]:
+                  - generic [ref=e79]: ~45 min
+                  - button "Test myself →" [ref=e80]
+            - generic [ref=e81]:
+              - button "Summary" [ref=e82]
+              - button "Flashcards" [ref=e83]
+              - button "Answer Coach" [ref=e84]
+            - generic [ref=e301]:
+              - generic [ref=e302]:
+                - text: Answer Coach
+                - heading "Exam Preparation for Race Conditions" [level=2] [ref=e303]
+                - paragraph [ref=e304]: Practice structuring full-mark exam responses.
+              - generic [ref=e305]:
+                - generic [ref=e306]:
+                  - paragraph [ref=e307]: Q1
+                  - paragraph [ref=e308]: Explain how race conditions occur in multithreaded applications and provide an example of a critical region that illustrates this concept.
+                  - paragraph [ref=e309]: This fundamental concept of race conditions will be essential for any comprehensive understanding of interprocess communication, making it a likely exam topic.
+                - generic [ref=e310]:
+                  - paragraph [ref=e311]: Answer Plan
+                  - list [ref=e312]:
+                    - listitem [ref=e313]:
+                      - generic [ref=e314]: "1"
+                      - generic [ref=e315]: Define race conditions in the context of multithreading.
+                    - listitem [ref=e316]:
+                      - generic [ref=e317]: "2"
+                      - generic [ref=e318]: Explain the significance of critical regions in preventing race conditions.
+                    - listitem [ref=e319]:
+                      - generic [ref=e320]: "3"
+                      - generic [ref=e321]: Provide a specific example involving a shared resource (e.g., a stack).
+                    - listitem [ref=e322]:
+                      - generic [ref=e323]: "4"
+                      - generic [ref=e324]: Illustrate how lack of mutual exclusion leads to race conditions with a sample execution transcript.
+                    - listitem [ref=e325]:
+                      - generic [ref=e326]: "5"
+                      - generic [ref=e327]: Conclude with the importance of proper synchronization mechanisms.
+                - generic [ref=e328]:
+                  - paragraph [ref=e329]: ✓ Full-mark answer
+                  - generic [ref=e330]: Race conditions occur when multiple threads access shared resources concurrently and the outcome depends on the timing of their execution. For example, consider a stack represented by a global variable 'aStack'. If two threads check if the stack is empty simultaneously, one thread may find it non-empty and pop an element. If the second thread simultaneously checks the same condition, it may incorrectly also execute a pop operation leading to an error. This illustrates the critical region that needs mutual exclusion to avoid errors. Proper synchronization, such as using locks, is vital to prevent race conditions.
+                - generic [ref=e331]:
+                  - paragraph [ref=e332]: ✗ Weak answer
+                  - generic [ref=e333]: Race conditions happen when threads access shared resources. For instance, two threads popping from a stack at the same time can cause errors.
+                  - paragraph [ref=e334]: Why this loses marks
+                  - paragraph [ref=e335]: The weak answer lacks depth by not explaining critical regions, mutual exclusion, or providing a detailed example with context, therefore failing to convey understanding of the implications and mechanisms involved.
+                - generic [ref=e336]:
+                  - paragraph [ref=e337]: Marking checklist
+                  - list [ref=e338]:
+                    - listitem [ref=e339]:
+                      - generic [ref=e340]: ✓
+                      - generic [ref=e341]: Clear definition of race conditions.
+                    - listitem [ref=e342]:
+                      - generic [ref=e343]: ✓
+                      - generic [ref=e344]: Logical explanation of critical regions.
+                    - listitem [ref=e345]:
+                      - generic [ref=e346]: ✓
+                      - generic [ref=e347]: Specific and relevant example of a race condition in action.
+                    - listitem [ref=e348]:
+                      - generic [ref=e349]: ✓
+                      - generic [ref=e350]: Discussion on the role of mutual exclusion mechanisms in preventing such conditions.
+                    - listitem [ref=e351]:
+                      - generic [ref=e352]: ✓
+                      - generic [ref=e353]: Conclusion emphasizing the importance of prevention.
+                - generic [ref=e355]:
+                  - generic [ref=e356]: ⚠
+                  - generic [ref=e357]:
+                    - paragraph [ref=e358]: Common mistake
+                    - paragraph [ref=e359]: Failing to explicitly describe the concept of mutual exclusion and assuming readers will understand its role in preventing race conditions.
+              - generic [ref=e360]:
+                - generic [ref=e361]:
+                  - paragraph [ref=e362]: Q2
+                  - paragraph [ref=e363]: Compare busy waiting and blocking techniques for achieving mutual exclusion. When might each technique be preferable?
+                  - paragraph [ref=e364]: Understanding different techniques for achieving mutual exclusion is critical as they have significant performance implications and are commonly included in exam questions.
+                - generic [ref=e365]:
+                  - paragraph [ref=e366]: Answer Plan
+                  - list [ref=e367]:
+                    - listitem [ref=e368]:
+                      - generic [ref=e369]: "1"
+                      - generic [ref=e370]: Define busy waiting and blocking with examples.
+                    - listitem [ref=e371]:
+                      - generic [ref=e372]: "2"
+                      - generic [ref=e373]: Discuss the pros and cons of each technique.
+                    - listitem [ref=e374]:
+                      - generic [ref=e375]: "3"
+                      - generic [ref=e376]: Consider scenarios where blocking might be preferred over busy waiting, and vice versa.
+                    - listitem [ref=e377]:
+                      - generic [ref=e378]: "4"
+                      - generic [ref=e379]: Conclude with the impact of each technique on CPU utilization and system behavior.
+                - generic [ref=e380]:
+                  - paragraph [ref=e381]: ✓ Full-mark answer
+                  - generic [ref=e382]: Busy waiting involves a process repeatedly checking for conditions (e.g., a lock) and can waste CPU resources, making it inefficient for long waits. In contrast, blocking allows a process to yield control when it's unable to enter a critical region, avoiding unnecessary CPU usage. Busy waiting may be preferable in high-priority real-time systems where response time is crucial, while blocking is generally better for systems where CPU efficiency is vital to avoid starvation and reduce context switching overhead. Both methods require careful trade-offs to optimize performance based on specific use cases.
+                - generic [ref=e383]:
+                  - paragraph [ref=e384]: ✗ Weak answer
+                  - generic [ref=e385]: Busy waiting keeps checking for a condition, whereas blocking means the process stops. Blocking is better for efficiency. Busy waiting is faster.
+                  - paragraph [ref=e386]: Why this loses marks
+                  - paragraph [ref=e387]: The weak answer oversimplifies the concepts and does not adequately compare the techniques or provide examples about when each is preferable, reflecting a superficial understanding of their implications.
+                - generic [ref=e388]:
+                  - paragraph [ref=e389]: Marking checklist
+                  - list [ref=e390]:
+                    - listitem [ref=e391]:
+                      - generic [ref=e392]: ✓
+                      - generic [ref=e393]: Accurate definitions of busy waiting and blocking.
+                    - listitem [ref=e394]:
+                      - generic [ref=e395]: ✓
+                      - generic [ref=e396]: Comparison highlighting advantages and disadvantages of each.
+                    - listitem [ref=e397]:
+                      - generic [ref=e398]: ✓
+                      - generic [ref=e399]: Specific examples illustrating when to use either technique.
+                    - listitem [ref=e400]:
+                      - generic [ref=e401]: ✓
+                      - generic [ref=e402]: Discussion on the impact on system performance and CPU utilization.
+                    - listitem [ref=e403]:
+                      - generic [ref=e404]: ✓
+                      - generic [ref=e405]: Clear and logical conclusion tying points together.
+                - generic [ref=e407]:
+                  - generic [ref=e408]: ⚠
+                  - generic [ref=e409]:
+                    - paragraph [ref=e410]: Common mistake
+                    - paragraph [ref=e411]: Confusing blocking with busy waiting or failing to mention the implications of each method on performance.
+              - generic [ref=e412]:
+                - paragraph [ref=e413]: Exam Phrases
+                - generic [ref=e414]:
+                  - generic [ref=e415]: "\"This phenomenon underscores the importance of mutual exclusion in shared resource management.\""
+                  - generic [ref=e416]: "\"A critical region must ensure that no concurrent access occurs to prevent data inconsistencies.\""
+                  - generic [ref=e417]: "\"This scenario illustrates how race conditions can lead to unexpected behavior in multithreaded applications.\""
+                  - generic [ref=e418]: "\"To mitigate the risks of race conditions, it is vital to implement synchronization mechanisms effectively.\""
+                  - generic [ref=e419]: "\"Blocking techniques tend to be preferred in environments where CPU efficiency is paramount.\""
+          - generic [ref=e188]:
+            - generic [ref=e189]:
+              - heading "Stage info" [level=3] [ref=e190]
+              - generic [ref=e191]:
+                - generic [ref=e192]:
+                  - generic [ref=e193]: Estimated time
+                  - generic [ref=e194]: ~45 min
+                - generic [ref=e195]:
+                  - generic [ref=e196]: Status
+                  - generic [ref=e197]: In progress
+                - generic [ref=e198]:
+                  - generic [ref=e199]: Order
+                  - generic [ref=e200]: Stage 2 of 7
+            - generic [ref=e201]:
+              - heading "Topics in this stage" [level=3] [ref=e202]
+              - generic [ref=e204]:
+                - generic [ref=e206]: Race Conditions
+                - generic [ref=e207]: Not started
+            - button "Test myself →" [ref=e208]
+  - button "Open Next.js Dev Tools" [ref=e10] [cursor=pointer]:
+    - img [ref=e11]
+  - alert [ref=e14]: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/stages/af99fe14-862e-4535-a5fa-65c1aac5d874

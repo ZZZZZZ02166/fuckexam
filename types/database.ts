@@ -108,7 +108,7 @@ export type MasteryRecord = Database['public']['Tables']['mastery_records']['Row
 export type ReadinessSnapshot = Database['public']['Tables']['readiness_snapshots']['Row']
 
 export type StageStatus = 'not_started' | 'in_progress' | 'complete' | 'needs_review'
-export type MaterialType = 'summary' | 'flashcards' | 'concept_map'
+export type MaterialType = 'summary' | 'flashcards' | 'concept_map' | 'answer_coach'
 export type TestType = 'recall' | 'mcq'
 export type MasteryLevel = 'grey' | 'green' | 'yellow' | 'red'
 
@@ -136,6 +136,20 @@ export interface ConceptMapContent {
   title: string
   nodes: ConceptMapNode[]
   relationships: ConceptMapRelationship[]
+}
+export interface AnswerCoachContent {
+  title: string
+  likelyQuestions: Array<{
+    question: string
+    whyLikely: string
+    answerPlan: string[]
+    fullMarkAnswer: string
+    weakAnswer: string
+    whyWeak: string
+    markingChecklist: string[]
+    commonMistake: string
+  }>
+  examPhrases: string[]
 }
 export interface MCQContent { question: string; options: string[]; correct_index: number; explanation: string }
 export interface RecallContent { prompt: string; ideal_answer: string; key_points: string[] }
