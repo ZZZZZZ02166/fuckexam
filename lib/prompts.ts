@@ -190,10 +190,48 @@ Return a JSON object with:
   - label: exactly one of: "leads to" | "solves" | "causes" | "enables" | "contrasts with" | "is part of" | "requires" | "produces" | "defines" | "exemplifies"
 
 Rules:
-- Every node must appear in at least one relationship
-- Relationships should reflect the actual logical flow of the topic (not just association)
-- Order relationships so they trace from foundational → applied concepts
-- Do not invent content not in the source material
+- The map must have exactly one root node — the single most foundational concept or problem in the topic. The root is the ONLY node permitted to have no incoming edges.
+- The root MUST be a concept or problem node — NEVER a solution, process, example, definition, or limitation node. Solutions and methods must appear DOWNSTREAM of the problems they address.
+- If the stage topic involves preventing or solving X, then X (the problem/concept) is the root. Solutions branch off from problems, not the other way around.
+- Every primary and secondary node that is NOT the root MUST appear at least once as the "to" target in the relationships array — something must point INTO it.
+- All nodes must be reachable from the root via the relationships chain — do not produce disconnected clusters.
+- Relationships must reflect real cause/effect, prerequisite, or part-whole logic from the source material (not superficial association).
+- Order relationships so they trace from foundational → applied concepts.
+- Self-check before returning: identify the single indegree-0 node (your root). For every other node with importance "primary" or "secondary", confirm its id appears in at least one relationship's "to" field. If not, add a relationship from a logically earlier concept.
+- Do not invent content not in the source material.
+
+Node type selection — use the most specific type, never default to "definition":
+- concept: an abstract principle or idea (e.g. "Mutual Exclusion", "Race Condition")
+- problem: a known failure mode, risk, or issue that needs solving (e.g. "Priority Inversion", "Race Condition")
+- solution: a mechanism, approach, or algorithm that addresses a problem (e.g. "Blocking", "Mutex Lock")
+- process: a step-by-step method or procedure (e.g. "Strict Alternation", "Busy Waiting loop")
+- limitation: a known drawback or constraint of a method (e.g. "CPU waste from busy waiting")
+- exam_trap: a common misconception or mistake students make about this topic
+- example: a concrete instantiation that exemplifies one specific method or concept — NOT the whole topic
+- definition: ONLY for a node that IS the formal definition of the root concept. Use at most once per map. Do NOT use for methods, approaches, techniques, conditions, or principles — use concept/process/solution/limitation instead.
+
+Relationship label semantics — use the most semantically precise label from the allowed set:
+- "requires": ONLY for necessary prerequisites. A "requires" B means B must already exist for A to function. Do NOT use this from a concept to a problem it produces, or to a solution/method that addresses it.
+- "causes": when one concept directly produces a problem or side effect (concept → problem). Also use when something creates a risk or limitation in another thing.
+- "solves": direction is always [solution/method node] → "solves" → [problem node]. Use when a method prevents or resolves a problem.
+- "enables": when one concept makes another possible or practical. Use to express "X is implemented by Y" as Y "enables" X's goal.
+- "produces": when a process or method generates an output or result.
+- "leads to": ordered causal or sequential chain (step A leads to step B in a process or sequence).
+- "defines": strict definitional relationship only — use sparingly.
+- "exemplifies": for concrete examples or instances. Connect the example node to the SPECIFIC method or concept it illustrates — NEVER directly to the root or a broad ancestor.
+- "is part of": for component/whole or subtype membership.
+- "contrasts with": only for comparison nodes.
+Type-pair rules — enforce correct direction per node type combination:
+- concept/definition → problem: use "causes" or "leads to" (NEVER "requires")
+- solution/process → problem: use "solves" — direction always [solution] → "solves" → [problem]
+- problem → solution: use "leads to" (the problem motivates the solution)
+- process/example → specific concept or process: use "exemplifies" or "is part of"
+- concept → concept: use "requires", "enables", or "is part of"
+- limitation → process/solution: use "is part of" or "leads to"
+Common mistakes that produce a broken flow:
+- Using "requires" from a concept to a problem it generates, or to a solution that handles it.
+- Connecting example or code_example nodes directly to the root instead of to the specific method they illustrate.
+- Problem nodes should have a "causes" incoming edge from what creates them, and a "solves" outgoing from whatever fixes them.
 
 Source material:
 ${context}

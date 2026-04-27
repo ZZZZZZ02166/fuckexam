@@ -52,10 +52,10 @@ export type Database = {
         Relationships: [{ foreignKeyName: "readiness_snapshots_subject_id_fkey"; columns: ["subject_id"]; isOneToOne: false; referencedRelation: "subjects"; referencedColumns: ["id"] }]
       }
       stage_context_cache: {
-        Row: { context_text: string; created_at: string | null; id: string; stage_id: string }
-        Insert: { context_text: string; created_at?: string | null; id?: string; stage_id: string }
-        Update: { context_text?: string; created_at?: string | null; id?: string; stage_id?: string }
-        Relationships: [{ foreignKeyName: "stage_context_cache_stage_id_fkey"; columns: ["stage_id"]; isOneToOne: true; referencedRelation: "study_stages"; referencedColumns: ["id"] }]
+        Row: { context_text: string; created_at: string | null; id: string; purpose: string; stage_id: string }
+        Insert: { context_text: string; created_at?: string | null; id?: string; purpose?: string; stage_id: string }
+        Update: { context_text?: string; created_at?: string | null; id?: string; purpose?: string; stage_id?: string }
+        Relationships: [{ foreignKeyName: "stage_context_cache_stage_id_fkey"; columns: ["stage_id"]; isOneToOne: false; referencedRelation: "study_stages"; referencedColumns: ["id"] }]
       }
       student_answers: {
         Row: { answer_hash: string | null; answer_text: string | null; answered_at: string | null; feedback: Json | null; id: string; question_id: string; score: string | null; user_id: string }

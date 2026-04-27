@@ -88,13 +88,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Stage not found' })
   }
 
-  // Force regeneration: delete existing item first
+  // Force regeneration: delete existing item + purpose-specific context cache
   if (force) {
     await supabaseAdmin
       .from('generated_items')
       .delete()
       .eq('stage_id', stage_id)
       .eq('type', type)
+
+    const cachePurpose = type === 'concept_map' ? 'concept_map' : 'general'
+    await supabaseAdmin
+      .from('stage_context_cache')
+      .delete()
+      .eq('stage_id', stage_id)
+      .eq('purpose', cachePurpose)
   }
 
   // Check cache
@@ -157,6 +164,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     topics?.map(t => t.name) ?? [stage.name],
     previousTopicNames,
     futureTopicNames,
+    type === 'concept_map' ? 'concept_map' : 'general',
   )
 
   const forbiddenTerms = new Set(
@@ -223,16 +231,175 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     content = r.choices[0].message.parsed as FlashcardsContent
 
   } else {
-    console.log('[ai] content concept_map model=gpt-4o-mini stage=', stage_id)
+    console.log('[ai] content concept_map model=gpt-4o stage=', stage_id)
     const r = await openai.chat.completions.parse({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
-        { role: 'system', content: 'You generate concept maps strictly scoped to the current stage\'s concepts. Exclude all concepts assigned to other stages.' },
+        {
+          role: 'system',
+          content: [
+            'You are a semantic concept-map builder. Your output must form a single connected directed acyclic graph with exactly one root.',
+            '',
+            'CRITICAL — ROOT SELECTION RULE:',
+            `The root is the TOPIC BEING STUDIED in this stage — it is what the stage is ABOUT. The root node must directly match the stage topic: "${topicNames}".`,
+            'Do NOT make a prerequisite or cause the root just because it has no prerequisites itself. The topic is the starting point for learning, not the starting point of causal chains.',
+            'Example: For a stage about "Race Conditions", Race Conditions IS the root — not "Shared Resources" (which causes race conditions). Students are learning about race conditions; shared resources is assumed background.',
+            'Example: For a stage about "Mutex Locks", Mutex Lock IS the root — race conditions (which motivated mutexes) belong to a previous stage.',
+            '',
+            'STRUCTURAL RULES:',
+            `- The root MUST match "${topicNames}" in label or be the primary concept/problem node closest to that topic name.`,
+            '- The root MUST have importance="primary" and type="concept" or "problem". NEVER solution, process, example, or definition.',
+            '- Every primary or secondary node that is NOT the root MUST appear as the "to" target in at least one relationship.',
+            '- No disconnected clusters. EVERY node must be reachable from the root via the relationships chain.',
+            '- No cycles. Relationships flow strictly from foundational → applied (DAG).',
+            '- Exactly ONE node has no incoming edges (the root). All others have at least one incoming edge.',
+            '- Relationships must encode real cause/effect, prerequisite, part-whole, or instantiation logic — not superficial association.',
+            '- Exclude all concepts assigned to other stages.',
+          ].join('\n'),
+        },
         { role: 'user', content: PROMPTS.generateConceptMap(topicNames, context, curriculumContext || undefined) },
       ],
       response_format: zodResponseFormat(ConceptMapSchema, 'concept_map'),
     })
-    content = r.choices[0].message.parsed as ConceptMapContent
+    let mapData = r.choices[0].message.parsed!
+
+    // Validate: build adjacency + indegree, then BFS from root to find unreachable important nodes
+    const adjMap = new Map<string, string[]>()
+    const inDeg = new Map<string, number>()
+    mapData.nodes.forEach(n => { adjMap.set(n.id, []); inDeg.set(n.id, 0) })
+    mapData.relationships.forEach(rel => {
+      adjMap.get(rel.from)?.push(rel.to)
+      inDeg.set(rel.to, (inDeg.get(rel.to) ?? 0) + 1)
+    })
+
+    const rootCandidates = mapData.nodes.filter(n => (inDeg.get(n.id) ?? 0) === 0)
+    const trueRoot = rootCandidates.find(n => n.importance === 'primary') ?? rootCandidates[0]
+
+    const reachable = new Set<string>()
+    if (trueRoot) {
+      const q = [trueRoot.id]
+      while (q.length) {
+        const id = q.shift()!
+        if (reachable.has(id)) continue
+        reachable.add(id)
+        adjMap.get(id)?.forEach(child => q.push(child))
+      }
+    }
+
+    const unreachable = mapData.nodes.filter(
+      n => n.id !== trueRoot?.id &&
+           (n.importance === 'primary' || n.importance === 'secondary') &&
+           !reachable.has(n.id)
+    )
+
+    const badRootTypes = ['solution', 'process', 'example', 'definition', 'limitation', 'code_example']
+    const rootIsWrongType = trueRoot && badRootTypes.includes(trueRoot.type)
+    const multipleRoots = rootCandidates.length > 1
+    const primaryNode = mapData.nodes.find(n => n.importance === 'primary')
+    const primaryNotRoot = !!(primaryNode && trueRoot && primaryNode.id !== trueRoot.id && !reachable.has(primaryNode.id))
+
+    if (unreachable.length === 0 && !rootIsWrongType && !multipleRoots && !primaryNotRoot) {
+      console.log('[ai] concept_map validation_passed stage=', stage_id)
+    } else {
+      const reasons = [
+        ...unreachable.map(n => `${n.label}(${n.importance})`),
+        ...(rootIsWrongType ? [`root_is_${trueRoot!.type}:${trueRoot!.label}`] : []),
+        ...(multipleRoots ? [`multiple_roots(${rootCandidates.map(n => n.label).join('|')})`] : []),
+        ...(primaryNotRoot ? [`primary_not_root:${primaryNode!.label}`] : []),
+      ].join(', ')
+      console.log('[ai] concept_map repair_triggered reasons=', reasons, 'stage=', stage_id)
+
+      try {
+        const repairResult = await openai.chat.completions.parse({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a concept map expert. You restructure broken concept maps so they correctly represent the learning topic with proper node connectivity, flow direction, and root placement.',
+            },
+            {
+              role: 'user',
+              content: `This concept map is for a stage about: "${topicNames}".
+
+ISSUES TO FIX:
+${unreachable.length > 0 ? `- DISCONNECTED NODES (unreachable from root): ${unreachable.map(n => `"${n.label}" (id: ${n.id}, type: ${n.type}, importance: ${n.importance})`).join(', ')}. These MUST be integrated into the main flow.` : ''}
+${rootIsWrongType ? `- WRONG ROOT TYPE: "${trueRoot!.label}" is typed as "${trueRoot!.type}" but roots MUST be concept or problem nodes.` : ''}
+${multipleRoots ? `- MULTIPLE DISCONNECTED ROOTS: The map has ${rootCandidates.length} nodes with no incoming edges: ${rootCandidates.map(n => `"${n.label}" (${n.type})`).join(', ')}. This creates disconnected subgraphs. There must be EXACTLY ONE root — all other nodes must connect into the single root's reachability chain.` : ''}
+${primaryNotRoot ? `- PRIMARY NODE NOT IN FLOW: "${primaryNode!.label}" (id: ${primaryNode!.id}) is marked as primary importance but is not reachable from the root. For a stage about "${topicNames}", the primary node should be at or near the root — it IS the main subject being studied.` : ''}
+
+CRITICAL CONCEPT: The ROOT of a learning map is the TOPIC BEING STUDIED, not what causes it.
+- For a stage about "Race Conditions": Race Conditions IS the root — students are learning what race conditions are and how they work. Shared resources is background context, not the starting node.
+- For a stage about "Mutex Locks": Mutex Lock IS the root — students are learning about mutexes. Race conditions are what motivated mutexes, but they belong to a previous stage.
+- Think of the root as the CHAPTER TITLE in a textbook. Everything else explains, exemplifies, or extends the chapter topic.
+
+RESTRUCTURING RULES:
+1. The root must have importance="primary" and type="concept" or "problem".
+2. The PRIMARY node that matches "${topicNames}" must be the root OR must appear in level 1 directly reachable from the root.
+3. PROBLEM nodes belong near the root. SOLUTION nodes appear downstream of problems. EXAMPLES and LIMITATIONS at the bottom.
+4. EXACTLY ONE node must have no incoming edges (the root). Every other node must have at least one incoming edge.
+5. No cycles. This is a directed acyclic graph — relationships flow from foundational → applied.
+6. Do NOT invent connections — all relationships must be grounded in the source material.
+7. Return the COMPLETE corrected map: all existing nodes (possibly re-typed or re-prioritized) plus all relationships.
+
+Source material:
+${context}
+
+Current broken map:
+${JSON.stringify(mapData)}`,
+            },
+          ],
+          response_format: zodResponseFormat(ConceptMapSchema, 'concept_map'),
+        })
+
+        const repaired = repairResult.choices[0].message.parsed
+        if (repaired && repaired.nodes.length >= mapData.nodes.length) {
+          // Re-run full BFS reachability check on the repaired map
+          const repAdj = new Map<string, string[]>()
+          const repInDeg = new Map<string, number>()
+          repaired.nodes.forEach(n => { repAdj.set(n.id, []); repInDeg.set(n.id, 0) })
+          repaired.relationships.forEach(rel => {
+            repAdj.get(rel.from)?.push(rel.to)
+            repInDeg.set(rel.to, (repInDeg.get(rel.to) ?? 0) + 1)
+          })
+          const repRootCandidates = repaired.nodes.filter(n => (repInDeg.get(n.id) ?? 0) === 0)
+          const repRoot = repRootCandidates.find(n => n.importance === 'primary') ?? repRootCandidates[0]
+          const repairedRootOk = repRoot && !badRootTypes.includes(repRoot.type)
+          const repairedSingleRoot = repRootCandidates.length === 1
+          const repPrimary = repaired.nodes.find(n => n.importance === 'primary')
+
+          const repReachable = new Set<string>()
+          if (repRoot) {
+            const q = [repRoot.id]
+            while (q.length) {
+              const id = q.shift()!
+              if (repReachable.has(id)) continue
+              repReachable.add(id)
+              repAdj.get(id)?.forEach(child => q.push(child))
+            }
+          }
+          const stillUnreachable = unreachable.filter(n => !repReachable.has(n.id))
+          const repPrimaryInFlow = !repPrimary || repRoot?.id === repPrimary.id || repReachable.has(repPrimary.id)
+
+          if (stillUnreachable.length === 0 && repairedRootOk && repairedSingleRoot && repPrimaryInFlow) {
+            mapData = repaired
+            console.log('[ai] concept_map repair_succeeded stage=', stage_id)
+          } else {
+            console.log('[ai] concept_map repair_failed still_unreachable=',
+              stillUnreachable.map(n => n.label).join(', '),
+              'root_ok=', repairedRootOk,
+              'single_root=', repairedSingleRoot,
+              'primary_in_flow=', repPrimaryInFlow,
+              'stage=', stage_id)
+          }
+        } else {
+          console.log('[ai] concept_map repair_failed_node_count stage=', stage_id)
+        }
+      } catch {
+        console.log('[ai] concept_map repair_error stage=', stage_id)
+      }
+    }
+
+    content = mapData as ConceptMapContent
   }
 
   const { data: item, error } = await supabaseAdmin

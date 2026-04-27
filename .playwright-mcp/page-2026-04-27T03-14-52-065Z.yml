@@ -1,0 +1,149 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - complementary [ref=e16]:
+      - generic [ref=e197]:
+        - generic [ref=e198]: fuckexam
+        - generic [ref=e199]: AI study companion
+      - navigation [ref=e200]:
+        - paragraph [ref=e201]: Menu
+        - generic [ref=e202]:
+          - link "🏠 Dashboard" [ref=e203] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e204]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e205] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e206]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e207] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/mastery
+            - generic [ref=e208]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e209]: Subjects
+        - generic [ref=e210]:
+          - link "computer system testing 2" [ref=e211] [cursor=pointer]:
+            - /url: /subjects/5aaffdfd-6ac7-4238-add3-eda83682e23e/path
+            - generic [ref=e213]: computer system testing 2
+          - link "computer systeme testing 1" [ref=e214] [cursor=pointer]:
+            - /url: /subjects/b45a73d6-0722-48cd-833a-cf55c500b608/path
+            - generic [ref=e216]: computer systeme testing 1
+          - link "computer systems" [ref=e217] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e219]: computer systems
+          - link "computer system" [ref=e220] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e222]: computer system
+          - link "computer system" [ref=e223] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e225]: computer system
+          - link "computer system" [ref=e226] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e228]: computer system
+        - paragraph [ref=e229]: Account
+        - link "＋ Add subject" [ref=e230] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e231]: ＋
+          - text: Add subject
+      - generic [ref=e233]:
+        - generic [ref=e234]: 🎓
+        - generic [ref=e235]:
+          - paragraph [ref=e236]: nioozhiqi
+          - button "Sign out" [ref=e237]
+    - generic [ref=e58]:
+      - banner [ref=e59]:
+        - generic [ref=e60]:
+          - link "← Study Path" [ref=e61] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+          - generic [ref=e62]: /
+          - generic [ref=e63]: Stage View
+      - main [ref=e64]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - generic [ref=e69]:
+                - generic [ref=e70]: Stage 2
+                - generic [ref=e71]: ·
+                - generic [ref=e72]: computer systems
+              - generic [ref=e73]:
+                - heading "Identifying and Preventing Race Conditions" [level=1] [ref=e74]
+                - generic [ref=e75]:
+                  - generic [ref=e76]: ~45 min
+                  - button "Test myself →" [ref=e77]
+            - generic [ref=e78]:
+              - button "Summary" [ref=e79]
+              - button "Flashcards" [ref=e80]
+              - button "Concept Map" [active] [ref=e81]
+            - generic [ref=e238]:
+              - paragraph [ref=e240]: Understanding Race Conditions
+              - generic [ref=e243]:
+                - generic [ref=e244]: solution
+                - paragraph [ref=e245]: Atomic Operations
+                - paragraph [ref=e246]: Operations that are completed without interruption, crucial for preventing race conditions.
+              - generic [ref=e248]:
+                - generic [ref=e249]:
+                  - paragraph [ref=e250]: ↑ enables
+                  - generic [ref=e251]: solution
+                  - paragraph [ref=e252]: Thread Synchronization
+                  - paragraph [ref=e253]: Process of coordinating the execution order of threads to prevent race conditions.
+                - generic [ref=e254]:
+                  - paragraph [ref=e255]: ↑ solves
+                  - generic [ref=e256]: concept
+                  - paragraph [ref=e257]: Critical Region
+                  - paragraph [ref=e258]: The part of the code where shared resources are accessed and race conditions occur if not protected.
+                - generic [ref=e259]:
+                  - generic [ref=e260]: example
+                  - paragraph [ref=e261]: Example of Stack Access
+                  - paragraph [ref=e262]: Demonstrates a race condition when two threads access a shared stack improperly.
+              - generic [ref=e263]:
+                - generic [ref=e266]: solves
+                - generic [ref=e269]:
+                  - generic [ref=e270]: problem
+                  - paragraph [ref=e271]: Race Condition
+                  - paragraph [ref=e272]: Occurs when multiple threads access shared data concurrently, leading to variable results based on execution timing.
+              - generic [ref=e273]:
+                - generic [ref=e276]: causes
+                - generic [ref=e279]:
+                  - generic [ref=e280]: problem
+                  - paragraph [ref=e281]: Incorrect Execution Order
+                  - paragraph [ref=e282]: One of the causes of race conditions, where instructions are executed out of intended sequence.
+              - generic [ref=e283]:
+                - generic [ref=e286]: leads to
+                - generic [ref=e289]:
+                  - generic [ref=e290]: problem
+                  - paragraph [ref=e291]: Data Inconsistency
+                  - paragraph [ref=e292]: A common result of race conditions where data does not reflect the intended operations.
+              - generic [ref=e293]:
+                - generic [ref=e294]:
+                  - generic [ref=e295]: ↗
+                  - paragraph [ref=e296]: Also see
+                - generic [ref=e297]:
+                  - generic [ref=e298]:
+                    - generic [ref=e299]: concept
+                    - paragraph [ref=e300]: Shared Resources
+                    - paragraph [ref=e301]: Resources accessed by multiple threads, often causing race conditions if not managed properly.
+                  - generic [ref=e302]:
+                    - generic [ref=e303]: concept
+                    - paragraph [ref=e304]: Interprocess Communication
+                    - paragraph [ref=e305]: Mechanisms allowing processes to share data and resources, potentially leading to race conditions.
+          - generic [ref=e176]:
+            - generic [ref=e177]:
+              - heading "Stage info" [level=3] [ref=e178]
+              - generic [ref=e179]:
+                - generic [ref=e180]:
+                  - generic [ref=e181]: Estimated time
+                  - generic [ref=e182]: ~45 min
+                - generic [ref=e183]:
+                  - generic [ref=e184]: Status
+                  - generic [ref=e185]: In progress
+                - generic [ref=e186]:
+                  - generic [ref=e187]: Order
+                  - generic [ref=e188]: Stage 2 of 7
+            - generic [ref=e189]:
+              - heading "Topics in this stage" [level=3] [ref=e190]
+              - generic [ref=e192]:
+                - generic [ref=e194]: Race Conditions
+                - generic [ref=e195]: Not started
+            - button "Test myself →" [ref=e196]
+  - button "Open Next.js Dev Tools" [ref=e10] [cursor=pointer]:
+    - img [ref=e11]
+  - alert [ref=e14]: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/stages/87af6be6-6083-4eb5-b26a-aa25637f515c

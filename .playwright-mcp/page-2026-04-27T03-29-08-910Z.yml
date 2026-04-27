@@ -1,0 +1,4 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e10] [cursor=pointer]:
+    - img [ref=e11]
+  - alert [ref=e14]: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/stages/87af6be6-6083-4eb5-b26a-aa25637f515c

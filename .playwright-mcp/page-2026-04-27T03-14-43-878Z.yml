@@ -1,0 +1,180 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e15]:
+    - complementary [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: fuckexam
+        - generic [ref=e19]: AI study companion
+      - navigation [ref=e20]:
+        - paragraph [ref=e21]: Menu
+        - generic [ref=e22]:
+          - link "🏠 Dashboard" [ref=e23] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e24]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e25] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e26]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e27] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/mastery
+            - generic [ref=e28]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e29]: Subjects
+        - generic [ref=e30]:
+          - link "computer system testing 2" [ref=e31] [cursor=pointer]:
+            - /url: /subjects/5aaffdfd-6ac7-4238-add3-eda83682e23e/path
+            - generic [ref=e33]: computer system testing 2
+          - link "computer systeme testing 1" [ref=e34] [cursor=pointer]:
+            - /url: /subjects/b45a73d6-0722-48cd-833a-cf55c500b608/path
+            - generic [ref=e36]: computer systeme testing 1
+          - link "computer systems" [ref=e37] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e39]: computer systems
+          - link "computer system" [ref=e40] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e42]: computer system
+          - link "computer system" [ref=e43] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e45]: computer system
+          - link "computer system" [ref=e46] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e48]: computer system
+        - paragraph [ref=e49]: Account
+        - link "＋ Add subject" [ref=e50] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e51]: ＋
+          - text: Add subject
+      - generic [ref=e53]:
+        - generic [ref=e54]: 🎓
+        - generic [ref=e55]:
+          - paragraph [ref=e56]: nioozhiqi
+          - button "Sign out" [ref=e57]
+    - generic [ref=e58]:
+      - banner [ref=e59]:
+        - generic [ref=e60]:
+          - link "← Study Path" [ref=e61] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+          - generic [ref=e62]: /
+          - generic [ref=e63]: Stage View
+      - main [ref=e64]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - generic [ref=e69]:
+                - generic [ref=e70]: Stage 2
+                - generic [ref=e71]: ·
+                - generic [ref=e72]: computer systems
+              - generic [ref=e73]:
+                - heading "Identifying and Preventing Race Conditions" [level=1] [ref=e74]
+                - generic [ref=e75]:
+                  - generic [ref=e76]: ~45 min
+                  - button "Test myself →" [ref=e77]
+            - generic [ref=e78]:
+              - button "Summary" [ref=e79]
+              - button "Flashcards" [ref=e80]
+              - button "Concept Map" [ref=e81]
+            - generic [ref=e83]:
+              - generic [ref=e84]:
+                - generic [ref=e85]:
+                  - generic [ref=e86]: ⚡
+                  - paragraph [ref=e87]: Learn this in 5 min
+                - list [ref=e89]:
+                  - listitem [ref=e90]:
+                    - generic [ref=e92]: Race conditions occur when multiple processes access shared resources simultaneously.
+                  - listitem [ref=e93]:
+                    - generic [ref=e95]: The results of race conditions are indeterminate and can vary with execution order.
+                  - listitem [ref=e96]:
+                    - generic [ref=e98]: Critical regions help to define parts of the code where shared resources are accessed.
+                  - listitem [ref=e99]:
+                    - generic [ref=e101]: Mutual exclusion is essential to prevent more than one process from entering the critical region at the same time.
+                  - listitem [ref=e102]:
+                    - generic [ref=e104]: Avoiding race conditions is crucial for program correctness in multithreaded environments.
+              - generic [ref=e105]:
+                - generic [ref=e106]:
+                  - generic [ref=e107]: 💡
+                  - paragraph [ref=e108]: Big Idea
+                - paragraph [ref=e110]: Understanding race conditions is key to mastering effective interprocess communication. This stage builds on prior knowledge of Interprocess Communication Mechanisms, emphasizing the need for coordination in accessing shared resources to prevent unpredictable behaviors and ensure reliability in systems.
+              - generic [ref=e111]:
+                - generic [ref=e112]:
+                  - generic [ref=e113]: 🎯
+                  - paragraph [ref=e114]: Key Concepts
+                - generic [ref=e118]:
+                  - paragraph [ref=e119]: Race Conditions
+                  - paragraph [ref=e120]: Race conditions occur when two or more threads or processes access shared data and try to change it at the same time, leading to unpredictable outcomes based on the timing of the execution.
+                  - paragraph [ref=e121]: They are critical to understand because they can cause major errors in concurrent applications.
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - generic [ref=e124]: 🔗
+                  - paragraph [ref=e125]: How It Connects
+                - generic [ref=e126]:
+                  - generic [ref=e127]:
+                    - generic [ref=e128]: Race Conditions
+                    - generic [ref=e129]: →
+                    - generic [ref=e130]: highlights the need for implementing critical regions to avoid them.
+                    - generic [ref=e131]: →
+                    - generic [ref=e132]: Critical Regions
+                  - generic [ref=e133]:
+                    - generic [ref=e134]: Critical Regions
+                    - generic [ref=e135]: →
+                    - generic [ref=e136]: requires mutual exclusion to function correctly.
+                    - generic [ref=e137]: →
+                    - generic [ref=e138]: Mutual Exclusion
+                  - generic [ref=e139]:
+                    - generic [ref=e140]: Interprocess Communication Mechanisms
+                    - generic [ref=e141]: →
+                    - generic [ref=e142]: sets the stage for understanding the potential issues arising in data-sharing scenarios.
+                    - generic [ref=e143]: →
+                    - generic [ref=e144]: Race Conditions
+              - generic [ref=e145]:
+                - generic [ref=e146]:
+                  - generic [ref=e147]: ⚠️
+                  - paragraph [ref=e148]: Exam Traps
+                - generic [ref=e149]:
+                  - generic [ref=e150]:
+                    - paragraph [ref=e151]: ✗ Students may think race conditions only happen in poorly written code.
+                    - paragraph [ref=e152]: ✓ Race conditions can happen in properly written code if proper synchronization is not enforced.
+                  - generic [ref=e153]:
+                    - paragraph [ref=e154]: ✗ Confusing critical regions with non-critical code sections.
+                    - paragraph [ref=e155]: ✓ Critical regions specifically refer to code that alters shared resources and requires careful management.
+                  - generic [ref=e156]:
+                    - paragraph [ref=e157]: ✗ Assuming that race conditions can be fixed by just a single lock mechanism.
+                    - paragraph [ref=e158]: ✓ Multiple types of synchronization mechanisms are often needed to address different scenarios and avoid race conditions.
+              - generic [ref=e159]:
+                - generic [ref=e160]:
+                  - generic [ref=e161]: ✅
+                  - paragraph [ref=e162]: Quick Check
+                - generic [ref=e163]:
+                  - generic [ref=e164]:
+                    - paragraph [ref=e165]: What is a race condition?
+                    - button "Show Answer ▾" [ref=e166]
+                  - generic [ref=e167]:
+                    - paragraph [ref=e168]: Why is mutual exclusion important?
+                    - button "Show Answer ▾" [ref=e169]
+                  - generic [ref=e170]:
+                    - paragraph [ref=e171]: What are critical regions?
+                    - button "Show Answer ▾" [ref=e172]
+              - button "📄 Detailed Notes ▾" [ref=e174]:
+                - text: 📄 Detailed Notes
+                - generic [ref=e175]: ▾
+          - generic [ref=e176]:
+            - generic [ref=e177]:
+              - heading "Stage info" [level=3] [ref=e178]
+              - generic [ref=e179]:
+                - generic [ref=e180]:
+                  - generic [ref=e181]: Estimated time
+                  - generic [ref=e182]: ~45 min
+                - generic [ref=e183]:
+                  - generic [ref=e184]: Status
+                  - generic [ref=e185]: In progress
+                - generic [ref=e186]:
+                  - generic [ref=e187]: Order
+                  - generic [ref=e188]: Stage 2 of 7
+            - generic [ref=e189]:
+              - heading "Topics in this stage" [level=3] [ref=e190]
+              - generic [ref=e192]:
+                - generic [ref=e194]: Race Conditions
+                - generic [ref=e195]: Not started
+            - button "Test myself →" [ref=e196]
+  - button "Open Next.js Dev Tools" [ref=e10] [cursor=pointer]:
+    - img [ref=e11]
+  - alert [ref=e14]: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/stages/87af6be6-6083-4eb5-b26a-aa25637f515c

@@ -1,0 +1,152 @@
+- generic [ref=e1]:
+  - generic [ref=e15]:
+    - complementary [ref=e16]:
+      - generic [ref=e197]:
+        - generic [ref=e198]: fuckexam
+        - generic [ref=e199]: AI study companion
+      - navigation [ref=e200]:
+        - paragraph [ref=e201]: Menu
+        - generic [ref=e202]:
+          - link "🏠 Dashboard" [ref=e203] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e204]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e205] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e206]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e207] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/mastery
+            - generic [ref=e208]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e209]: Subjects
+        - generic [ref=e210]:
+          - link "computer system testing 2" [ref=e211] [cursor=pointer]:
+            - /url: /subjects/5aaffdfd-6ac7-4238-add3-eda83682e23e/path
+            - generic [ref=e213]: computer system testing 2
+          - link "computer systeme testing 1" [ref=e214] [cursor=pointer]:
+            - /url: /subjects/b45a73d6-0722-48cd-833a-cf55c500b608/path
+            - generic [ref=e216]: computer systeme testing 1
+          - link "computer systems" [ref=e217] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e219]: computer systems
+          - link "computer system" [ref=e220] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e222]: computer system
+          - link "computer system" [ref=e223] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e225]: computer system
+          - link "computer system" [ref=e226] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e228]: computer system
+        - paragraph [ref=e229]: Account
+        - link "＋ Add subject" [ref=e230] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e231]: ＋
+          - text: Add subject
+      - generic [ref=e233]:
+        - generic [ref=e234]: 🎓
+        - generic [ref=e235]:
+          - paragraph [ref=e236]: nioozhiqi
+          - button "Sign out" [ref=e237]
+    - generic [ref=e58]:
+      - banner [ref=e59]:
+        - generic [ref=e60]:
+          - link "← Study Path" [ref=e61] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+          - generic [ref=e62]: /
+          - generic [ref=e63]: Stage View
+      - main [ref=e64]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - generic [ref=e69]:
+                - generic [ref=e70]: Stage 2
+                - generic [ref=e71]: ·
+                - generic [ref=e72]: computer systems
+              - generic [ref=e73]:
+                - heading "Identifying and Preventing Race Conditions" [level=1] [ref=e74]
+                - generic [ref=e75]:
+                  - generic [ref=e76]: ~45 min
+                  - button "Test myself →" [ref=e77]
+            - generic [ref=e78]:
+              - button "Summary" [ref=e79]
+              - button "Flashcards" [ref=e80]
+              - button "Concept Map" [active] [ref=e81]
+            - generic [ref=e238]:
+              - paragraph [ref=e240]: Understanding and Preventing Race Conditions
+              - generic [ref=e242]:
+                - generic [ref=e243]:
+                  - generic [ref=e244]: concept
+                  - paragraph [ref=e245]: Atomic Operations
+                  - paragraph [ref=e246]: Operations that complete in a single step relative to other threads, preventing interference during execution.
+                - generic [ref=e247]:
+                  - generic [ref=e248]: limitation
+                  - paragraph [ref=e249]: Busy Waiting
+                  - paragraph [ref=e250]: A technique where a process repeatedly checks for a condition to be met, such as a lock being available.
+              - generic [ref=e251]:
+                - generic [ref=e254]: enables
+                - generic [ref=e257]:
+                  - generic [ref=e258]: solution
+                  - paragraph [ref=e259]: Mutex Locks
+                  - paragraph [ref=e260]: Used to ensure mutual exclusion by allowing only one process/thread to access the critical region at a time.
+              - generic [ref=e262]:
+                - generic [ref=e263]:
+                  - paragraph [ref=e264]: ↑ leads to
+                  - generic [ref=e265]: problem
+                  - paragraph [ref=e266]: Priority Inversion
+                  - paragraph [ref=e267]: A scenario in which a lower-priority task holds a lock needed by a higher-priority task, potentially leading to a deadline miss.
+                - generic [ref=e268]:
+                  - paragraph [ref=e269]: ↑ solves
+                  - generic [ref=e270]: example
+                  - paragraph [ref=e271]: "Example: Stack Pop"
+                  - paragraph [ref=e272]: Demonstrates a race condition when two threads attempt to pop from an empty stack concurrently.
+              - generic [ref=e273]:
+                - generic [ref=e276]: causes
+                - generic [ref=e279]:
+                  - generic [ref=e280]: problem
+                  - paragraph [ref=e281]: Starvation
+                  - paragraph [ref=e282]: Occurs when a process is perpetually denied necessary resources to proceed with its execution.
+              - generic [ref=e283]:
+                - generic [ref=e284]:
+                  - generic [ref=e285]: ↗
+                  - paragraph [ref=e286]: Also see
+                - generic [ref=e287]:
+                  - generic [ref=e288]:
+                    - generic [ref=e289]: problem
+                    - paragraph [ref=e290]: Race Condition
+                    - paragraph [ref=e291]: Occurs when multiple processes/threads access shared data simultaneously, leading to unpredictable results depending on execution order.
+                  - generic [ref=e292]:
+                    - generic [ref=e293]: concept
+                    - paragraph [ref=e294]: Critical Region
+                    - paragraph [ref=e295]: Part of a program where shared resources are accessed and needs protection from race conditions.
+                  - generic [ref=e296]:
+                    - generic [ref=e297]: concept
+                    - paragraph [ref=e298]: Shared Memory
+                    - paragraph [ref=e299]: A communication mechanism between processes and threads, often leading to race conditions if not managed properly.
+                  - generic [ref=e300]:
+                    - generic [ref=e301]: solution
+                    - paragraph [ref=e302]: Critical Region as Solution
+                    - paragraph [ref=e303]: A program section that prevents race conditions by providing controlled access to shared resources.
+          - generic [ref=e176]:
+            - generic [ref=e177]:
+              - heading "Stage info" [level=3] [ref=e178]
+              - generic [ref=e179]:
+                - generic [ref=e180]:
+                  - generic [ref=e181]: Estimated time
+                  - generic [ref=e182]: ~45 min
+                - generic [ref=e183]:
+                  - generic [ref=e184]: Status
+                  - generic [ref=e185]: In progress
+                - generic [ref=e186]:
+                  - generic [ref=e187]: Order
+                  - generic [ref=e188]: Stage 2 of 7
+            - generic [ref=e189]:
+              - heading "Topics in this stage" [level=3] [ref=e190]
+              - generic [ref=e192]:
+                - generic [ref=e194]: Race Conditions
+                - generic [ref=e195]: Not started
+            - button "Test myself →" [ref=e196]
+  - button "Open Next.js Dev Tools" [ref=e10] [cursor=pointer]:
+    - img [ref=e11]
+  - alert [ref=e14]: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/stages/87af6be6-6083-4eb5-b26a-aa25637f515c

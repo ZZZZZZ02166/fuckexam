@@ -729,7 +729,30 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
     relMap.set(`${r.from}:${r.to}`, r.label)
   })
 
-  const rootIds = nodes.filter(n => (inDeg.get(n.id) ?? 0) === 0).map(n => n.id)
+  const allRootIds = nodes.filter(n => (inDeg.get(n.id) ?? 0) === 0).map(n => n.id)
+
+  // When multiple indegree-0 nodes exist, only the most important one is the true root.
+  // The rest are initially held as extraOrphans; we try to re-integrate them before "Also see".
+  let rootIds: string[]
+  let extraOrphans: string[] = []
+  if (allRootIds.length <= 1) {
+    rootIds = allRootIds
+  } else {
+    const importanceOrder = ['primary', 'secondary', 'supporting']
+    const sorted = [...allRootIds].sort((a, b) => {
+      const na = nodeMap.get(a)!
+      const nb = nodeMap.get(b)!
+      const ai = importanceOrder.indexOf((na as any).importance ?? 'supporting')
+      const bi = importanceOrder.indexOf((nb as any).importance ?? 'supporting')
+      if (ai !== bi) return ai - bi
+      if (na.type === 'concept' && nb.type !== 'concept') return -1
+      if (nb.type === 'concept' && na.type !== 'concept') return 1
+      return 0
+    })
+    rootIds = [sorted[0]]
+    extraOrphans.push(...sorted.slice(1))
+  }
+
   let fallbackRoot: string | undefined
   if (!rootIds.length && nodes.length) {
     const importanceOrder = ['primary', 'secondary', 'supporting']
@@ -761,17 +784,31 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
     frontier = next
   }
 
-  const orphans = nodes.filter(n => !visited.has(n.id))
-
-  function getLevelConnector(fromIds: string[], toIds: string[]): string | null {
-    for (const from of fromIds) {
-      for (const to of toIds) {
-        const label = relMap.get(`${from}:${to}`)
-        if (label) return label
+  // Safety layer: try to integrate extraOrphans that have children in the main flow.
+  // They belong upstream of their children, not in a footnote section.
+  for (const orphanId of [...extraOrphans]) {
+    const children = adj.get(orphanId) ?? []
+    let earliestChildLevel = -1
+    for (let li = 0; li < levels.length; li++) {
+      if (levels[li].some(id => children.includes(id))) {
+        earliestChildLevel = li
+        break
       }
     }
-    return null
+    if (earliestChildLevel > 0) {
+      levels[earliestChildLevel - 1] = [...levels[earliestChildLevel - 1], orphanId]
+      visited.add(orphanId)
+      extraOrphans = extraOrphans.filter(id => id !== orphanId)
+    } else if (earliestChildLevel === 0) {
+      levels.unshift([orphanId])
+      visited.add(orphanId)
+      extraOrphans = extraOrphans.filter(id => id !== orphanId)
+    }
+    // If no children in the main flow, it stays in extraOrphans → "Also see"
   }
+
+  // Truly unreachable nodes (not integrated above) go to "Also see"
+  const orphans = nodes.filter(n => !visited.has(n.id))
 
   return (
     <div className="space-y-3">
@@ -780,19 +817,50 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
       </div>
 
       {levels.map((level, li) => {
-        const connector = li < levels.length - 1 ? getLevelConnector(level, levels[li + 1]) : null
+        const prevLevel = li > 0 ? levels[li - 1] : null
+
+        // Compute each node's incoming edge label from the previous level
+        const incomingLabels = level.map(id => {
+          if (!prevLevel) return null
+          for (const parentId of prevLevel) {
+            const label = relMap.get(`${parentId}:${id}`)
+            if (label) return label
+          }
+          return null
+        })
+
+        // Use a shared centered connector only when all edges share the same label
+        const uniqueLabels = [...new Set(incomingLabels.filter(Boolean))]
+        const sharedLabel = uniqueLabels.length === 1 ? uniqueLabels[0] : null
+
         return (
           <div key={li}>
+            {sharedLabel && (
+              <div className="flex flex-col items-center py-1.5 gap-0.5">
+                <div className="w-px h-3 bg-slate-300" />
+                <span className="rounded-full bg-white border border-slate-300 px-2.5 py-0.5 text-slate-500 text-[11px]">
+                  {sharedLabel}
+                </span>
+                <div className="w-px h-3 bg-slate-300" />
+              </div>
+            )}
+
             <div className={cn(
               'grid gap-2',
               level.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
             )}>
-              {level.map(id => {
+              {level.map((id, idx) => {
                 const node = nodeMap.get(id)
                 if (!node) return null
                 const cls = nodeTypeClasses(node.type)
+                const incomingLabel = incomingLabels[idx]
+                const showPerCardLabel = prevLevel && !sharedLabel && incomingLabel
+
                 return (
                   <div key={id} className={cn('rounded-xl border-[1.5px] px-4 py-3.5', cls.bg, cls.border)}>
+                    {showPerCardLabel && (
+                      <p className="text-[10px] text-slate-400 italic mb-2 -mt-0.5">↑ {incomingLabel}</p>
+                    )}
                     <span className={cn('inline-block rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide', cls.badge)}>
                       {node.type.replace(/_/g, ' ')}
                     </span>
@@ -805,16 +873,6 @@ function ConceptFlowMap({ content, onRetry }: { content: ConceptMapContent; onRe
                 )
               })}
             </div>
-
-            {connector && (
-              <div className="flex flex-col items-center py-1.5 gap-0.5">
-                <div className="w-px h-3 bg-slate-300" />
-                <span className="rounded-full bg-white border border-slate-300 px-2.5 py-0.5 text-slate-500 text-[11px]">
-                  {connector}
-                </span>
-                <div className="w-px h-3 bg-slate-300" />
-              </div>
-            )}
           </div>
         )
       })}

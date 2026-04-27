@@ -10,29 +10,44 @@ export async function getStageContext(
   topicNames: string[],
   previousTopicNames: string[] = [],
   futureTopicNames: string[] = [],
+  purpose: 'general' | 'concept_map' = 'general',
 ): Promise<string> {
   const { data: cached } = await supabaseAdmin
     .from('stage_context_cache')
     .select('context_text')
     .eq('stage_id', stageId)
+    .eq('purpose', purpose)
     .single()
   if (cached) {
-    console.log('[ai] context cache_hit stage=', stageId)
+    console.log('[ai] context cache_hit stage=', stageId, 'purpose=', purpose)
     return cached.context_text
   }
 
-  console.log('[ai] context cache_miss stage=', stageId)
+  console.log('[ai] context cache_miss stage=', stageId, 'purpose=', purpose)
 
   const exclusions = [...previousTopicNames, ...futureTopicNames]
-  const query = exclusions.length
-    ? `${topicNames.join(', ')} (not about: ${exclusions.join(', ')})`
-    : topicNames.join(', ')
+  const base = topicNames.join(', ')
+  let query: string
+  if (purpose === 'concept_map') {
+    // Relationship-focused query to surface cause/effect, conditions, solutions, and exam traps.
+    // Still applies exclusions so chunks stay scoped to the current stage.
+    const excl = exclusions.length ? ` (not about: ${exclusions.join(', ')})` : ''
+    query = `${base}${excl}: causes, conditions, solutions, methods, limitations, exam traps, examples, relationships between`
+  } else {
+    query = exclusions.length ? `${base} (not about: ${exclusions.join(', ')})` : base
+  }
+
   const queryEmbedding = await embedText(query)
+
+  // More topics = more chunks needed to cover all sub-concepts
+  const matchCount = purpose === 'concept_map'
+    ? Math.min(6 + topicNames.length * 3, 24)
+    : Math.min(4 + topicNames.length * 2, 12)
 
   const { data: chunks } = await supabaseAdmin.rpc('match_chunks_for_stage', {
     stage_id_input: stageId,
     query_embedding: JSON.stringify(queryEmbedding),
-    match_count: 8,
+    match_count: matchCount,
   })
 
   let contextText = ''
@@ -50,7 +65,7 @@ export async function getStageContext(
         .from('chunks')
         .select('content')
         .in('material_id', materialIds)
-        .limit(8)
+        .limit(matchCount)
       contextText = (fallbackChunks ?? []).map((c: any) => c.content).join('\n\n')
     }
   }
@@ -58,7 +73,10 @@ export async function getStageContext(
   if (contextText) {
     await supabaseAdmin
       .from('stage_context_cache')
-      .upsert({ stage_id: stageId, context_text: contextText }, { onConflict: 'stage_id' })
+      .upsert(
+        { stage_id: stageId, purpose, context_text: contextText },
+        { onConflict: 'stage_id,purpose' },
+      )
   }
 
   return contextText
