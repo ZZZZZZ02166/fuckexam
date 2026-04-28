@@ -88,15 +88,36 @@ export function computeNextBestTask(
 }
 
 export function computeReadinessScore(
+  stages: StudyStage[],
   topics: Topic[],
   masteryRecords: MasteryRecord[]
 ): number {
-  const masteryMap = new Map(masteryRecords.map(m => [m.topic_id, m.level]))
-  const attempted = topics.filter(t => {
-    const level = masteryMap.get(t.id)
-    return level && level !== 'grey'
-  })
-  if (attempted.length === 0) return 0
-  const green = attempted.filter(t => masteryMap.get(t.id) === 'green')
-  return Math.round((green.length / attempted.length) * 100)
+  if (stages.length === 0) return 0
+
+  // Use actual quiz score ratio if available, fall back to level-based approximation
+  const masteryMap = new Map(masteryRecords.map(m => [m.topic_id, m]))
+
+  // Each completed stage contributes its average topic score / total stages
+  let totalWeight = 0
+  for (const stage of stages) {
+    if (stage.status !== 'complete') continue
+    const topicIds = stage.topic_ids ?? []
+    if (topicIds.length === 0) {
+      totalWeight += 1
+      continue
+    }
+    const stageWeight = topicIds.reduce((sum, tid) => {
+      const record = masteryMap.get(tid)
+      if (!record) return sum
+      // Prefer actual recorded ratio; fall back to level midpoints for legacy records
+      if (typeof record.score === 'number') return sum + record.score
+      if (record.level === 'green') return sum + 0.9
+      if (record.level === 'yellow') return sum + 0.65
+      if (record.level === 'red') return sum + 0.2
+      return sum
+    }, 0) / topicIds.length
+    totalWeight += stageWeight
+  }
+
+  return Math.round((totalWeight / stages.length) * 100)
 }

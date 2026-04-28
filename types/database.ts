@@ -25,9 +25,9 @@ export type Database = {
         Relationships: [{ foreignKeyName: "generated_items_stage_id_fkey"; columns: ["stage_id"]; isOneToOne: false; referencedRelation: "study_stages"; referencedColumns: ["id"] }]
       }
       mastery_records: {
-        Row: { id: string; level: string | null; topic_id: string; updated_at: string | null; user_id: string }
-        Insert: { id?: string; level?: string | null; topic_id: string; updated_at?: string | null; user_id: string }
-        Update: { id?: string; level?: string | null; topic_id?: string; updated_at?: string | null; user_id?: string }
+        Row: { id: string; level: string | null; score: number | null; topic_id: string; updated_at: string | null; user_id: string }
+        Insert: { id?: string; level?: string | null; score?: number | null; topic_id: string; updated_at?: string | null; user_id: string }
+        Update: { id?: string; level?: string | null; score?: number | null; topic_id?: string; updated_at?: string | null; user_id?: string }
         Relationships: [{ foreignKeyName: "mastery_records_topic_id_fkey"; columns: ["topic_id"]; isOneToOne: false; referencedRelation: "topics"; referencedColumns: ["id"] }]
       }
       materials: {

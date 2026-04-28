@@ -59,7 +59,7 @@ function MasteryView() {
 
   const { subject, topics, stages, mastery, readiness_history } = data
   const masteryMap = new Map(mastery.map(m => [m.topic_id, m.level]))
-  const score = readiness_history[0]?.score ?? computeReadinessScore(topics, mastery)
+  const score = computeReadinessScore(stages, topics, mastery)
   const nextTask: NextBestTask = computeNextBestTask(stages, topics, mastery, subject.exam_date)
   const days = daysUntil(subject.exam_date)
   const greenCount = topics.filter(t => masteryMap.get(t.id) === 'green').length

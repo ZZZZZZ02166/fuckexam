@@ -108,11 +108,11 @@ function Dashboard() {
                     <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-white/85 rounded-full"
-                        style={{ width: `${continueCard.readiness_history[0]?.score ?? computeReadinessScore(continueCard.topics, continueCard.mastery)}%` }}
+                        style={{ width: `${computeReadinessScore(continueCard.stages, continueCard.topics, continueCard.mastery)}%` }}
                       />
                     </div>
                     <span className="text-white/75 text-sm font-bold shrink-0">
-                      {continueCard.readiness_history[0]?.score ?? computeReadinessScore(continueCard.topics, continueCard.mastery)}% ready
+                      {computeReadinessScore(continueCard.stages, continueCard.topics, continueCard.mastery)}% ready
                     </span>
                   </div>
                 </div>
@@ -140,7 +140,7 @@ function Dashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {cards.map(({ subject, topics, stages, mastery, readiness_history }) => {
-                  const score = readiness_history[0]?.score ?? computeReadinessScore(topics, mastery)
+                  const score = computeReadinessScore(stages, topics, mastery)
                   const days = daysUntil(subject.exam_date)
                   const stagesComplete = stages.filter(s => s.status === 'complete').length
 
@@ -227,8 +227,8 @@ function Dashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {cards.map(({ subject, topics, stages, mastery, readiness_history }, i) => {
-                          const score = readiness_history[0]?.score ?? computeReadinessScore(topics, mastery)
+                        {cards.map(({ subject, topics, stages, mastery }, i) => {
+                          const score = computeReadinessScore(stages, topics, mastery)
                           const days = daysUntil(subject.exam_date)
                           const stagesComplete = stages.filter(s => s.status === 'complete').length
                           const solidCount = topics.filter(t => (mastery.find(m => m.topic_id === t.id)?.level ?? 'grey') === 'green').length

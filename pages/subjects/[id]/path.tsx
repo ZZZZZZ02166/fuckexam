@@ -75,7 +75,7 @@ function PathView() {
   )
 
   const { subject, topics, stages, mastery, readiness_history, materials } = data
-  const score = readiness_history[0]?.score ?? computeReadinessScore(topics, mastery)
+  const score = computeReadinessScore(stages, topics, mastery)
   const nextTask: NextBestTask = computeNextBestTask(stages, topics, mastery, subject.exam_date)
   const days = daysUntil(subject.exam_date)
   const masteryMap = new Map(mastery.map(m => [m.topic_id, m.level]))
@@ -140,17 +140,23 @@ function PathView() {
             </div>
             <ReadinessBar score={score} showLabel={false} />
             <div className="flex gap-1 pt-0.5">
-              {stages.map((s, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'h-1.5 flex-1 rounded-full transition-all',
-                    s.status === 'complete'    ? 'bg-green-500' :
-                    s.status === 'in_progress' ? 'bg-blue-500' :
-                    'bg-[#E2E8F0]'
-                  )}
-                />
-              ))}
+              {stages.map((s, i) => {
+                const ml = stageMasteryLevel(s)
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      'h-1.5 flex-1 rounded-full transition-all',
+                      s.status === 'in_progress' ? 'bg-blue-500' :
+                      s.status === 'complete' && ml === 'green'  ? 'bg-green-500' :
+                      s.status === 'complete' && ml === 'yellow' ? 'bg-amber-400' :
+                      s.status === 'complete' && ml === 'red'    ? 'bg-red-400' :
+                      s.status === 'complete'                    ? 'bg-amber-400' :
+                      'bg-[#E2E8F0]'
+                    )}
+                  />
+                )
+              })}
             </div>
           </div>
 
@@ -177,10 +183,16 @@ function PathView() {
                         onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
                         className={cn(
                           'w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-sm font-extrabold z-10 shrink-0 border-2 transition-all',
-                          isComplete
-                            ? 'bg-green-50 border-green-400 text-green-700'
-                            : isActive
+                          isActive
                             ? 'bg-blue-600 border-blue-600 text-white'
+                            : isComplete && ml === 'green'
+                            ? 'bg-green-50 border-green-400 text-green-700'
+                            : isComplete && ml === 'yellow'
+                            ? 'bg-amber-50 border-amber-400 text-amber-700'
+                            : isComplete && ml === 'red'
+                            ? 'bg-red-50 border-red-400 text-red-700'
+                            : isComplete
+                            ? 'bg-amber-50 border-amber-400 text-amber-700'
                             : 'bg-white border-[#CBD5E1] text-[#94A3B8]'
                         )}
                       >
@@ -189,7 +201,11 @@ function PathView() {
                       {index < stages.length - 1 && (
                         <div className={cn(
                           'w-0.5 flex-1 my-1.5 rounded-full min-h-[16px]',
-                          isComplete ? 'bg-green-300' : 'bg-[#E2E8F0]'
+                          isComplete && ml === 'green'  ? 'bg-green-300' :
+                          isComplete && ml === 'yellow' ? 'bg-amber-200' :
+                          isComplete && ml === 'red'    ? 'bg-red-200' :
+                          isComplete                    ? 'bg-amber-200' :
+                          'bg-[#E2E8F0]'
                         )} />
                       )}
                     </div>
@@ -201,8 +217,14 @@ function PathView() {
                         'flex-1 text-left rounded-xl border px-4 py-3.5 mb-3 transition-all group',
                         isActive
                           ? 'border-blue-300 bg-blue-50 hover:border-blue-400'
+                          : isComplete && ml === 'green'
+                          ? 'border-green-200 bg-green-50 hover:border-green-300'
+                          : isComplete && ml === 'yellow'
+                          ? 'border-amber-200 bg-amber-50 hover:border-amber-300'
+                          : isComplete && ml === 'red'
+                          ? 'border-red-200 bg-red-50 hover:border-red-300'
                           : isComplete
-                          ? 'border-[#E2E8F0] bg-white opacity-60 hover:opacity-100 hover:border-green-200'
+                          ? 'border-[#E2E8F0] bg-white hover:border-green-200'
                           : 'border-[#E2E8F0] bg-white hover:border-blue-200 hover:shadow-sm'
                       )}
                     >
@@ -210,6 +232,10 @@ function PathView() {
                         <div className="min-w-0">
                           <p className={cn(
                             'font-bold text-sm truncate',
+                            isActive ? 'text-[#0F172A]' :
+                            isComplete && ml === 'green' ? 'text-green-800' :
+                            isComplete && ml === 'yellow' ? 'text-amber-800' :
+                            isComplete && ml === 'red' ? 'text-red-800' :
                             isComplete ? 'text-[#64748B]' : 'text-[#0F172A]'
                           )}>
                             {stage.name}

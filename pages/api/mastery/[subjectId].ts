@@ -36,13 +36,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       topicScores.set(a.topic_id, existing)
     }
 
-    // Upsert mastery records
+    // Upsert mastery records — store actual ratio alongside the bucketed level
     const upsertRows = [...topicScores.entries()].map(([topic_id, { correct, total }]) => {
       const ratio = total > 0 ? correct / total : 0
       let level: MasteryLevel = 'red'
       if (ratio >= 0.8) level = 'green'
       else if (ratio >= 0.5) level = 'yellow'
-      return { user_id: user.id, topic_id, level, updated_at: new Date().toISOString() }
+      return { user_id: user.id, topic_id, level, score: ratio, updated_at: new Date().toISOString() }
     })
 
     if (upsertRows.length) {
@@ -60,17 +60,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Recompute readiness score
-    const { data: topics } = await supabaseAdmin
-      .from('topics')
-      .select('*')
-      .eq('subject_id', subjectId)
+    const [{ data: topics }, { data: stages }] = await Promise.all([
+      supabaseAdmin.from('topics').select('*').eq('subject_id', subjectId),
+      supabaseAdmin.from('study_stages').select('*').eq('subject_id', subjectId),
+    ])
     const { data: mastery } = await supabaseAdmin
       .from('mastery_records')
       .select('*')
       .eq('user_id', user.id)
       .in('topic_id', topics?.map(t => t.id) ?? [])
 
-    const score = computeReadinessScore(topics ?? [], mastery ?? [])
+    const score = computeReadinessScore(stages ?? [], topics ?? [], mastery ?? [])
     await supabaseAdmin
       .from('readiness_snapshots')
       .insert({ user_id: user.id, subject_id: subjectId, score })

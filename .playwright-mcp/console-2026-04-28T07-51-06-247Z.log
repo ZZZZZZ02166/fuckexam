@@ -6,3 +6,73 @@
 [  248495ms] [LOG] [Fast Refresh] done in 79ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
 [  330384ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
 [  330542ms] [LOG] [Fast Refresh] done in 158ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1077189ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1077805ms] [LOG] [Fast Refresh] done in 619ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1086680ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1086978ms] [LOG] [Fast Refresh] done in 298ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1094785ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1095078ms] [LOG] [Fast Refresh] done in 293ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1361491ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1361698ms] [LOG] [Fast Refresh] done in 208ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1543599ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1543746ms] [ERROR] %o
+
+%s
+
+%s
+ TypeError: Cannot read properties of undefined (reading 'map')
+    at computeReadinessScore (webpack-internal:///(pages-dir-browser)/./lib/nextBestTask.ts:87:47)
+    at PathView (webpack-internal:///(pages-dir-browser)/./pages/subjects/[id]/path.tsx:113:92)
+    at Object.react_stack_bottom_frame (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:25905:20)
+    at renderWithHooks (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:7663:22)
+    at updateFunctionComponent (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:10167:19)
+    at beginWork (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:11779:18)
+    at runWithFiberInDEV (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:872:30)
+    at performUnitOfWork (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:17642:22)
+    at workLoopSync (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:17470:41)
+    at renderRootSync (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:17451:11)
+    at performWorkOnRoot (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:16584:35)
+    at performSyncWorkOnRoot (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:18973:7)
+    at flushSyncWorkAcrossRoots_impl (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:18815:21)
+    at flushSyncWork$1 (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:16899:12)
+    at Object.scheduleRefresh (webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:114:9)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/compiled/react-refresh/cjs/react-refresh-runtime.development.js:265:17)
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/compiled/react-refresh/cjs/react-refresh-runtime.development.js:254:26)
+    at applyUpdate (webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/compiled/@next/react-refresh-utils/dist/internal/helpers.js:139:31)
+    at statusHandler (webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/compiled/@next/react-refresh-utils/dist/internal/helpers.js:156:13)
+    at setStatus (http://localhost:3000/_next/static/chunks/webpack.js:437:55)
+    at http://localhost:3000/_next/static/chunks/webpack.js:606:21 The above error occurred in the <PathView> component. React will try to recreate this component tree from scratch using the error boundary you provided, PagesDevOverlayErrorBoundary. @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[ 1543749ms] [LOG] [Fast Refresh] done in 150ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1551319ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1551522ms] [LOG] [Fast Refresh] done in 203ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1557298ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1563473ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1563603ms] [LOG] [Fast Refresh] done in 129ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1570035ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1570122ms] [LOG] [Fast Refresh] done in 87ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1577365ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1577434ms] [LOG] [Fast Refresh] done in 69ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1582837ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1583114ms] [LOG] [Fast Refresh] done in 276ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1592657ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1733232ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1747476ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1747622ms] [LOG] [Fast Refresh] done in 145ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1767064ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1767150ms] [LOG] [Fast Refresh] done in 86ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1773653ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1773764ms] [LOG] [Fast Refresh] done in 110ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1773883ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1773924ms] [LOG] [Fast Refresh] done in 40ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1774341ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de:0
+[ 1792292ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:28004
+[ 1792355ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[ 1797461ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1797553ms] [LOG] [Fast Refresh] done in 93ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1961011ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1961249ms] [LOG] [Fast Refresh] done in 239ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1970270ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1970406ms] [LOG] [Fast Refresh] done in 135ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[ 1977858ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 1977976ms] [LOG] [Fast Refresh] done in 117ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
