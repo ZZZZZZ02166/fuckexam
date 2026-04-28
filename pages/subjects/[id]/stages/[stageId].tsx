@@ -686,6 +686,8 @@ function SummaryTab({ content }: { content: SummaryContent }) {
 
 function AnswerCoachTab({ content }: { content: AnswerCoachContent }) {
   const [activeQ, setActiveQ] = useState(0)
+  const [showFullMark, setShowFullMark] = useState(false)
+  const [showWeak, setShowWeak] = useState(false)
 
   if (!content?.likelyQuestions?.length) {
     return (
@@ -754,30 +756,48 @@ function AnswerCoachTab({ content }: { content: AnswerCoachContent }) {
         </div>
       </div>
 
-      {/* Card 4 — Full-mark answer */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">✓</span>
-          <p className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.14em]">Full-mark answer</p>
-        </div>
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{q.fullMarkAnswer}</div>
-      </div>
-
-      {/* Card 5 — Weak answer */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-4 h-4 rounded-full bg-rose-400 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">✗</span>
-          <p className="text-[10px] font-black text-rose-600 uppercase tracking-[0.14em]">Weak answer</p>
-        </div>
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line mb-4">{q.weakAnswer}</div>
-        <div className="flex gap-3 pl-1">
-          <div className="w-0.5 rounded-full bg-rose-300 flex-shrink-0 self-stretch" />
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.12em] mb-1">Why this loses marks</p>
-            <p className="text-sm text-slate-600 leading-relaxed">{q.whyWeak}</p>
+      {/* Card 4 — Full-mark answer (toggle) */}
+      <button
+        onClick={() => setShowFullMark(v => !v)}
+        className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5 text-left transition hover:border-emerald-200"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">✓</span>
+            <p className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.14em]">Full-mark answer</p>
           </div>
+          <span className={cn('text-slate-400 text-xs font-bold transition-transform duration-200', showFullMark ? 'rotate-180' : '')}>▾</span>
         </div>
-      </div>
+        {showFullMark && (
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{q.fullMarkAnswer}</div>
+        )}
+      </button>
+
+      {/* Card 5 — Weak answer (toggle) */}
+      <button
+        onClick={() => setShowWeak(v => !v)}
+        className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5 text-left transition hover:border-rose-200"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full bg-rose-400 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">✗</span>
+            <p className="text-[10px] font-black text-rose-600 uppercase tracking-[0.14em]">Weak answer</p>
+          </div>
+          <span className={cn('text-slate-400 text-xs font-bold transition-transform duration-200', showWeak ? 'rotate-180' : '')}>▾</span>
+        </div>
+        {showWeak && (
+          <div className="mt-4 space-y-3">
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{q.weakAnswer}</div>
+            <div className="flex gap-3 pl-1">
+              <div className="w-0.5 rounded-full bg-rose-300 flex-shrink-0 self-stretch" />
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.12em] mb-1">Why this loses marks</p>
+                <p className="text-sm text-slate-600 leading-relaxed">{q.whyWeak}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </button>
 
       {/* Card 6 — Marking checklist */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
@@ -812,7 +832,7 @@ function AnswerCoachTab({ content }: { content: AnswerCoachContent }) {
       <div className="flex gap-3 pt-1">
         {activeQ > 0 && (
           <button
-            onClick={() => setActiveQ(i => i - 1)}
+            onClick={() => { setActiveQ(i => i - 1); setShowFullMark(false); setShowWeak(false) }}
             className="flex-1 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 transition"
           >
             ← Previous
@@ -820,7 +840,7 @@ function AnswerCoachTab({ content }: { content: AnswerCoachContent }) {
         )}
         {activeQ < total - 1 && (
           <button
-            onClick={() => setActiveQ(i => i + 1)}
+            onClick={() => { setActiveQ(i => i + 1); setShowFullMark(false); setShowWeak(false) }}
             className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition shadow-sm"
           >
             Next question →
