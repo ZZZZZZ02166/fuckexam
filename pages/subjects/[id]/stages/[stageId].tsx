@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Lightbulb, ListChecks } from 'lucide-react'
 import { RequireAuth } from '@/components/RequireAuth'
 import { Layout } from '@/components/Layout'
 import { MasteryDot, MasteryChip } from '@/components/MasteryDot'
@@ -698,120 +699,117 @@ function AnswerCoachTab({ content }: { content: AnswerCoachContent }) {
   const q = content.likelyQuestions[activeQ]
 
   return (
-    <div className="space-y-4">
-      {/* Top nav strip */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black tracking-[0.18em] text-blue-600 uppercase">Answer Coach</span>
-          <span className="text-slate-300 text-xs">·</span>
-          <span className="text-xs text-slate-400 font-medium">Question {activeQ + 1} of {total}</span>
+    <div className="space-y-3">
+
+      {/* Card 1 — Header + question + why likely (one unified card) */}
+      <div className="rounded-[28px] overflow-hidden shadow-sm">
+        {/* Gradient header */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-5 text-white flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-lg font-black text-blue-700 shadow-sm flex-shrink-0">Q{activeQ + 1}</div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-100">Exam question</p>
+              <p className="text-sm text-blue-50">Likely written-response question</p>
+            </div>
+          </div>
+          <div className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-blue-50 ring-1 ring-white/20">High relevance</div>
         </div>
-        <div className="flex gap-1.5">
-          {content.likelyQuestions.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveQ(i)}
-              className={cn(
-                'h-1.5 rounded-full transition-all duration-200',
-                i === activeQ ? 'w-6 bg-blue-500' : 'w-4 bg-slate-200 hover:bg-slate-300'
-              )}
-            />
+
+        {/* Card body */}
+        <div className="bg-white px-6 py-6 space-y-3">
+          {/* Question box */}
+          <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Question</p>
+            <p className="text-[22px] font-bold leading-snug text-slate-950">{q.question}</p>
+          </div>
+          {/* Why likely box — more saturated periwinkle */}
+          <div className="rounded-2xl bg-indigo-100/70 p-5 border border-indigo-100 flex gap-3">
+            <Lightbulb className="mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-400" />
+            <div>
+              <p className="text-sm font-bold text-indigo-900">Why this question is likely</p>
+              <p className="mt-1 text-sm leading-relaxed text-indigo-700">{q.whyLikely}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Card 3 — Answer plan */}
+      <div className="rounded-[28px] border border-blue-200 bg-white shadow-sm p-7">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 flex-shrink-0">
+            <ListChecks className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-500">Answer plan</p>
+            <p className="text-xl font-bold text-slate-950">Write it in this order</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {q.answerPlan.map((step, j) => (
+            <div key={j} className="flex gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 items-start">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm">{j + 1}</div>
+              <p className="pt-1 text-base leading-relaxed text-slate-700">{step}</p>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Question card */}
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      {/* Card 4 — Full-mark answer */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">✓</span>
+          <p className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.14em]">Full-mark answer</p>
+        </div>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{q.fullMarkAnswer}</div>
+      </div>
 
-        {/* Exam question zone */}
-        <div className="px-6 pt-6 pb-5 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded tracking-wider uppercase">Q{activeQ + 1}</span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em]">Exam Question</span>
-          </div>
-          {/* Why likely callout */}
-          <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3.5 py-2.5 mb-4">
-            <p className="text-xs text-indigo-500 italic leading-relaxed">{q.whyLikely}</p>
-          </div>
-          {/* The question itself — hero element */}
-          <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 shadow-sm">
-            <p className="text-[15px] font-bold text-slate-800 leading-relaxed">{q.question}</p>
+      {/* Card 5 — Weak answer */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-4 h-4 rounded-full bg-rose-400 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">✗</span>
+          <p className="text-[10px] font-black text-rose-600 uppercase tracking-[0.14em]">Weak answer</p>
+        </div>
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line mb-4">{q.weakAnswer}</div>
+        <div className="flex gap-3 pl-1">
+          <div className="w-0.5 rounded-full bg-rose-300 flex-shrink-0 self-stretch" />
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.12em] mb-1">Why this loses marks</p>
+            <p className="text-sm text-slate-600 leading-relaxed">{q.whyWeak}</p>
           </div>
         </div>
+      </div>
 
-        {/* Answer plan */}
-        <div className="px-6 py-5 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-slate-400 text-sm">≡</span>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.14em]">Answer Plan</p>
-          </div>
-          <div className="space-y-3">
-            {q.answerPlan.map((step, j) => (
-              <div key={j} className="flex gap-4 items-start">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-extrabold flex items-center justify-center mt-0.5">{j + 1}</span>
-                <p className="text-sm text-slate-700 leading-relaxed pt-0.5">{step}</p>
-              </div>
-            ))}
-          </div>
+      {/* Card 6 — Marking checklist */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-slate-400 text-sm">✦</span>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.14em]">Marking checklist</p>
         </div>
-
-        {/* Full-mark answer */}
-        <div className="px-6 py-5 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">✓</span>
-            <p className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.14em]">Full-mark answer</p>
-          </div>
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{q.fullMarkAnswer}</div>
-        </div>
-
-        {/* Weak answer */}
-        <div className="px-6 py-5 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-4 h-4 rounded-full bg-rose-400 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">✗</span>
-            <p className="text-[10px] font-black text-rose-600 uppercase tracking-[0.14em]">Weak answer</p>
-          </div>
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line mb-3">{q.weakAnswer}</div>
-          <div className="flex gap-3 pl-1">
-            <div className="w-0.5 rounded-full bg-rose-300 flex-shrink-0 self-stretch" />
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.12em] mb-1">Why this loses marks</p>
-              <p className="text-sm text-slate-600 leading-relaxed">{q.whyWeak}</p>
+        <div className="space-y-3">
+          {q.markingChecklist.map((item, j) => (
+            <div key={j} className="flex gap-3 items-start">
+              <span className="flex-shrink-0 mt-0.5 w-4 h-4 rounded border-2 border-emerald-400 bg-white flex items-center justify-center">
+                <span className="text-emerald-500 text-[9px] font-black leading-none">✓</span>
+              </span>
+              <p className="text-sm text-slate-700 leading-relaxed">{item}</p>
             </div>
-          </div>
+          ))}
         </div>
+      </div>
 
-        {/* Marking checklist */}
-        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/60">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-slate-400 text-sm">✦</span>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.14em]">Marking checklist</p>
-          </div>
-          <div className="space-y-3">
-            {q.markingChecklist.map((item, j) => (
-              <div key={j} className="flex gap-3 items-start">
-                <span className="flex-shrink-0 mt-0.5 w-4 h-4 rounded border-2 border-emerald-400 bg-white flex items-center justify-center">
-                  <span className="text-emerald-500 text-[9px] font-black leading-none">✓</span>
-                </span>
-                <p className="text-sm text-slate-700 leading-relaxed">{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Common mistake */}
-        <div className="px-6 py-5">
-          <div className="flex gap-3.5 bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-400 text-white text-xs font-black flex items-center justify-center mt-0.5">!</span>
-            <div>
-              <p className="text-[10px] font-black text-amber-700 uppercase tracking-[0.12em] mb-1">Common mistake</p>
-              <p className="text-sm text-slate-700 leading-relaxed">{q.commonMistake}</p>
-            </div>
+      {/* Card 7 — Common mistake */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
+        <div className="flex gap-3.5 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-400 text-white text-xs font-black flex items-center justify-center mt-0.5">!</span>
+          <div>
+            <p className="text-[10px] font-black text-amber-700 uppercase tracking-[0.12em] mb-1">Common mistake</p>
+            <p className="text-sm text-slate-700 leading-relaxed">{q.commonMistake}</p>
           </div>
         </div>
       </div>
 
       {/* Prev / Next navigation */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-1">
         {activeQ > 0 && (
           <button
             onClick={() => setActiveQ(i => i - 1)}
@@ -823,21 +821,21 @@ function AnswerCoachTab({ content }: { content: AnswerCoachContent }) {
         {activeQ < total - 1 && (
           <button
             onClick={() => setActiveQ(i => i + 1)}
-            className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition shadow-sm"
+            className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition shadow-sm"
           >
             Next question →
           </button>
         )}
       </div>
 
-      {/* Exam phrases — shown once below all questions */}
+      {/* Exam phrases — last question only */}
       {activeQ === total - 1 && content.examPhrases?.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 mt-2">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.14em] mb-4">Exam Phrases</p>
           <div className="space-y-2.5">
             {content.examPhrases.map((phrase, i) => (
               <div key={i} className="flex gap-3 items-start">
-                <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-blue-400 mt-2" />
+                <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2" />
                 <p className="text-sm text-slate-600 leading-relaxed italic">"{phrase}"</p>
               </div>
             ))}
