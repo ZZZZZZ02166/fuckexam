@@ -1,17 +1,24 @@
 export const PROMPTS = {
-  buildSubject: (materialSample: string, examFormat: string, subjectName: string) => `
+  buildSubject: (materialSample: string, examFormat: string, subjectName: string, lectureFileCount = 1) => {
+    const minTopics = lectureFileCount * 2
+    const maxTopics = lectureFileCount * 5
+    const minStages = lectureFileCount * 2
+    const maxStages = lectureFileCount * 5
+    return `
 You are a curriculum designer building a university exam study system.
 
 Subject: ${subjectName}
 Exam format: ${examFormat}
+Lecture files provided: ${lectureFileCount}
 
-STEP 1 — Extract 5–12 topics from the material sample below:
+STEP 1 — Extract ${minTopics}–${maxTopics} topics from the material sample below.
+Each lecture file typically covers 2–5 distinct topics. With ${lectureFileCount} file(s), aim for ${minTopics}–${maxTopics} topics total.
 - name: 2–5 words, precise and distinct
 - description: 1–2 sentences on what this topic covers
 - weight: 0.0–1.0 based on how much emphasis the material places on it
 
 STEP 2 — Create an ordered study path from EXACTLY those topics.
-Think of each stage as a CHAPTER in a well-structured textbook.
+Think of each stage as a CHAPTER in a well-structured textbook. With ${lectureFileCount} lecture file(s), aim for ${minStages}–${maxStages} stages.
 
 CRITICAL CURRICULUM RULES:
 1. Every concept belongs to EXACTLY ONE stage — the first stage where it is needed
@@ -26,9 +33,10 @@ Settings per stage:
 - test_types: always include ["recall", "mcq"]
 - estimated_minutes: realistic study time 15–60 min per stage
 
-Material sample:
+Material sample (${lectureFileCount} file(s), each labelled with === FILE: ... ===):
 ${materialSample}
-`.trim(),
+`.trim()
+  },
 
   generateQuizBundle: (topicNames: string, examFormat: string, context: string) => `
 Generate a quiz bundle for: ${topicNames}

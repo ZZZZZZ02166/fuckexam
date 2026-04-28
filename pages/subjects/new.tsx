@@ -142,19 +142,29 @@ function NewSubjectForm() {
     setStep('processing')
     setStatuses([])
 
+    let subject: { id: string } | null = null
+
     try {
       addStatus('Creating subject…')
-      const subject = await apiJson<{ id: string }>('/api/subjects', {
+      subject = await apiJson<{ id: string }>('/api/subjects', {
         method: 'POST',
         body: JSON.stringify({ name, exam_date: examDate || undefined, exam_format_text: examFormat || undefined }),
       })
       completeStatus()
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to create subject')
+      setStep('upload')
+      return
+    }
 
-      const ordered = [...fileEntries].sort((a, b) =>
-        a.materialType === 'course_lecture_material' ? -1 : b.materialType === 'course_lecture_material' ? 1 : 0
-      )
+    const ordered = [...fileEntries].sort((a, b) =>
+      a.materialType === 'course_lecture_material' ? -1 : b.materialType === 'course_lecture_material' ? 1 : 0
+    )
 
-      for (const entry of ordered) {
+    const fileErrors: string[] = []
+
+    for (const entry of ordered) {
+      try {
         addStatus(`Uploading ${entry.file.name}…`)
         const storagePath = `${user.id}/${Date.now()}_${entry.file.name}`
         const { error: uploadErr } = await supabase.storage
@@ -163,11 +173,7 @@ function NewSubjectForm() {
         if (uploadErr) throw new Error(uploadErr.message)
         completeStatus()
 
-        addStatus(
-          entry.materialType === 'course_lecture_material'
-            ? 'Analysing material and building your study path…'
-            : `Processing ${entry.file.name}…`
-        )
+        addStatus(`Processing ${entry.file.name}…`)
         await apiJson('/api/process-material', {
           method: 'POST',
           body: JSON.stringify({
@@ -178,14 +184,29 @@ function NewSubjectForm() {
           }),
         })
         completeStatus()
+      } catch (err: any) {
+        completeStatus()
+        fileErrors.push(`${entry.file.name}: ${err.message ?? 'processing failed'}`)
       }
-
-      setStep('done')
-      setTimeout(() => router.push(`/subjects/${subject.id}/path`), 800)
-    } catch (err: any) {
-      setError(err.message ?? 'Something went wrong')
-      setStep('upload')
     }
+
+    if (fileErrors.length > 0) {
+      setError(`Some files failed to process: ${fileErrors.join('; ')}`)
+    }
+
+    try {
+      addStatus('Building your study path from all materials…')
+      await apiJson(`/api/subjects/${subject!.id}/build-path`, { method: 'POST' })
+      completeStatus()
+    } catch (err: any) {
+      completeStatus()
+      setError((fileErrors.length > 0 ? `${fileErrors.join('; ')}; ` : '') + `Study path generation failed: ${err.message}`)
+      setStep('upload')
+      return
+    }
+
+    setStep('done')
+    setTimeout(() => router.push(`/subjects/${subject!.id}/path`), 800)
   }
 
   return (
