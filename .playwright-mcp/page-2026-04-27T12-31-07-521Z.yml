@@ -1,0 +1,175 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e241]:
+        - generic [ref=e242]: fuckexam
+        - generic [ref=e243]: AI study companion
+      - navigation [ref=e244]:
+        - paragraph [ref=e245]: Menu
+        - generic [ref=e246]:
+          - link "🏠 Dashboard" [ref=e247] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e248]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e249] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e250]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e251] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/mastery
+            - generic [ref=e252]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e253]: Subjects
+        - generic [ref=e254]:
+          - link "comp sys test 3" [ref=e255] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e257]: comp sys test 3
+          - link "computer system testing 2" [ref=e258] [cursor=pointer]:
+            - /url: /subjects/5aaffdfd-6ac7-4238-add3-eda83682e23e/path
+            - generic [ref=e260]: computer system testing 2
+          - link "computer systeme testing 1" [ref=e261] [cursor=pointer]:
+            - /url: /subjects/b45a73d6-0722-48cd-833a-cf55c500b608/path
+            - generic [ref=e263]: computer systeme testing 1
+          - link "computer systems" [ref=e264] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e266]: computer systems
+          - link "computer system" [ref=e267] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e269]: computer system
+          - link "computer system" [ref=e270] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e272]: computer system
+          - link "computer system" [ref=e273] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e275]: computer system
+        - paragraph [ref=e276]: Account
+        - link "＋ Add subject" [ref=e277] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e278]: ＋
+          - text: Add subject
+      - generic [ref=e280]:
+        - generic [ref=e281]: 🎓
+        - generic [ref=e282]:
+          - paragraph [ref=e283]: nioozhiqi
+          - button "Sign out" [ref=e284]
+    - generic [ref=e26]:
+      - banner [ref=e27]:
+        - generic [ref=e28]:
+          - link "← Study Path" [ref=e29] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+          - generic [ref=e30]: /
+          - generic [ref=e31]: Stage View
+      - main [ref=e32]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]:
+                - generic [ref=e38]: Stage 1
+                - generic [ref=e39]: ·
+                - generic [ref=e40]: comp sys test 3
+              - generic [ref=e41]:
+                - heading "Foundations of Interprocess Communication" [level=1] [ref=e42]
+                - generic [ref=e43]:
+                  - generic [ref=e44]: ~15 min
+                  - button "Test myself →" [ref=e45]
+            - generic [ref=e46]:
+              - button "Summary" [ref=e47]
+              - button "Flashcards" [ref=e48]
+              - button "Answer Coach" [active] [ref=e49]
+            - generic [ref=e285]:
+              - generic [ref=e286]:
+                - generic [ref=e287]:
+                  - generic [ref=e288]: Answer Coach
+                  - generic [ref=e289]: ·
+                  - generic [ref=e290]: Question 1 of 2
+                - generic [ref=e291]:
+                  - button [ref=e292]
+                  - button [ref=e293]
+              - generic [ref=e294]:
+                - generic [ref=e295]:
+                  - generic [ref=e296]:
+                    - generic [ref=e297]: Q1
+                    - generic [ref=e298]: Exam Question
+                  - paragraph [ref=e300]: This question assesses the understanding of different IPC mechanisms and their implications in concurrent environments, a core concept of the stage.
+                  - paragraph [ref=e302]: Compare and contrast busy waiting and blocking as techniques for achieving mutual exclusion in interprocess communication. What are the advantages and disadvantages of each?
+                - generic [ref=e303]:
+                  - generic [ref=e304]:
+                    - generic [ref=e305]: ≡
+                    - paragraph [ref=e306]: Answer Plan
+                  - generic [ref=e307]:
+                    - generic [ref=e308]:
+                      - generic [ref=e309]: "1"
+                      - paragraph [ref=e310]: Define busy waiting and blocking.
+                    - generic [ref=e311]:
+                      - generic [ref=e312]: "2"
+                      - paragraph [ref=e313]: Explain how each technique achieves mutual exclusion.
+                    - generic [ref=e314]:
+                      - generic [ref=e315]: "3"
+                      - paragraph [ref=e316]: Discuss the advantages of busy waiting, particularly in terms of simplicity.
+                    - generic [ref=e317]:
+                      - generic [ref=e318]: "4"
+                      - paragraph [ref=e319]: Discuss the disadvantages of busy waiting, such as CPU waste and priority inversion.
+                    - generic [ref=e320]:
+                      - generic [ref=e321]: "5"
+                      - paragraph [ref=e322]: Outline the advantages of blocking, like CPU efficiency.
+                    - generic [ref=e323]:
+                      - generic [ref=e324]: "6"
+                      - paragraph [ref=e325]: Conclude with the disadvantages of blocking, focussing on potential overheads.
+                - generic [ref=e326]:
+                  - generic [ref=e327]:
+                    - generic [ref=e328]: ✓
+                    - paragraph [ref=e329]: Full-mark answer
+                  - generic [ref=e330]: Busy waiting and blocking are two techniques for achieving mutual exclusion in interprocess communication. Busy waiting involves a process continuously checking if a lock is available, which simplifies implementation but wastes CPU cycles and can lead to priority inversion issues. In contrast, blocking allows a process to sleep until a resource becomes available, thus conserving CPU resources; however, it may involve overhead due to context switching and potential delays. Each technique has unique advantages, such as the simplicity of busy waiting, and significant drawbacks, particularly in efficiency and responsiveness.
+                - generic [ref=e331]:
+                  - generic [ref=e332]:
+                    - generic [ref=e333]: ✗
+                    - paragraph [ref=e334]: Weak answer
+                  - generic [ref=e335]: Busy waiting is when a process keeps checking for a lock. Blocking means a process waits for a lock and can sleep. Busy waiting is easier but can waste CPU, while blocking can be more efficient but may take longer. Therefore, busy waiting is good and blocking is bad.
+                  - generic [ref=e338]:
+                    - paragraph [ref=e339]: Why this loses marks
+                    - paragraph [ref=e340]: This answer lacks depth and fails to adequately compare and contrast the two techniques. It does not cover specific advantages and disadvantages or provide clear reasoning, resulting in a lack of detail needed for full marks.
+                - generic [ref=e341]:
+                  - generic [ref=e342]:
+                    - generic [ref=e343]: ✦
+                    - paragraph [ref=e344]: Marking checklist
+                  - generic [ref=e345]:
+                    - generic [ref=e346]:
+                      - generic [ref=e348]: ✓
+                      - paragraph [ref=e349]: Accurate definitions of busy waiting and blocking.
+                    - generic [ref=e350]:
+                      - generic [ref=e352]: ✓
+                      - paragraph [ref=e353]: Clear comparison of how each technique works for mutual exclusion.
+                    - generic [ref=e354]:
+                      - generic [ref=e356]: ✓
+                      - paragraph [ref=e357]: Consideration of advantages and disadvantages of each technique.
+                    - generic [ref=e358]:
+                      - generic [ref=e360]: ✓
+                      - paragraph [ref=e361]: Logical structure of argument with relevant examples.
+                - generic [ref=e363]:
+                  - generic [ref=e364]: "!"
+                  - generic [ref=e365]:
+                    - paragraph [ref=e366]: Common mistake
+                    - paragraph [ref=e367]: Failing to distinguish between busy waiting and blocking clearly, or not providing specific examples of scenarios where one technique may be preferred over the other.
+              - button "Next question →" [ref=e369]
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - heading "Stage info" [level=3] [ref=e164]
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - generic [ref=e167]: Estimated time
+                  - generic [ref=e168]: ~15 min
+                - generic [ref=e169]:
+                  - generic [ref=e170]: Status
+                  - generic [ref=e171]: In progress
+                - generic [ref=e172]:
+                  - generic [ref=e173]: Order
+                  - generic [ref=e174]: Stage 1 of 7
+            - generic [ref=e175]:
+              - heading "Topics in this stage" [level=3] [ref=e176]
+              - generic [ref=e178]:
+                - generic [ref=e180]: Interprocess Communication Mechanisms
+                - generic [ref=e181]: Not started
+            - button "Test myself →" [ref=e182]
+  - button "Open Next.js Dev Tools" [ref=e188] [cursor=pointer]:
+    - img [ref=e189]
+  - alert [ref=e192]: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/stages/0f788101-066b-43ed-bd6f-104090488255

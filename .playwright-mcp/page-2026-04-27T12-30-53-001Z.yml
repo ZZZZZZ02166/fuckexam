@@ -1,0 +1,101 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e193]:
+        - generic [ref=e194]: fuckexam
+        - generic [ref=e195]: AI study companion
+      - navigation [ref=e196]:
+        - paragraph [ref=e197]: Menu
+        - generic [ref=e198]:
+          - link "🏠 Dashboard" [ref=e199] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e200]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e201] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e202]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e203] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/mastery
+            - generic [ref=e204]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e205]: Subjects
+        - generic [ref=e206]:
+          - link "comp sys test 3" [ref=e207] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e209]: comp sys test 3
+          - link "computer system testing 2" [ref=e210] [cursor=pointer]:
+            - /url: /subjects/5aaffdfd-6ac7-4238-add3-eda83682e23e/path
+            - generic [ref=e212]: computer system testing 2
+          - link "computer systeme testing 1" [ref=e213] [cursor=pointer]:
+            - /url: /subjects/b45a73d6-0722-48cd-833a-cf55c500b608/path
+            - generic [ref=e215]: computer systeme testing 1
+          - link "computer systems" [ref=e216] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e218]: computer systems
+          - link "computer system" [ref=e219] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e221]: computer system
+          - link "computer system" [ref=e222] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e224]: computer system
+          - link "computer system" [ref=e225] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e227]: computer system
+        - paragraph [ref=e228]: Account
+        - link "＋ Add subject" [ref=e229] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e230]: ＋
+          - text: Add subject
+      - generic [ref=e232]:
+        - generic [ref=e233]: 🎓
+        - generic [ref=e234]:
+          - paragraph [ref=e235]: nioozhiqi
+          - button "Sign out" [ref=e236]
+    - generic [ref=e26]:
+      - banner [ref=e27]:
+        - generic [ref=e28]:
+          - link "← Study Path" [ref=e29] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+          - generic [ref=e30]: /
+          - generic [ref=e31]: Stage View
+      - main [ref=e32]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]:
+                - generic [ref=e38]: Stage 1
+                - generic [ref=e39]: ·
+                - generic [ref=e40]: comp sys test 3
+              - generic [ref=e41]:
+                - heading "Foundations of Interprocess Communication" [level=1] [ref=e42]
+                - generic [ref=e43]:
+                  - generic [ref=e44]: ~15 min
+                  - button "Test myself →" [disabled] [ref=e45]
+            - generic [ref=e46]:
+              - button "Summary" [ref=e47]
+              - button "Flashcards" [ref=e48]
+              - button "Answer Coach" [active] [ref=e49]
+            - paragraph [ref=e240]: Generating answer coach…
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - heading "Stage info" [level=3] [ref=e164]
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - generic [ref=e167]: Estimated time
+                  - generic [ref=e168]: ~15 min
+                - generic [ref=e169]:
+                  - generic [ref=e170]: Status
+                  - generic [ref=e171]: In progress
+                - generic [ref=e172]:
+                  - generic [ref=e173]: Order
+                  - generic [ref=e174]: Stage 1 of 7
+            - generic [ref=e175]:
+              - heading "Topics in this stage" [level=3] [ref=e176]
+              - generic [ref=e178]:
+                - generic [ref=e180]: Interprocess Communication Mechanisms
+                - generic [ref=e181]: Not started
+            - button "Test myself →" [disabled] [ref=e182]
+  - button "Open Next.js Dev Tools" [ref=e188] [cursor=pointer]:
+    - img [ref=e189]
+  - alert [ref=e192]: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/stages/0f788101-066b-43ed-bd6f-104090488255

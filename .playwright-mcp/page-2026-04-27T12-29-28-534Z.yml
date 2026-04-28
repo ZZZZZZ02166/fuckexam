@@ -1,0 +1,81 @@
+- generic:
+  - generic [active]:
+    - generic [ref=e190]:
+      - generic [ref=e191]:
+        - generic [ref=e192]:
+          - navigation [ref=e193]:
+            - button "previous" [disabled] [ref=e194]:
+              - img "previous" [ref=e195]
+            - generic [ref=e197]:
+              - generic [ref=e198]: 1/
+              - text: "1"
+            - button "next" [disabled] [ref=e199]:
+              - img "next" [ref=e200]
+          - img
+        - generic [ref=e202]:
+          - link "Next.js 15.5.15 (outdated) Webpack" [ref=e203] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e204]
+            - generic "An outdated version detected (latest is 16.2.4), upgrade is highly recommended!" [ref=e206]: Next.js 15.5.15 (outdated)
+            - generic [ref=e207]: Webpack
+          - img
+      - dialog "Runtime Error" [ref=e209]:
+        - generic [ref=e212]:
+          - generic [ref=e213]:
+            - generic [ref=e214]:
+              - generic [ref=e216]: Runtime Error
+              - generic [ref=e217]:
+                - button "Copy Error Info" [ref=e218] [cursor=pointer]:
+                  - img [ref=e219]
+                - button "No related documentation found" [disabled] [ref=e221]:
+                  - img [ref=e222]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e224] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e225]
+            - paragraph [ref=e234]: Internal Server Error
+          - generic [ref=e235]:
+            - generic [ref=e236]:
+              - paragraph [ref=e238]:
+                - img [ref=e240]
+                - generic [ref=e244]: lib/apiFetch.ts (19:11) @ apiJson
+                - button "Open in editor" [ref=e245] [cursor=pointer]:
+                  - img [ref=e247]
+              - generic [ref=e250]:
+                - generic [ref=e251]: "17 | if (!res.ok) {"
+                - generic [ref=e252]: "18 | const err = await res.json().catch(() => ({ error: res.statusText }))"
+                - generic [ref=e253]: "> 19 | throw new Error(err.error ?? res.statusText)"
+                - generic [ref=e254]: "| ^"
+                - generic [ref=e255]: "20 | }"
+                - generic [ref=e256]: 21 | return res.json()
+                - generic [ref=e257]: "22 | }"
+            - generic [ref=e258]:
+              - paragraph [ref=e260]:
+                - text: Call Stack
+                - generic [ref=e261]: "2"
+              - generic [ref=e262]:
+                - generic [ref=e263]:
+                  - text: apiJson
+                  - button "Open apiJson in editor" [ref=e264] [cursor=pointer]:
+                    - img [ref=e265]
+                - text: lib/apiFetch.ts (19:11)
+              - generic [ref=e267]:
+                - generic [ref=e268]:
+                  - text: async loadStage
+                  - button "Open async loadStage in editor" [ref=e269] [cursor=pointer]:
+                    - img [ref=e270]
+                - text: pages/subjects/[id]/stages/[stageId].tsx (80:27)
+        - generic [ref=e272]:
+          - generic [ref=e273]: "1"
+          - generic [ref=e274]: "2"
+    - generic [ref=e9] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e10]:
+        - img [ref=e11]
+      - generic [ref=e275]:
+        - button "Open issues overlay" [ref=e276]:
+          - generic [ref=e277]:
+            - generic [ref=e278]: "0"
+            - generic [ref=e279]: "1"
+          - generic [ref=e280]: Issue
+        - button "Collapse issues badge" [ref=e281]:
+          - img [ref=e282]
+  - alert [ref=e14]: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/stages/0f788101-066b-43ed-bd6f-104090488255
