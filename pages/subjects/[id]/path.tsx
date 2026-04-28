@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -9,9 +9,20 @@ import { MasteryDot } from '@/components/MasteryDot'
 import { ReadinessBar } from '@/components/ReadinessBar'
 import { Spinner } from '@/components/Spinner'
 import { apiJson } from '@/lib/apiFetch'
+import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/pages/_app'
 import { computeNextBestTask, computeReadinessScore } from '@/lib/nextBestTask'
 import { daysUntil, cn } from '@/lib/utils'
-import type { Subject, StudyStage, Topic, MasteryRecord, NextBestTask } from '@/types/database'
+import type { Subject, StudyStage, Topic, MasteryRecord, NextBestTask, UploadMaterialType } from '@/types/database'
+import { UPLOAD_MATERIAL_TYPE_LABELS } from '@/types/database'
+
+interface MaterialRow {
+  id: string
+  file_name: string
+  material_type: string | null
+  created_at: string | null
+  processed_at: string | null
+}
 
 interface SubjectData {
   subject: Subject
@@ -19,6 +30,7 @@ interface SubjectData {
   stages: StudyStage[]
   mastery: MasteryRecord[]
   readiness_history: { score: number; computed_at: string }[]
+  materials: MaterialRow[]
 }
 
 export default function PathPage() {
@@ -32,9 +44,15 @@ export default function PathPage() {
 function PathView() {
   const router = useRouter()
   const { id } = router.query as { id: string }
+  const { user } = useAuth()
   const [data, setData] = useState<SubjectData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  function reload() {
+    if (!id) return
+    apiJson<SubjectData>(`/api/subjects/${id}`).then(setData).catch(() => {})
+  }
 
   useEffect(() => {
     if (!id) return
@@ -56,7 +74,7 @@ function PathView() {
     </div>
   )
 
-  const { subject, topics, stages, mastery, readiness_history } = data
+  const { subject, topics, stages, mastery, readiness_history, materials } = data
   const score = readiness_history[0]?.score ?? computeReadinessScore(topics, mastery)
   const nextTask: NextBestTask = computeNextBestTask(stages, topics, mastery, subject.exam_date)
   const days = daysUntil(subject.exam_date)
@@ -139,6 +157,9 @@ function PathView() {
           {/* Next best task */}
           <NextBestTaskCard task={nextTask} subjectId={id} />
 
+          {/* Materials */}
+          <MaterialsSection materials={materials ?? []} subjectId={id} userId={user?.id} onUploaded={reload} />
+
           {/* Stage list */}
           <div>
             <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B] mb-4">Study stages</h2>
@@ -209,6 +230,155 @@ function PathView() {
         </div>
       </Layout>
     </>
+  )
+}
+
+function MaterialsSection({
+  materials,
+  subjectId,
+  userId,
+  onUploaded,
+}: {
+  materials: MaterialRow[]
+  subjectId: string
+  userId?: string
+  onUploaded: () => void
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [showAdd, setShowAdd] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedType, setSelectedType] = useState<UploadMaterialType>('course_lecture_material')
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+
+  const grouped = Object.entries(UPLOAD_MATERIAL_TYPE_LABELS).map(([type, label]) => ({
+    type: type as UploadMaterialType,
+    label,
+    files: materials.filter(m => (m.material_type ?? 'course_lecture_material') === type),
+  })).filter(g => g.files.length > 0)
+
+  async function handleUpload() {
+    if (!selectedFile || !userId) return
+    setUploading(true)
+    setUploadError('')
+    try {
+      const storagePath = `${userId}/${Date.now()}_${selectedFile.name}`
+      const { error: uploadErr } = await supabase.storage
+        .from('materials')
+        .upload(storagePath, selectedFile, { contentType: selectedFile.type })
+      if (uploadErr) throw new Error(uploadErr.message)
+      await apiJson('/api/process-material', {
+        method: 'POST',
+        body: JSON.stringify({
+          subject_id: subjectId,
+          storage_path: storagePath,
+          file_name: selectedFile.name,
+          material_type: selectedType,
+        }),
+      })
+      setSelectedFile(null)
+      setShowAdd(false)
+      onUploaded()
+    } catch (err: any) {
+      setUploadError(err.message ?? 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B]">Materials</h2>
+        <button
+          onClick={() => setShowAdd(v => !v)}
+          className="text-xs font-bold text-blue-600 hover:text-blue-700 transition"
+        >
+          {showAdd ? 'Cancel' : '+ Add material'}
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] px-5 py-4 space-y-4">
+        {grouped.length === 0 && !showAdd && (
+          <p className="text-sm text-slate-400">No materials uploaded yet.</p>
+        )}
+
+        {grouped.map(group => (
+          <div key={group.type}>
+            <p className="text-xs font-bold text-slate-500 mb-2">{group.label}</p>
+            <div className="space-y-1.5">
+              {group.files.map(f => (
+                <div key={f.id} className="flex items-center gap-2 text-sm text-slate-600">
+                  <span className="text-slate-300">📄</span>
+                  <span className="flex-1 truncate">{f.file_name}</span>
+                  <span className="text-xs text-slate-300 shrink-0">
+                    {f.created_at ? new Date(f.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {showAdd && (
+          <div className="border-t border-slate-100 pt-4 space-y-3">
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
+            />
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5">Material type</label>
+              <select
+                value={selectedType}
+                onChange={e => setSelectedType(e.target.value as UploadMaterialType)}
+                className="w-full text-sm rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              >
+                {(Object.entries(UPLOAD_MATERIAL_TYPE_LABELS) as [UploadMaterialType, string][]).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              {selectedFile ? (
+                <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                  <span className="text-sm text-blue-700 flex-1 truncate">📄 {selectedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFile(null)}
+                    className="text-slate-300 hover:text-red-400 transition text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="w-full rounded-lg border-2 border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400 hover:border-blue-300 hover:text-blue-500 transition"
+                >
+                  Click to select a PDF
+                </button>
+              )}
+            </div>
+
+            {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
+
+            <button
+              onClick={handleUpload}
+              disabled={!selectedFile || uploading}
+              className="w-full rounded-lg px-4 py-2 text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+            >
+              {uploading ? <><Spinner className="w-4 h-4" /> Processing…</> : 'Upload'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

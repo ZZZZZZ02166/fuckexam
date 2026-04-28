@@ -1,8 +1,17 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { embedText } from '@/lib/openai'
 
+type ContextPurpose = 'general' | 'concept_map' | 'answer_coach'
+
+// Three-condition rule: same subject (RPC join) + correct material type + semantic relevance.
+// Material type sets the filter; vector similarity picks the relevant chunks within that filter.
+const MATERIAL_TYPES_FOR_PURPOSE: Record<ContextPurpose, string[]> = {
+  general:      ['course_lecture_material', 'tutorial_material'],
+  concept_map:  ['course_lecture_material'],
+  answer_coach: ['course_lecture_material', 'tutorial_material', 'past_exam_questions', 'exam_solutions_marking_guide'],
+}
+
 // Cache assumes the subject's material set does not change after initial upload.
-// If materials are re-uploaded or added, this cache will be stale.
 // Cache invalidation on material change is out of scope and must be handled in a future PR.
 export async function getStageContext(
   stageId: string,
@@ -10,7 +19,8 @@ export async function getStageContext(
   topicNames: string[],
   previousTopicNames: string[] = [],
   futureTopicNames: string[] = [],
-  purpose: 'general' | 'concept_map' = 'general',
+  purpose: ContextPurpose = 'general',
+  stageName?: string,
 ): Promise<string> {
   const { data: cached } = await supabaseAdmin
     .from('stage_context_cache')
@@ -25,10 +35,22 @@ export async function getStageContext(
 
   console.log('[ai] context cache_miss stage=', stageId, 'purpose=', purpose)
 
+  const materialTypesFilter = MATERIAL_TYPES_FOR_PURPOSE[purpose]
   const exclusions = [...previousTopicNames, ...futureTopicNames]
   const base = topicNames.join(', ')
 
-  // More topics = more chunks needed to cover all sub-concepts
+  // Build a specific query string: stage name + topic names + purpose
+  // This improves semantic similarity by giving the embedding model full context.
+  const purposeLabel = purpose === 'answer_coach' ? 'Answer Coach'
+    : purpose === 'concept_map' ? 'concept map'
+    : 'summary'
+  const excl = exclusions.length ? ` (not about: ${exclusions.join(', ')})` : ''
+  const baseQuery = [
+    stageName ? `Stage: ${stageName}.` : '',
+    `Topics: ${base}${excl}.`,
+    `Purpose: ${purposeLabel}.`,
+  ].filter(Boolean).join(' ')
+
   const matchCount = purpose === 'concept_map'
     ? Math.min(6 + topicNames.length * 3, 24)
     : Math.min(4 + topicNames.length * 2, 12)
@@ -36,14 +58,12 @@ export async function getStageContext(
   let contextText = ''
 
   if (purpose === 'concept_map') {
-    // Multi-query retrieval: 5 purpose-specific queries run in parallel for better coverage
-    const excl = exclusions.length ? ` (not about: ${exclusions.join(', ')})` : ''
     const queries = [
-      `${base}${excl}: core concept definition key idea`,
-      `${base}${excl}: problem motivation failure mode why it matters`,
-      `${base}${excl}: cause requirement prerequisite condition`,
-      `${base}${excl}: solution method mechanism algorithm approach prevent`,
-      `${base}${excl}: limitation drawback trap mistake example scenario`,
+      `${baseQuery} Core concept definition key idea.`,
+      `${baseQuery} Problem motivation failure mode why it matters.`,
+      `${baseQuery} Cause requirement prerequisite condition.`,
+      `${baseQuery} Solution method mechanism algorithm approach.`,
+      `${baseQuery} Limitation drawback trap mistake example scenario.`,
     ]
 
     const perQueryCount = Math.min(4 + topicNames.length * 2, 10)
@@ -54,11 +74,11 @@ export async function getStageContext(
           stage_id_input: stageId,
           query_embedding: JSON.stringify(emb),
           match_count: perQueryCount,
+          material_types_filter: materialTypesFilter,
         })
       )
     )
 
-    // Deduplicate by chunk id, keeping highest similarity score per chunk
     const bestByChunk = new Map<string, { content: string; similarity: number }>()
     for (const result of results) {
       for (const chunk of (result.data ?? []) as any[]) {
@@ -74,12 +94,12 @@ export async function getStageContext(
       contextText = sorted.slice(0, matchCount).map(c => c.content).join('\n\n')
     }
   } else {
-    const query = exclusions.length ? `${base} (not about: ${exclusions.join(', ')})` : base
-    const queryEmbedding = await embedText(query)
+    const queryEmbedding = await embedText(baseQuery)
     const { data: chunks } = await supabaseAdmin.rpc('match_chunks_for_stage', {
       stage_id_input: stageId,
       query_embedding: JSON.stringify(queryEmbedding),
       match_count: matchCount,
+      material_types_filter: materialTypesFilter,
     })
     if (chunks?.length) {
       contextText = (chunks as any[]).map((c: any) => c.content).join('\n\n')
@@ -87,10 +107,12 @@ export async function getStageContext(
   }
 
   if (!contextText) {
+    // Fallback: pull from lecture material only, ignoring semantic similarity
     const { data: materials } = await supabaseAdmin
       .from('materials')
       .select('id')
       .eq('subject_id', subjectId)
+      .eq('material_type', 'course_lecture_material')
     const materialIds = (materials ?? []).map((m: any) => m.id)
     if (materialIds.length) {
       const { data: fallbackChunks } = await supabaseAdmin

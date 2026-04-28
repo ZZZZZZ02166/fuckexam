@@ -147,7 +147,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('stage_id', stage_id)
       .eq('type', type)
 
-    const cachePurpose = type === 'concept_map' ? 'concept_map' : 'general'
+    const purposeMap: Record<string, string> = { concept_map: 'concept_map', answer_coach: 'answer_coach' }
+    const cachePurpose = purposeMap[type] ?? 'general'
     await supabaseAdmin
       .from('stage_context_cache')
       .delete()
@@ -209,13 +210,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     curriculumContext = lines.join('\n')
   }
 
+  const purposeMap: Record<string, 'general' | 'concept_map' | 'answer_coach'> = {
+    concept_map: 'concept_map',
+    answer_coach: 'answer_coach',
+  }
   const context = await getStageContext(
     stage_id,
     stage.subject_id,
     topics?.map(t => t.name) ?? [stage.name],
     previousTopicNames,
     futureTopicNames,
-    type === 'concept_map' ? 'concept_map' : 'general',
+    purposeMap[type] ?? 'general',
+    stage.name,
   )
 
   const forbiddenTerms = new Set(

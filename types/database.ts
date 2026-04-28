@@ -13,9 +13,9 @@ export type Database = {
   public: {
     Tables: {
       chunks: {
-        Row: { content: string; embedding: string | null; id: string; material_id: string; metadata: Json | null }
-        Insert: { content: string; embedding?: string | null; id?: string; material_id: string; metadata?: Json | null }
-        Update: { content?: string; embedding?: string | null; id?: string; material_id?: string; metadata?: Json | null }
+        Row: { content: string; embedding: string | null; id: string; material_id: string; material_type: string | null; metadata: Json | null }
+        Insert: { content: string; embedding?: string | null; id?: string; material_id: string; material_type?: string | null; metadata?: Json | null }
+        Update: { content?: string; embedding?: string | null; id?: string; material_id?: string; material_type?: string | null; metadata?: Json | null }
         Relationships: [{ foreignKeyName: "chunks_material_id_fkey"; columns: ["material_id"]; isOneToOne: false; referencedRelation: "materials"; referencedColumns: ["id"] }]
       }
       generated_items: {
@@ -31,9 +31,9 @@ export type Database = {
         Relationships: [{ foreignKeyName: "mastery_records_topic_id_fkey"; columns: ["topic_id"]; isOneToOne: false; referencedRelation: "topics"; referencedColumns: ["id"] }]
       }
       materials: {
-        Row: { file_name: string; id: string; processed_at: string | null; storage_path: string; subject_id: string }
-        Insert: { file_name: string; id?: string; processed_at?: string | null; storage_path: string; subject_id: string }
-        Update: { file_name?: string; id?: string; processed_at?: string | null; storage_path?: string; subject_id?: string }
+        Row: { created_at: string | null; file_name: string; id: string; material_type: string | null; processed_at: string | null; storage_path: string; subject_id: string }
+        Insert: { created_at?: string | null; file_name: string; id?: string; material_type?: string | null; processed_at?: string | null; storage_path: string; subject_id: string }
+        Update: { created_at?: string | null; file_name?: string; id?: string; material_type?: string | null; processed_at?: string | null; storage_path?: string; subject_id?: string }
         Relationships: [{ foreignKeyName: "materials_subject_id_fkey"; columns: ["subject_id"]; isOneToOne: false; referencedRelation: "subjects"; referencedColumns: ["id"] }]
       }
       questions: {
@@ -84,10 +84,15 @@ export type Database = {
     }
     Views: { [_ in never]: never }
     Functions: {
-      match_chunks_for_stage: {
-        Args: { match_count?: number; query_embedding: string; stage_id_input: string }
-        Returns: { content: string; id: string; metadata: Json; similarity: number }[]
-      }
+      match_chunks_for_stage:
+        | {
+            Args: { match_count?: number; query_embedding: string; stage_id_input: string }
+            Returns: { content: string; id: string; metadata: Json; similarity: number }[]
+          }
+        | {
+            Args: { match_count?: number; material_types_filter?: string[]; query_embedding: string; stage_id_input: string }
+            Returns: { content: string; id: string; metadata: Json; similarity: number }[]
+          }
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
@@ -111,6 +116,19 @@ export type StageStatus = 'not_started' | 'in_progress' | 'complete' | 'needs_re
 export type MaterialType = 'summary' | 'flashcards' | 'concept_map' | 'answer_coach'
 export type TestType = 'recall' | 'mcq'
 export type MasteryLevel = 'grey' | 'green' | 'yellow' | 'red'
+
+export type UploadMaterialType =
+  | 'course_lecture_material'
+  | 'tutorial_material'
+  | 'past_exam_questions'
+  | 'exam_solutions_marking_guide'
+
+export const UPLOAD_MATERIAL_TYPE_LABELS: Record<UploadMaterialType, string> = {
+  course_lecture_material: 'Course lecture material',
+  tutorial_material: 'Tutorial / problem set',
+  past_exam_questions: 'Past exam questions',
+  exam_solutions_marking_guide: 'Solutions / marking guide',
+}
 
 export interface SummaryContent {
   quickOverview: string[]

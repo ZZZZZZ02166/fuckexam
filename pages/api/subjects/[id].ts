@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!subject) return res.status(404).json({ error: 'Not found' })
 
   if (req.method === 'GET') {
-    const [{ data: topics }, { data: stages }, { data: mastery }, { data: snapshots }] =
+    const [{ data: topics }, { data: stages }, { data: mastery }, { data: snapshots }, { data: materials }] =
       await Promise.all([
         supabaseAdmin.from('topics').select('*').eq('subject_id', id).order('display_order'),
         supabaseAdmin.from('study_stages').select('*').eq('subject_id', id).order('stage_order'),
@@ -29,6 +29,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .eq('subject_id', id)
           .order('computed_at', { ascending: false })
           .limit(7),
+        supabaseAdmin
+          .from('materials')
+          .select('id, file_name, material_type, created_at, processed_at')
+          .eq('subject_id', id)
+          .order('created_at'),
       ])
 
     return res.status(200).json({
@@ -37,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       stages: stages ?? [],
       mastery: mastery ?? [],
       readiness_history: snapshots ?? [],
+      materials: materials ?? [],
     })
   }
 

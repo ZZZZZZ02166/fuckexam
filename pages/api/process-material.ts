@@ -11,6 +11,12 @@ const BodySchema = z.object({
   subject_id: z.string().uuid(),
   storage_path: z.string(),
   file_name: z.string(),
+  material_type: z.enum([
+    'course_lecture_material',
+    'tutorial_material',
+    'past_exam_questions',
+    'exam_solutions_marking_guide',
+  ]).default('course_lecture_material'),
 })
 
 const BuildSubjectSchema = z.object({
@@ -77,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const parsed = BodySchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
-  const { subject_id, storage_path, file_name } = parsed.data
+  const { subject_id, storage_path, file_name, material_type } = parsed.data
 
   const { data: subject } = await supabaseAdmin
     .from('subjects')
@@ -89,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data: material, error: materialErr } = await supabaseAdmin
     .from('materials')
-    .insert({ subject_id, file_name, storage_path })
+    .insert({ subject_id, file_name, storage_path, material_type })
     .select()
     .single()
   if (materialErr) return res.status(500).json({ error: materialErr.message })
@@ -126,9 +132,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       content: c.content,
       embedding: JSON.stringify(c.embedding),
       metadata: c.metadata,
+      material_type,
     }))
   )
   if (chunksErr) return res.status(500).json({ error: chunksErr.message })
+
+  // Non-lecture materials are stored for RAG augmentation only — no topic/stage generation.
+  if (material_type !== 'course_lecture_material') {
+    await supabaseAdmin
+      .from('materials')
+      .update({ processed_at: new Date().toISOString() })
+      .eq('id', material.id)
+    return res.status(200).json({ material_id: material.id, chunks_count: chunks.length })
+  }
 
   const examFormat = (subject as any).exam_format_text ?? 'university written exam'
   const subjectName = (subject as any).name ?? 'Unknown Subject'
