@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
-  watchOptions: {
-    ignored: ['**/.playwright-mcp/**', '**/screenshots/**', '**/.git/**'],
+  webpack: (config) => {
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: [
+        '**/.playwright-mcp/**',
+        '**/screenshots/**',
+        '**/.git/**',
+        '**/node_modules/**',
+      ],
+    }
+    return config
   },
 }

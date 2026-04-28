@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - button "← Dashboard" [ref=e6]
+    - generic [ref=e7]:
+      - heading "New subject" [level=1] [ref=e8]
+      - paragraph [ref=e9]: Tell us about the subject and your exam.
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]: Subject name
+          - textbox "e.g. Computer Networks" [ref=e13]
+        - generic [ref=e14]:
+          - generic [ref=e15]: Exam date (optional)
+          - textbox [ref=e16]
+        - generic [ref=e17]:
+          - generic [ref=e18]: Exam format(optional but helps)
+          - textbox "e.g. 2-hour written, closed-book, 30% MCQ + 50% short answer + 20% problem-solving" [ref=e19]
+        - 'button "Next: upload materials →" [disabled] [ref=e20]'
+  - button "Open Next.js Dev Tools" [ref=e26] [cursor=pointer]:
+    - img [ref=e27]
+  - alert [ref=e30]

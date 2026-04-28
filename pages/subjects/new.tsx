@@ -88,6 +88,8 @@ function NewSubjectForm() {
   const [fileEntries, setFileEntries] = useState<FileEntry[]>([])
   const [error, setError] = useState('')
   const [statuses, setStatuses] = useState<ProcessingStatus[]>([])
+  const [previewEntry, setPreviewEntry] = useState<FileEntry | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   function addStatus(label: string) {
     setStatuses(prev => [...prev, { label, done: false }])
@@ -108,7 +110,20 @@ function NewSubjectForm() {
   }
 
   function removeEntry(id: string) {
+    if (previewEntry?.id === id) closePreview()
     setFileEntries(prev => prev.filter(e => e.id !== id))
+  }
+
+  function openPreview(entry: FileEntry) {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(entry.file))
+    setPreviewEntry(entry)
+  }
+
+  function closePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setPreviewEntry(null)
   }
 
   const hasLectureFile = fileEntries.some(e => e.materialType === 'course_lecture_material')
@@ -179,7 +194,7 @@ function NewSubjectForm() {
       <div className="min-h-screen bg-[#F0F4FF]">
         {/* Nav */}
         <div className="bg-white/80 backdrop-blur border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
-          <div className="max-w-xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <button
               onClick={() => router.push('/')}
               className="text-slate-400 hover:text-slate-700 text-sm flex items-center gap-1.5 transition font-medium"
@@ -189,7 +204,7 @@ function NewSubjectForm() {
           </div>
         </div>
 
-        <div className="max-w-xl mx-auto px-4 py-10">
+        <div className={cn('mx-auto px-4 py-10', step === 'upload' ? 'max-w-6xl' : 'max-w-xl')}>
           <h1 className="text-[28px] font-extrabold text-[#0F172A] mb-1 tracking-tight">New subject</h1>
 
           {/* ── Details step ── */}
@@ -243,143 +258,193 @@ function NewSubjectForm() {
             </>
           )}
 
-          {/* ── Upload step ── */}
+          {/* ── Upload step — two-column split ── */}
           {step === 'upload' && (
             <form onSubmit={handleUpload}>
-              <p className="text-[#64748B] text-sm mb-6">Upload your files. We'll build the path from lecture material first.</p>
-
-              {/* Subject summary */}
-              <div className="bg-white rounded-2xl border border-[#E2E8F0] px-5 py-4 flex items-center justify-between shadow-sm mb-4">
+              {/* Full-width subject header */}
+              <div className="bg-white rounded-2xl border border-[#E2E8F0] px-5 py-4 flex items-center justify-between shadow-sm mb-5">
                 <div>
                   <p className="font-bold text-[#0F172A] text-[15px] leading-tight">{name}</p>
-                  {examDate && (
+                  {examDate ? (
                     <p className="text-sm text-[#64748B] mt-0.5">
                       Exam: {new Date(examDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
+                  ) : (
+                    <p className="text-xs text-[#94A3B8] mt-0.5">Upload your course materials below</p>
                   )}
                 </div>
                 {totalFiles > 0 && (
-                  <span className="shrink-0 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1 ml-4">
+                  <span className="shrink-0 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1 ml-4">
                     {totalFiles} file{totalFiles !== 1 ? 's' : ''} added
                   </span>
                 )}
               </div>
 
-              {/* Rule callout */}
-              <div className="rounded-2xl bg-indigo-50 border border-indigo-100 px-4 py-3 mb-5 flex gap-2.5 items-start">
-                <span className="text-indigo-400 text-sm mt-0.5 shrink-0">💡</span>
-                <p className="text-sm text-indigo-800 leading-relaxed">
-                  <span className="font-bold">Simple rule: </span>
-                  Lecture files build the study path. The other files improve practice, Answer Coach, and exam-style questions.
-                </p>
-              </div>
+              {/* Two-column: left = cards, right = preview */}
+              <div className="grid grid-cols-[1fr_360px] gap-5 items-stretch">
 
-              {/* Section cards */}
-              <div className="space-y-3 mb-5">
-                {MATERIAL_SECTIONS.map((section, index) => {
-                  const sectionFiles = fileEntries.filter(e => e.materialType === section.type)
-                  const count = sectionFiles.length
-                  const hasFiles = count > 0
+                {/* ── LEFT: section cards ── */}
+                <div className="flex flex-col gap-4">
+                  {/* Rule callout */}
+                  <div className="rounded-2xl bg-indigo-50 border border-indigo-100 px-4 py-3 flex gap-2.5 items-start">
+                    <span className="text-indigo-400 text-sm mt-0.5 shrink-0">💡</span>
+                    <p className="text-sm text-indigo-800 leading-relaxed">
+                      <span className="font-bold">Simple rule: </span>
+                      Lecture files build the study path. The other files improve practice, Answer Coach, and exam-style questions.
+                    </p>
+                  </div>
 
-                  return (
-                    <div
-                      key={section.type}
-                      className={cn(
-                        'rounded-2xl border bg-white shadow-sm overflow-hidden transition-all',
-                        hasFiles
-                          ? section.required ? 'border-blue-200' : 'border-slate-200'
-                          : 'border-[#E2E8F0]'
-                      )}
-                    >
-                      {/* Row header */}
-                      <div className="flex items-center gap-4 px-5 py-4">
-                        {/* Number / check badge */}
-                        <div className={cn(
-                          'w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 transition-all',
-                          hasFiles
-                            ? 'bg-green-100 text-green-700'
-                            : section.required
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-[#F1F5F9] text-[#94A3B8]'
-                        )}>
-                          {hasFiles ? '✓' : index + 1}
-                        </div>
+                  {/* Section cards */}
+                  <div className="space-y-2.5">
+                    {MATERIAL_SECTIONS.map((section, index) => {
+                      const sectionFiles = fileEntries.filter(e => e.materialType === section.type)
+                      const hasFiles = sectionFiles.length > 0
 
-                        {/* Label + description */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-bold text-[#0F172A] text-[14px]">{section.label}</span>
-                            {section.required ? (
-                              <span className="text-[9px] font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">Required</span>
-                            ) : (
-                              <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2 py-0.5 rounded-full">Optional</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-[#94A3B8] mt-0.5 leading-relaxed">{section.description}</p>
-                        </div>
-
-                        {/* Add button */}
-                        <button
-                          type="button"
-                          onClick={() => pickFile(section.type)}
+                      return (
+                        <div
+                          key={section.type}
                           className={cn(
-                            'shrink-0 text-xs font-bold rounded-xl px-3.5 py-2 border transition whitespace-nowrap',
+                            'rounded-2xl border bg-white shadow-sm overflow-hidden transition-all',
                             hasFiles
-                              ? 'text-[#334155] bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F1F5F9]'
-                              : section.required
-                              ? 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100'
-                              : 'text-[#64748B] bg-white border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                              ? section.required ? 'border-blue-200' : 'border-slate-200'
+                              : 'border-[#E2E8F0]'
                           )}
                         >
-                          {hasFiles ? `+ Add more` : '+ Add PDF'}
-                        </button>
-                      </div>
-
-                      {/* File chips */}
-                      {hasFiles && (
-                        <div className="px-5 pb-4 ml-[52px] space-y-1.5">
-                          {sectionFiles.map(entry => (
-                            <div
-                              key={entry.id}
-                              className="flex items-center gap-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] px-3.5 py-2.5"
-                            >
-                              <span className="text-xs text-[#94A3B8]">📄</span>
-                              <span className="flex-1 text-[13px] text-[#334155] font-medium truncate">{entry.file.name}</span>
-                              <span className="text-[11px] text-[#CBD5E1] shrink-0">{(entry.file.size / 1024 / 1024).toFixed(1)} MB</span>
-                              <button
-                                type="button"
-                                onClick={() => removeEntry(entry.id)}
-                                className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#CBD5E1] hover:text-red-400 hover:bg-red-50 transition text-[10px] ml-0.5"
-                              >
-                                ✕
-                              </button>
+                          <div className="flex items-center gap-3.5 px-4 py-3.5">
+                            <div className={cn(
+                              'w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 transition-all',
+                              hasFiles
+                                ? 'bg-green-100 text-green-700'
+                                : section.required
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-[#F1F5F9] text-[#94A3B8]'
+                            )}>
+                              {hasFiles ? '✓' : index + 1}
                             </div>
-                          ))}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="font-bold text-[#0F172A] text-[13px]">{section.label}</span>
+                                {section.required ? (
+                                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">Required</span>
+                                ) : (
+                                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2 py-0.5 rounded-full">Optional</span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-[#94A3B8] mt-0.5 leading-relaxed">{section.description}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => pickFile(section.type)}
+                              className={cn(
+                                'shrink-0 text-xs font-bold rounded-xl px-3 py-1.5 border transition whitespace-nowrap',
+                                hasFiles
+                                  ? 'text-[#334155] bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F1F5F9]'
+                                  : section.required
+                                  ? 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100'
+                                  : 'text-[#64748B] bg-white border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                              )}
+                            >
+                              {hasFiles ? '+ Add more' : '+ Add PDF'}
+                            </button>
+                          </div>
+
+                          {hasFiles && (
+                            <div className="px-4 pb-3.5 ml-[46px] space-y-1.5">
+                              {sectionFiles.map(entry => (
+                                <div
+                                  key={entry.id}
+                                  onClick={() => openPreview(entry)}
+                                  className={cn(
+                                    'flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition group',
+                                    previewEntry?.id === entry.id
+                                      ? 'bg-blue-50 border-blue-200'
+                                      : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-blue-50 hover:border-blue-200'
+                                  )}
+                                >
+                                  <span className="text-[11px] text-[#94A3B8] shrink-0">📄</span>
+                                  <span className="flex-1 text-[12px] text-[#334155] font-medium truncate">{entry.file.name}</span>
+                                  <span className="text-[10px] text-[#94A3B8] shrink-0 group-hover:text-blue-400 transition">
+                                    {previewEntry?.id === entry.id ? 'previewing' : 'preview'}
+                                  </span>
+                                  <span className="text-[10px] text-[#CBD5E1] shrink-0">{(entry.file.size / 1024 / 1024).toFixed(1)} MB</span>
+                                  <button
+                                    type="button"
+                                    onClick={e => { e.stopPropagation(); removeEntry(entry.id) }}
+                                    className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#CBD5E1] hover:text-red-400 hover:bg-red-50 transition text-[10px]"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+                      )
+                    })}
+                  </div>
 
-              {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+                  {error && <p className="text-red-600 text-sm">{error}</p>}
 
-              {/* Bottom actions */}
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep('details')}
-                  className="flex-1 rounded-xl px-4 py-3 text-sm font-bold bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition shadow-sm"
-                >
-                  ← Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={!hasLectureFile}
-                  className="flex-[2] rounded-xl px-4 py-3 text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
-                >
-                  Build study path →
-                </button>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setStep('details')}
+                      className="flex-1 rounded-xl px-4 py-3 text-sm font-bold bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition shadow-sm"
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!hasLectureFile}
+                      className="flex-[2] rounded-xl px-4 py-3 text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
+                    >
+                      Build study path →
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── RIGHT: preview pane (sticky) ── */}
+                <div className="h-full" style={{ minHeight: '420px' }}>
+                  <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden flex flex-col h-full">
+                    {previewEntry && previewUrl ? (
+                      <>
+                        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#F1F5F9] shrink-0">
+                          <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                            <span className="text-xs">📄</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-[#0F172A] truncate leading-tight">{previewEntry.file.name}</p>
+                            <p className="text-[10px] text-[#94A3B8] mt-0.5">
+                              {(previewEntry.file.size / 1024 / 1024).toFixed(1)} MB · {MATERIAL_SECTIONS.find(s => s.type === previewEntry.materialType)?.label}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={closePreview}
+                            className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-[#CBD5E1] hover:text-[#64748B] hover:bg-[#F1F5F9] transition text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="flex-1 overflow-hidden bg-[#F8FAFC]">
+                          <iframe
+                            src={previewUrl}
+                            className="w-full h-full border-0"
+                            title={previewEntry.file.name}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-center px-8">
+                        <div className="w-16 h-16 rounded-2xl bg-[#F1F5F9] flex items-center justify-center mb-4">
+                          <span className="text-3xl opacity-40">📄</span>
+                        </div>
+                        <p className="text-sm font-bold text-[#334155] mb-1.5">PDF preview</p>
+                        <p className="text-xs text-[#94A3B8] leading-relaxed">Upload a file, then click it to<br />preview its contents here</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </form>
           )}
