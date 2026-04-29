@@ -1,0 +1,84 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e46]:
+        - generic [ref=e47]: fuckexam
+        - generic [ref=e48]: AI study companion
+      - navigation [ref=e49]:
+        - paragraph [ref=e50]: Menu
+        - generic [ref=e51]:
+          - link "🏠 Dashboard" [ref=e52] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e53]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e54] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e55]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e56] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e57]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e58]: Subjects
+        - generic [ref=e59]:
+          - link "intro macro 4" [ref=e60] [cursor=pointer]:
+            - /url: /subjects/d7d68f57-de96-45f8-bf5b-7b91d60da4d8/path
+            - generic [ref=e62]: intro macro 4
+          - link "fundamental concept" [ref=e63] [cursor=pointer]:
+            - /url: /subjects/8e732f95-1a77-43cc-9cb5-412eeb2b6099/path
+            - generic [ref=e65]: fundamental concept
+          - link "intro macro test 3" [ref=e66] [cursor=pointer]:
+            - /url: /subjects/a03610ea-51e0-4bb6-9760-1c8ef56715f3/path
+            - generic [ref=e68]: intro macro test 3
+          - link "intro macro test 2" [ref=e69] [cursor=pointer]:
+            - /url: /subjects/4ea5b5bd-d2fa-45a0-be96-33f0ffd038e8/path
+            - generic [ref=e71]: intro macro test 2
+          - link "intro macro test 1" [ref=e72] [cursor=pointer]:
+            - /url: /subjects/236c1479-a9a3-4b06-9e6b-7936765ad337/path
+            - generic [ref=e74]: intro macro test 1
+          - link "introductory of macroeconomic" [ref=e75] [cursor=pointer]:
+            - /url: /subjects/4572c2da-1523-4476-8b68-130c00bb7c4f/path
+            - generic [ref=e77]: introductory of macroeconomic
+          - link "introductory of macroeconomic" [ref=e78] [cursor=pointer]:
+            - /url: /subjects/5f1d5fac-8824-4f13-ac4d-5564f3ada213/path
+            - generic [ref=e80]: introductory of macroeconomic
+          - link "comp sys test 3" [ref=e81] [cursor=pointer]:
+            - /url: /subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de/path
+            - generic [ref=e83]: comp sys test 3
+          - link "computer system testing 2" [ref=e84] [cursor=pointer]:
+            - /url: /subjects/5aaffdfd-6ac7-4238-add3-eda83682e23e/path
+            - generic [ref=e86]: computer system testing 2
+          - link "computer systeme testing 1" [ref=e87] [cursor=pointer]:
+            - /url: /subjects/b45a73d6-0722-48cd-833a-cf55c500b608/path
+            - generic [ref=e89]: computer systeme testing 1
+          - link "computer systems" [ref=e90] [cursor=pointer]:
+            - /url: /subjects/cced5f46-b6d1-49e8-a933-7d071c50834e/path
+            - generic [ref=e92]: computer systems
+          - link "computer system" [ref=e93] [cursor=pointer]:
+            - /url: /subjects/764c1402-83f1-44bf-82cc-edd0a196e9b1/path
+            - generic [ref=e95]: computer system
+          - link "computer system" [ref=e96] [cursor=pointer]:
+            - /url: /subjects/9bc16efb-30f9-4c0e-bdd9-c5d78b167207/path
+            - generic [ref=e98]: computer system
+          - link "computer system" [ref=e99] [cursor=pointer]:
+            - /url: /subjects/e75fa87a-ef17-4d36-90d6-57f7f63fbf4a/path
+            - generic [ref=e101]: computer system
+        - paragraph [ref=e102]: Account
+        - link "＋ Add subject" [ref=e103] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e104]: ＋
+          - text: Add subject
+      - generic [ref=e106]:
+        - generic [ref=e107]: 🎓
+        - generic [ref=e108]:
+          - paragraph [ref=e109]: nioozhiqi
+          - button "Sign out" [ref=e110]
+    - generic [ref=e26]:
+      - banner [ref=e27]:
+        - generic [ref=e29]: Dashboard
+        - link "+ Add subject" [ref=e31] [cursor=pointer]:
+          - /url: /subjects/new
+      - main [ref=e32]
+  - button "Open Next.js Dev Tools" [ref=e41] [cursor=pointer]:
+    - img [ref=e42]
+  - alert [ref=e45]

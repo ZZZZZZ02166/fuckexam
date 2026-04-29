@@ -19,6 +19,11 @@ const FileOrderSchema = z.object({
   ordered_file_names: z.array(z.string()),
 })
 
+// Pedagogical stage ordering pass
+const StageOrderSchema = z.object({
+  ordered_stage_ids: z.array(z.string()),
+})
+
 // Pass 2: enrich only — topics + material details, NO ordering
 const EnrichSchema = z.object({
   topics: z.array(z.object({
@@ -94,6 +99,55 @@ function deduplicateStages(orderedFileResults: PerFileResult[]): DedupedStage[] 
     }
   }
   return deduped
+}
+
+function topoSortStages(stages: DedupedStage[]): DedupedStage[] {
+  const n = stages.length
+  const inDegree = new Array(n).fill(0)
+  const adj: number[][] = Array.from({ length: n }, () => [])
+
+  for (let b = 0; b < n; b++) {
+    if (stages[b].prerequisite_knowledge.length === 0) continue
+    for (let a = 0; a < n; a++) {
+      if (a === b) continue
+      const matched = stages[b].prerequisite_knowledge.some(prereq =>
+        stages[a].key_concepts.some(concept => jaccardSimilarity(prereq, concept) >= 0.35)
+      )
+      if (matched && !adj[a].includes(b)) {
+        adj[a].push(b)
+        inDegree[b]++
+      }
+    }
+  }
+
+  const queue: number[] = []
+  for (let i = 0; i < n; i++) {
+    if (inDegree[i] === 0) queue.push(i)
+  }
+  queue.sort((a, b) => a - b)
+
+  const result: DedupedStage[] = []
+  while (queue.length > 0) {
+    const idx = queue.shift()!
+    result.push(stages[idx])
+    for (const next of adj[idx]) {
+      inDegree[next]--
+      if (inDegree[next] === 0) {
+        const pos = queue.findIndex(i => i > next)
+        pos === -1 ? queue.push(next) : queue.splice(pos, 0, next)
+      }
+    }
+  }
+
+  if (result.length < n) {
+    const seen = new Set(result)
+    console.warn(`[ai] topoSort: cycle detected, appending ${n - result.length} stages in original order`)
+    for (const s of stages) {
+      if (!seen.has(s)) result.push(s)
+    }
+  }
+
+  return result
 }
 
 // Extract a numeric course position from filenames like "Lecture04", "Week 2", "Chapter 3"
@@ -265,17 +319,95 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const deduped = deduplicateStages(orderedFiles)
   console.log(`[ai] dedup: ${totalProposed} → ${deduped.length} stages (removed ${totalProposed - deduped.length} near-duplicates)`)
 
+  // ── STAGE ORDERING ────────────────────────────────────────────────────────
+  // 1. Topo sort using prerequisite_knowledge as pre-order hint and fallback
+  const topoOrdered = topoSortStages(deduped)
+  const topoReorderedCount = deduped.filter((s, i) => topoOrdered.indexOf(s) !== i).length
+  console.log(`[ai] topoSort: ${topoReorderedCount}/${deduped.length} stages reordered by prerequisite graph`)
+
+  // 2. GPT pedagogical ordering pass — compact metadata only, no lecture content
+  const stageMetadata = topoOrdered.map((s, i) => ({
+    id: `stage_${i}`,
+    name: s.name,
+    key_concepts: s.key_concepts,
+    prerequisite_knowledge: s.prerequisite_knowledge,
+    source_files: s.source_files,
+  }))
+  const expectedIds = new Set(stageMetadata.map(s => s.id))
+
+  async function attemptGptOrder(): Promise<DedupedStage[] | null> {
+    try {
+      const ro = await openai.chat.completions.parse({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a curriculum designer ordering study stages for optimal exam preparation.',
+          },
+          {
+            role: 'user',
+            content: PROMPTS.orderStages(
+              JSON.stringify(stageMetadata, null, 2),
+              deduped.length,
+              subjectName,
+              examFormat
+            ),
+          },
+        ],
+        response_format: zodResponseFormat(StageOrderSchema, 'stage_order'),
+      })
+      const ids = ro.choices[0].message.parsed?.ordered_stage_ids ?? []
+      if (
+        ids.length !== deduped.length ||
+        new Set(ids).size !== deduped.length ||
+        ids.some(id => !expectedIds.has(id))
+      ) {
+        console.warn(`[ai] GPT order invalid: returned ${ids.length} ids, expected ${deduped.length}`)
+        return null
+      }
+      const indexMap = new Map(stageMetadata.map((s, i) => [s.id, i]))
+      return ids.map(id => topoOrdered[indexMap.get(id)!])
+    } catch (err) {
+      console.warn(`[ai] GPT order error: ${err}`)
+      return null
+    }
+  }
+
+  let finalOrdered: DedupedStage[]
+  let orderMethod: string
+
+  const gptOrder = await attemptGptOrder()
+  if (gptOrder) {
+    finalOrdered = gptOrder
+    orderMethod = 'gpt_pedagogical_stage_order'
+  } else {
+    console.warn(`[ai] GPT order failed, retrying once`)
+    const retry = await attemptGptOrder()
+    if (retry) {
+      finalOrdered = retry
+      orderMethod = 'gpt_pedagogical_stage_order (retry)'
+    } else if (topoReorderedCount > 0) {
+      finalOrdered = topoOrdered
+      orderMethod = 'fallback_topological_order'
+    } else {
+      finalOrdered = deduped
+      orderMethod = 'fallback_original_order'
+    }
+  }
+
+  console.log(`[ai] stage order method: ${orderMethod}`)
+
   // ── PASS 2: enrich only ────────────────────────────────────────────────────
-  // Stages are already in correct order. GPT only extracts topics + fills details.
+  // Stages are in final pedagogical order. GPT only extracts topics + fills details.
   // No ordering task → no ordering errors. Explicit stageCount constraint prevents compression.
-  const stageList = deduped.map((s, i) =>
+  const stageList = finalOrdered.map((s, i) =>
     `${i + 1}. ${s.name}\n   Source files: ${s.source_files.join(', ')}\n   Concepts: ${s.key_concepts.join(', ')}` +
     (s.prerequisite_knowledge.length > 0
       ? `\n   Prerequisites: ${s.prerequisite_knowledge.join(', ')}`
       : '')
   ).join('\n\n')
 
-  console.log(`[ai] pass2 enriching ${deduped.length} ordered stages`)
+  console.log(`[ai] pass2 enriching ${finalOrdered.length} ordered stages`)
 
   const r2 = await openai.chat.completions.parse({
     model: 'gpt-4o',

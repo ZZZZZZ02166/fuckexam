@@ -68,6 +68,34 @@ Stages (${stageCount} total — preserve this order exactly):
 ${stageList}
 `.trim(),
 
+  orderStages: (stagesJson: string, stageCount: number, subjectName: string, examFormat: string) => `
+You are reviewing a proposed study path for "${subjectName}" (exam: ${examFormat}).
+
+The ${stageCount} stages below are already in a tentative pedagogical order derived from the course's own lecture sequence and prerequisite analysis. Your job is to make MINIMAL, TARGETED improvements — only move a stage when it clearly violates an explicit prerequisite dependency.
+
+WHEN TO MOVE A STAGE — only if ALL of these are true:
+- The stage's prerequisite_knowledge explicitly requires knowledge that a LATER stage provides
+- Moving it resolves the dependency without creating other violations
+- The move is clearly necessary based on the content, not just domain convention
+
+WHEN NOT TO MOVE A STAGE:
+- Do not reorder based on your opinion of how this subject is typically taught in textbooks
+- Do not move stages because you think "concept X usually precedes Y" in standard curricula
+- Do not make large structural changes — the existing order reflects the course's own lecture sequence, which the instructor designed deliberately
+- Stylistic or cosmetic reorderings are wrong. If in doubt, keep the original position.
+
+VALID reasons to move (prerequisite_knowledge-driven only):
+- A stage lists a concept in prerequisite_knowledge that only appears in a stage numbered later in the input
+- Moving the prerequisite stage earlier resolves the gap
+
+Return only JSON matching this schema: { ordered_stage_ids: string[] }
+The array must contain the same IDs in the order a student should study them.
+You MUST include every stage exactly once. Do NOT add, remove, rename, merge, or skip any stage.
+
+Proposed order (make MINIMAL changes only):
+${stagesJson}
+`.trim(),
+
   buildSubject: (materialSample: string, examFormat: string, subjectName: string, lectureFileCount = 1) => `
 You are a curriculum designer building a university exam study system.
 
