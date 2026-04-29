@@ -276,6 +276,9 @@ function MaterialsSection({
   const [selectedType, setSelectedType] = useState<UploadMaterialType>('course_lecture_material')
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [pendingRebuild, setPendingRebuild] = useState(false)
+  const [rebuilding, setRebuilding] = useState(false)
+  const [rebuildError, setRebuildError] = useState('')
 
   const grouped = Object.entries(UPLOAD_MATERIAL_TYPE_LABELS).map(([type, label]) => ({
     type: type as UploadMaterialType,
@@ -304,11 +307,28 @@ function MaterialsSection({
       })
       setSelectedFile(null)
       setShowAdd(false)
+      if (selectedType === 'course_lecture_material') {
+        setPendingRebuild(true)
+      }
       onUploaded()
     } catch (err: any) {
       setUploadError(err.message ?? 'Upload failed')
     } finally {
       setUploading(false)
+    }
+  }
+
+  async function handleRebuild() {
+    setRebuilding(true)
+    setRebuildError('')
+    try {
+      await apiJson(`/api/subjects/${subjectId}/build-path`, { method: 'POST' })
+      setPendingRebuild(false)
+      onUploaded()
+    } catch (err: any) {
+      setRebuildError(err.message ?? 'Rebuild failed')
+    } finally {
+      setRebuilding(false)
     }
   }
 
@@ -323,6 +343,31 @@ function MaterialsSection({
           {showAdd ? 'Cancel' : '+ Add material'}
         </button>
       </div>
+
+      {pendingRebuild && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 space-y-3 mb-3">
+          <p className="text-sm font-bold text-amber-900">New lecture material added.</p>
+          <p className="text-xs text-amber-700">Rebuild the study path so this file is included in the stages.</p>
+          <p className="text-xs text-amber-600 italic">⚠ Rebuilding may replace your current study path. Some stage progress and mastery data may no longer match the new path.</p>
+          {rebuildError && <p className="text-xs text-red-600">{rebuildError}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={handleRebuild}
+              disabled={rebuilding}
+              className="rounded-lg px-4 py-2 text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition flex items-center gap-2"
+            >
+              {rebuilding ? <><Spinner className="w-3 h-3" /> Rebuilding…</> : 'Rebuild study path'}
+            </button>
+            <button
+              onClick={() => setPendingRebuild(false)}
+              disabled={rebuilding}
+              className="rounded-lg px-4 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100 transition"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-[#E2E8F0] px-5 py-4 space-y-4">
         {grouped.length === 0 && !showAdd && (

@@ -88,3 +88,283 @@
 [ 6137660ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
 [ 6554565ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
 [ 6569533ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[ 7769362ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[ 8504133ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[15036942ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[21581456ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[22619435ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[23766592ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[23934923ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[25268781ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[25512204ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[29015381ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[29589607ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[65750896ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[66342953ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[67715930ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[68677700ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[69780398ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[69780414ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:42)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:223:11)
+    at new Promise (<anonymous>)
+    at retryable (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:204:21)
+    at SupabaseAuthClient._refreshAccessToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3749:81)
+    at SupabaseAuthClient._callRefreshToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3907:48)
+    at SupabaseAuthClient.__loadSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2382:57)
+    at async SupabaseAuthClient._useSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2316:28)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:4186:32) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[69780630ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[69780632ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[69781043ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[69781043ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[69781854ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[69781854ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[69783462ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[69783462ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[69786670ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[69786670ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[69793077ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[69793078ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[69805893ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[69805894ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70758113ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70758113ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:42)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:223:11)
+    at new Promise (<anonymous>)
+    at retryable (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:204:21)
+    at SupabaseAuthClient._refreshAccessToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3749:81)
+    at SupabaseAuthClient._callRefreshToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3907:48)
+    at SupabaseAuthClient.__loadSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2382:57)
+    at async SupabaseAuthClient._useSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2316:28)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:4186:32) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70758319ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70758319ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70758725ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70758725ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70759533ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70759533ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70761140ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70761140ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70764346ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70764346ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70770755ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70770755ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70783562ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70783563ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70788115ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70788115ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:42)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:223:11)
+    at new Promise (<anonymous>)
+    at retryable (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:204:21)
+    at SupabaseAuthClient._refreshAccessToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3749:81)
+    at SupabaseAuthClient._callRefreshToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3907:48)
+    at SupabaseAuthClient.__loadSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2382:57)
+    at async SupabaseAuthClient._useSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2316:28)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:4186:32) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70788322ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70788322ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70788729ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70788729ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70789535ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70789535ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70791144ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70791145ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70794355ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70794356ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70800767ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70800767ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70813575ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70813575ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70818115ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70818115ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:42)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:223:11)
+    at new Promise (<anonymous>)
+    at retryable (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:204:21)
+    at SupabaseAuthClient._refreshAccessToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3749:81)
+    at SupabaseAuthClient._callRefreshToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3907:48)
+    at SupabaseAuthClient.__loadSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2382:57)
+    at async SupabaseAuthClient._useSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2316:28)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:4186:32) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70818324ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70818324ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70818729ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70818729ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70819537ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70819537ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70821145ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70821145ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70824354ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70824354ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[70830762ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[70830762ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:36) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[72751689ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[74916676ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[74949073ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[74967795ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[74968200ms] [LOG] [Fast Refresh] done in 406ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[74968369ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[74968445ms] [LOG] [Fast Refresh] done in 75ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[74968690ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de:0
+[74979016ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[74979292ms] [LOG] [Fast Refresh] done in 277ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[74979324ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/subjects/98ffe019-3382-45d7-9f6e-0f1b2ff2a2de:0
+[75632965ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[75633178ms] [LOG] [Fast Refresh] done in 214ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[75664606ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[75989503ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[76779012ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
