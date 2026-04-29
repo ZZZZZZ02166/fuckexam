@@ -1,4 +1,73 @@
 export const PROMPTS = {
+  perFileDecompose: (fileContent: string, fileName: string, examFormat: string) => `
+You are a curriculum designer. Decompose this single lecture file into granular study stages for exam preparation.
+
+File: ${fileName}
+Exam format: ${examFormat}
+
+Rules:
+- Create one stage per distinct examinable concept cluster in this file
+- A concept cluster deserves its own stage when a student could be tested on it independently
+- Split concepts that are genuinely distinct — do NOT merge to reduce count
+- Compression is wrong: if this file covers 8 separately testable topics, produce 8 stages
+- Stage name: 3–6 words describing exactly what is NEW in that stage
+
+Per stage:
+- name: 3–6 words, precise, describes what is new
+- key_concepts: 3–8 specific, precise, examinable concepts covered in this stage
+- prerequisite_knowledge: specific concepts or topics a student MUST already understand before
+  this stage makes sense. Be precise — e.g. "GDP definition and components", not "economics basics".
+  Return an empty array only for genuinely foundational stages that assume zero prior knowledge.
+
+File content:
+${fileContent}
+`.trim(),
+
+  orderFiles: (fileDescriptions: string, subjectName: string) => `
+You are ordering lecture files for "${subjectName}" from foundational to advanced.
+
+Below are the lecture files with their first few stage topics listed.
+Return them in the order a student should study them — foundational concepts first, applied/policy topics last.
+Use the file names and stage topics as signals. If a file covers "introduction", "basics", or "fundamentals", it comes early.
+
+${fileDescriptions}
+`.trim(),
+
+  enrichStages: (stageList: string, stageCount: number, subjectName: string, examFormat: string) => `
+You are a curriculum designer enriching a study path for "${subjectName}" (exam: ${examFormat}).
+
+Below are ${stageCount} study stages ALREADY IN CORRECT PEDAGOGICAL ORDER. Do not reorder them.
+
+════════════════════════════════════════
+STEP 1 — Extract topics (15–40 total)
+════════════════════════════════════════
+Topics are high-level mastery areas — broader than one stage, narrower than an entire lecture.
+Group related key_concepts into topics. Multiple stages map to the same topic.
+Expect 15–40 topics for a typical university course.
+- name: 2–5 words, precise and distinct
+- description: 1–2 sentences
+- weight: 0.0–1.0 exam emphasis
+- source_files: copy from stages that cover this topic
+
+════════════════════════════════════════
+STEP 2 — Fill in stage details (same order as input)
+════════════════════════════════════════
+For each stage, in the EXACT SAME ORDER as input:
+- name: copy EXACTLY from input — do not rename
+- topic_names: topic names from Step 1 (must exactly match Step 1 names)
+- source_files: copy EXACTLY from input
+- material_types: from ["summary", "flashcards", "concept_map"]
+- test_types: always ["recall", "mcq"]
+- estimated_minutes: 15–60 based on concept depth
+
+CONSTRAINTS:
+- Output exactly ${stageCount} stages in the EXACT SAME ORDER as input
+- Do not reorder, merge, split, rename, add, or remove any stage
+
+Stages (${stageCount} total — preserve this order exactly):
+${stageList}
+`.trim(),
+
   buildSubject: (materialSample: string, examFormat: string, subjectName: string, lectureFileCount = 1) => `
 You are a curriculum designer building a university exam study system.
 
@@ -6,75 +75,23 @@ Subject: ${subjectName}
 Exam format: ${examFormat}
 Lecture files: ${lectureFileCount} — each section labelled === FILE: filename === below.
 
-════════════════════════════════════════
-STEP 1 — Per-file concept analysis (file_coverage_notes)
-════════════════════════════════════════
-For EACH file section (=== FILE: filename ===), output one entry in file_coverage_notes:
-- file_name: the exact filename from the label
-- key_concepts: 4–10 specific, examinable concepts this file covers
-  BAD: "macroeconomics", "economic theory"
-  GOOD: "IS-LM model equilibrium", "money supply and interest rates", "fiscal multiplier"
-- exam_weight: "high" (core exam topic), "medium" (likely tested), or "low" (background only)
-- suggested_stages: imagine this file were the ONLY file uploaded. List the stage names you would
-  create for it, at full granularity — one stage per distinct examinable concept cluster.
-  A stage is ready to split when a student could be tested on its concepts in isolation.
-  Do not merge concepts just to reduce the count. Do not compress because other files exist.
-  Each entry is a short stage title (3–6 words).
-  BAD: ["Labour Market"] — one stage for an entire lecture's worth of content
-  GOOD: ["Labour Market States and Flows", "Participation and Unemployment Rates",
-         "Labour Market Transition Dynamics", "Search and Matching Models",
-         "Wage Rigidity and Unemployment", "Labour Market Policy Interventions"]
-  The number of entries is whatever the file's content genuinely warrants — no target.
+Extract topics and build a complete study path.
 
-You MUST produce exactly one entry per file. ${lectureFileCount} files = ${lectureFileCount} entries. Do not skip any file.
-
-════════════════════════════════════════
-STEP 2 — Extract topics (topics)
-════════════════════════════════════════
-Using the key_concepts from ALL file_coverage_notes entries above as your source of truth:
-- Every key_concept listed must be represented by at least one topic. Do not omit any.
-- Merge only when two concepts are genuinely the same idea with different names.
-- No fixed count — the number of topics must reflect the actual breadth of all uploaded files.
-- Do not invent topics that are not grounded in the key_concepts from Step 1.
-
-Each topic:
+Topics:
 - name: 2–5 words, precise and distinct
 - description: 1–2 sentences
-- weight: 0.0–1.0 based on exam emphasis
-- source_files: which filenames this topic came from
+- weight: 0.0–1.0 exam emphasis
+- source_files: which files this came from
 
-════════════════════════════════════════
-STEP 3 — Build ordered study path (stages)
-════════════════════════════════════════
-CRITICAL: Use the suggested_stages from ALL file_coverage_notes entries as your starting point.
-Collect every suggested stage from every file. Then:
-- Merge ONLY when two suggested stages from different files cover genuinely the same concept.
-  "Labour Market States and Flows" from file A and "Labour Market States" from file B → ONE merged stage.
-  "Labour Market States and Flows" and "Search and Matching Models" → TWO stages, never merged.
-- Do NOT compress stages because many files were uploaded. The total stage count is whatever
-  the material genuinely warrants — 10 stages or 50 stages, whichever gives the student
-  complete mastery coverage. There is no target count. Compression is always wrong here.
-- A stage is justified if a student could be tested on those concepts in isolation and need
-  dedicated study time to master them. Split when in doubt — do not merge when in doubt.
-
-After merging, order all stages foundational-to-advanced and apply curriculum rules:
-
-CRITICAL CURRICULUM RULES:
-1. Every concept belongs to EXACTLY ONE stage — the first stage where it is needed
-2. Later stages ASSUME mastery of all earlier stages. Never re-introduce prior concepts.
-3. Order stages so no stage requires knowledge from a later stage.
-4. Stage names describe WHAT IS NEW — not restate general themes.
-5. 1–3 tightly scoped NEW concepts per stage — narrow is better than broad.
-6. Every topic_name in stages must exactly match a name from Step 2.
-
-Per stage:
+Stages:
+- 1–3 tightly scoped NEW concepts per stage
 - material_types: from ["summary", "flashcards", "concept_map"]
 - test_types: always ["recall", "mcq"]
 - estimated_minutes: 15–60 min
-- source_files: which filenames informed this stage
+- source_files: which files informed this stage
+- Every topic_name must match a topic name exactly
 
-════════════════════════════════════════
-Material (${lectureFileCount} files, each labelled === FILE: filename ===):
+Material:
 ${materialSample}
 `.trim(),
 

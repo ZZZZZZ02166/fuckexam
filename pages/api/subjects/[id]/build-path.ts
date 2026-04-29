@@ -5,19 +5,22 @@ import { PROMPTS } from '@/lib/prompts'
 import { z } from 'zod'
 import { zodResponseFormat } from 'openai/helpers/zod'
 
-const BuildSubjectSchema = z.object({
-  // FIRST field: forces GPT to enumerate concepts per file BEFORE generating topics.
-  // Prospective (plan before acting), not retrospective (check after acting).
-  // OpenAI structured output fills fields in declared order — placing this first
-  // guarantees the per-file analysis happens before topics/stages are committed.
-  // suggested_stages: per-file mini decomposition — prevents GPT from compressing
-  // many files into a "semester summary" count rather than preserving granularity.
-  file_coverage_notes: z.array(z.object({
-    file_name: z.string(),
+// Pass 1: per-file decomposition
+const PerFileSchema = z.object({
+  stages: z.array(z.object({
+    name: z.string(),
     key_concepts: z.array(z.string()),
-    exam_weight: z.enum(['high', 'medium', 'low']),
-    suggested_stages: z.array(z.string()),
+    prerequisite_knowledge: z.array(z.string()),
   })),
+})
+
+// File ordering fallback (when no lecture numbers in filenames)
+const FileOrderSchema = z.object({
+  ordered_file_names: z.array(z.string()),
+})
+
+// Pass 2: enrich only — topics + material details, NO ordering
+const EnrichSchema = z.object({
   topics: z.array(z.object({
     name: z.string(),
     description: z.string(),
@@ -34,6 +37,71 @@ const BuildSubjectSchema = z.object({
   })),
 })
 
+interface PerFileResult {
+  file_name: string
+  lecture_num: number | null
+  stages: Array<{ name: string; key_concepts: string[]; prerequisite_knowledge: string[] }>
+}
+
+interface DedupedStage {
+  name: string
+  key_concepts: string[]
+  prerequisite_knowledge: string[]
+  source_files: string[]
+}
+
+// Jaccard similarity on content words (>= 4 chars, not stop words)
+function jaccardSimilarity(a: string, b: string): number {
+  const stopWords = new Set([
+    'introduction', 'understanding', 'exploring', 'analyzing', 'overview',
+    'fundamentals', 'basics', 'principles', 'concepts', 'theory', 'theories',
+    'with', 'from', 'into', 'this', 'that', 'their', 'between', 'role',
+    'implications', 'challenges',
+  ])
+  const normalize = (s: string) => new Set(
+    s.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/)
+      .filter(w => w.length >= 4 && !stopWords.has(w))
+  )
+  const wa = normalize(a)
+  const wb = normalize(b)
+  if (wa.size === 0 && wb.size === 0) return 1
+  if (wa.size === 0 || wb.size === 0) return 0
+  const intersection = [...wa].filter(w => wb.has(w)).length
+  const union = new Set([...wa, ...wb]).size
+  return intersection / union
+}
+
+// Deterministic dedup: iterates files in the ALREADY-ORDERED sequence.
+// First occurrence of a near-duplicate wins (it's from the earlier/more-foundational file).
+function deduplicateStages(orderedFileResults: PerFileResult[]): DedupedStage[] {
+  const deduped: DedupedStage[] = []
+  for (const { file_name, stages } of orderedFileResults) {
+    for (const stage of stages) {
+      const existing = deduped.find(d => jaccardSimilarity(d.name, stage.name) >= 0.6)
+      if (existing) {
+        if (!existing.source_files.includes(file_name)) existing.source_files.push(file_name)
+        for (const c of stage.key_concepts) {
+          if (!existing.key_concepts.includes(c)) existing.key_concepts.push(c)
+        }
+      } else {
+        deduped.push({
+          name: stage.name,
+          key_concepts: [...stage.key_concepts],
+          prerequisite_knowledge: [...stage.prerequisite_knowledge],
+          source_files: [file_name],
+        })
+      }
+    }
+  }
+  return deduped
+}
+
+// Extract a numeric course position from filenames like "Lecture04", "Week 2", "Chapter 3"
+function extractCoursePosition(fileName: string): number | null {
+  const m = fileName.match(/(?:lecture|lec|week|wk|chapter|ch|unit|topic)\s*[-_]?\s*0*(\d+)/i)
+  return m ? parseInt(m[1], 10) : null
+}
+
 function fuzzyMapTopicNames(
   topicNames: string[],
   topicNameToId: Map<string, string>
@@ -49,6 +117,8 @@ function fuzzyMapTopicNames(
     })
     .filter(Boolean) as string[]
 }
+
+const PER_FILE_CHAR_LIMIT = 460000
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -80,22 +150,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'No lecture material found for this subject' })
   }
 
-  // GPT-4o context: 128k tokens ≈ 512k chars.
-  // Reserve ~50k chars for prompt instructions + output. That leaves ~460k for material.
-  // Strategy: load ALL chunks from all files first, measure total size, then decide:
-  //   - If total fits: send everything (no assumptions, no sampling)
-  //   - If total is too large: proportionally truncate per file based on actual file size
-  const TOTAL_CHAR_LIMIT = 460000
+  const examFormat = subject.exam_format_text ?? 'university written exam'
+  const subjectName = subject.name ?? 'Unknown Subject'
 
-  // Load all files' chunks upfront
-  interface FileChunks {
-    material: { id: string; file_name: string }
-    sorted: Array<{ content: string; metadata: unknown }>
-    headings: string[]
-    fullText: string
-  }
-
-  const allFileData: FileChunks[] = []
+  const allFileData: Array<{ material: { id: string; file_name: string }; fileContent: string }> = []
 
   for (const material of materials) {
     const { data: chunks } = await supabaseAdmin
@@ -105,14 +163,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!chunks || chunks.length === 0) continue
 
-    // Sort by chunk_index for document order (UUID ordering is random)
     const sorted = [...chunks].sort((a, b) => {
       const ai = (a.metadata as any)?.chunk_index ?? 0
       const bi = (b.metadata as any)?.chunk_index ?? 0
       return ai - bi
     })
 
-    // Extract unique section headings — slide/section titles, highest-signal content
     const headings = [...new Set(
       sorted
         .map(c => (c.metadata as any)?.heading)
@@ -120,85 +176,133 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     )]
 
     const fullText = sorted.map(c => c.content).join('\n\n')
-    allFileData.push({ material, sorted, headings, fullText })
+    const toc = headings.length > 0 ? `[SECTIONS: ${headings.join(' | ')}]\n\n` : ''
+    const fileContent = `${toc}${fullText}`.slice(0, PER_FILE_CHAR_LIMIT)
+
+    console.log(`[ai] file="${material.file_name}" chars=${fullText.length} sent=${fileContent.length}`)
+    allFileData.push({ material, fileContent })
   }
 
   if (allFileData.length === 0) {
     return res.status(400).json({ error: 'No lecture chunks found for this subject' })
   }
 
-  const totalChars = allFileData.reduce((sum, f) => sum + f.fullText.length, 0)
-  console.log(`[ai] build-path subject=${subject_id} files=${allFileData.length} totalChars=${totalChars} limit=${TOTAL_CHAR_LIMIT}`)
+  console.log(`[ai] build-path subject=${subject_id} files=${allFileData.length} — pass 1 (parallel per-file)`)
 
-  const sections: string[] = []
+  // ── PASS 1: per-file decomposition in parallel ─────────────────────────────
+  // Each file processed independently → same granularity as single-file processing.
+  // Stages come out in DOCUMENT ORDER from each file (correct within-file sequence).
+  const perFileResults: PerFileResult[] = await Promise.all(
+    allFileData.map(async ({ material, fileContent }) => {
+      const r = await openai.chat.completions.parse({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a curriculum designer. Decompose a single lecture file into granular study stages.',
+          },
+          {
+            role: 'user',
+            content: PROMPTS.perFileDecompose(fileContent, material.file_name, examFormat),
+          },
+        ],
+        response_format: zodResponseFormat(PerFileSchema, 'per_file_stages'),
+      })
 
-  if (totalChars <= TOTAL_CHAR_LIMIT) {
-    // Everything fits — send full content from every file, no sampling
-    for (const { material, headings, fullText } of allFileData) {
-      const toc = headings.length > 0 ? `[SECTIONS: ${headings.join(' | ')}]\n\n` : ''
-      sections.push(`=== FILE: ${material.file_name} ===\n${toc}${fullText}`)
-      console.log(`[ai] file="${material.file_name}" chars=${fullText.length} (full)`)
-    }
+      const stages = r.choices[0].message.parsed?.stages ?? []
+      const lectureNum = extractCoursePosition(material.file_name)
+      console.log(`[ai] pass1 file="${material.file_name}" (lecture#${lectureNum ?? '?'}) → ${stages.length} stages: ${stages.map(s => s.name).join(' | ')}`)
+      return { file_name: material.file_name, lecture_num: lectureNum, stages }
+    })
+  )
+
+  const totalProposed = perFileResults.reduce((n, f) => n + f.stages.length, 0)
+  console.log(`[ai] pass1 complete — ${totalProposed} proposed stages across ${perFileResults.length} files`)
+
+  // ── FILE ORDERING ─────────────────────────────────────────────────────────
+  // Sort files by lecture/week number when present — deterministic and always correct.
+  // Fall back to a small GPT call (ordering just the files, not 30+ stages) when no numbers.
+  const hasNumbers = perFileResults.some(f => f.lecture_num !== null)
+  let orderedFiles: PerFileResult[]
+
+  if (hasNumbers) {
+    orderedFiles = [...perFileResults].sort((a, b) => {
+      if (a.lecture_num !== null && b.lecture_num !== null) return a.lecture_num - b.lecture_num
+      if (a.lecture_num !== null) return -1
+      if (b.lecture_num !== null) return 1
+      return 0
+    })
+    console.log(`[ai] file order (by lecture#): ${orderedFiles.map(f => `${f.file_name}(#${f.lecture_num})`).join(' → ')}`)
   } else {
-    // Too large — allocate budget per file proportional to actual file size
-    // Larger files get more budget; no file is artificially capped below its proportion
-    for (const { material, sorted, headings, fullText } of allFileData) {
-      const fileProportion = fullText.length / totalChars
-      const charBudget = Math.floor(TOTAL_CHAR_LIMIT * fileProportion)
+    // Ask GPT to order just the files — small N, easy task
+    const fileDescriptions = perFileResults.map(f =>
+      `- ${f.file_name}: covers ${f.stages.slice(0, 3).map(s => s.name).join(', ')}`
+    ).join('\n')
 
-      const toc = headings.length > 0 ? `[SECTIONS: ${headings.join(' | ')}]\n\n` : ''
-      const contentBudget = Math.max(0, charBudget - toc.length)
+    const fo = await openai.chat.completions.parse({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'user', content: PROMPTS.orderFiles(fileDescriptions, subjectName) },
+      ],
+      response_format: zodResponseFormat(FileOrderSchema, 'file_order'),
+    })
 
-      // Sample evenly through document order within the proportional budget
-      const targetChunks = Math.max(6, Math.floor(contentBudget / 400))
-      const step = Math.max(1, Math.floor(sorted.length / targetChunks))
-      const contentSample = sorted
-        .filter((_, i) => i % step === 0)
-        .map(c => c.content.slice(0, 400))
-        .join('\n\n')
-        .slice(0, contentBudget)
+    const orderedNames = fo.choices[0].message.parsed?.ordered_file_names ?? perFileResults.map(f => f.file_name)
+    orderedFiles = orderedNames
+      .map(name => perFileResults.find(f => f.file_name === name))
+      .filter(Boolean) as PerFileResult[]
 
-      sections.push(`=== FILE: ${material.file_name} ===\n${toc}${contentSample}`)
-      console.log(`[ai] file="${material.file_name}" chars=${fullText.length} budget=${charBudget} (sampled)`)
+    // Append any files that weren't returned by GPT (safety net)
+    for (const f of perFileResults) {
+      if (!orderedFiles.find(o => o.file_name === f.file_name)) orderedFiles.push(f)
     }
+    console.log(`[ai] file order (by GPT): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
   }
 
-  if (sections.length === 0) {
-    return res.status(400).json({ error: 'No lecture chunks found for this subject' })
-  }
+  // ── CODE DEDUP ─────────────────────────────────────────────────────────────
+  // Now that files are in correct order, dedup preserves within-file sequence
+  // and cross-file order. First occurrence wins — it's from the earlier file.
+  const deduped = deduplicateStages(orderedFiles)
+  console.log(`[ai] dedup: ${totalProposed} → ${deduped.length} stages (removed ${totalProposed - deduped.length} near-duplicates)`)
 
-  const combinedSample = sections.join('\n\n')
-  const examFormat = subject.exam_format_text ?? 'university written exam'
-  const subjectName = subject.name ?? 'Unknown Subject'
+  // ── PASS 2: enrich only ────────────────────────────────────────────────────
+  // Stages are already in correct order. GPT only extracts topics + fills details.
+  // No ordering task → no ordering errors. Explicit stageCount constraint prevents compression.
+  const stageList = deduped.map((s, i) =>
+    `${i + 1}. ${s.name}\n   Source files: ${s.source_files.join(', ')}\n   Concepts: ${s.key_concepts.join(', ')}` +
+    (s.prerequisite_knowledge.length > 0
+      ? `\n   Prerequisites: ${s.prerequisite_knowledge.join(', ')}`
+      : '')
+  ).join('\n\n')
 
-  console.log(`[ai] build-path subject=${subject_id} files=${materials.length} chars=${combinedSample.length}`)
+  console.log(`[ai] pass2 enriching ${deduped.length} ordered stages`)
 
-  const r = await openai.chat.completions.parse({
+  const r2 = await openai.chat.completions.parse({
     model: 'gpt-4o',
     messages: [
-      { role: 'system', content: 'You are a curriculum designer. Extract topics and build a complete study path from university course materials.' },
-      { role: 'user', content: PROMPTS.buildSubject(combinedSample, examFormat, subjectName, materials.length) },
+      {
+        role: 'system',
+        content: 'You are a curriculum designer. Extract topics and fill in study stage details.',
+      },
+      {
+        role: 'user',
+        content: PROMPTS.enrichStages(stageList, deduped.length, subjectName, examFormat),
+      },
     ],
-    response_format: zodResponseFormat(BuildSubjectSchema, 'build_subject'),
+    response_format: zodResponseFormat(EnrichSchema, 'enriched_study_path'),
   })
 
-  const result = r.choices[0].message.parsed
+  const result = r2.choices[0].message.parsed
   if (!result || result.topics.length === 0 || result.stages.length === 0) {
-    return res.status(500).json({ error: 'AI failed to generate topics and stages' })
+    return res.status(500).json({ error: 'AI failed to enrich stages' })
   }
 
-  // Log per-file coverage and source attribution
-  for (const note of result.file_coverage_notes) {
-    console.log(`[ai] file="${note.file_name}" weight=${note.exam_weight} concepts: ${note.key_concepts.join(', ')} suggested_stages: ${note.suggested_stages.join(' | ')}`)
-  }
-  for (const t of result.topics) {
-    console.log(`[ai] topic="${t.name}" sources=${t.source_files.join(', ')}`)
-  }
-  for (const s of result.stages) {
-    console.log(`[ai] stage="${s.name}" sources=${s.source_files.join(', ')}`)
+  console.log(`[ai] pass2 complete — ${result.topics.length} topics, ${result.stages.length} stages`)
+  if (result.stages.length < deduped.length) {
+    console.warn(`[ai] WARNING: pass2 dropped ${deduped.length - result.stages.length} stages`)
   }
 
-  // Explicitly clear cached stage content before rebuilding
+  // Clear cached stage content before rebuilding
   const { data: existingStages } = await supabaseAdmin
     .from('study_stages')
     .select('id')
@@ -246,6 +350,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   return res.status(200).json({
     topics_count: topicsInserted?.length ?? 0,
     stages_count: stageRows.length,
-    files_covered: result.file_coverage_notes.length,
+    files_processed: perFileResults.length,
+    stages_proposed: totalProposed,
+    stages_after_dedup: deduped.length,
   })
 }
