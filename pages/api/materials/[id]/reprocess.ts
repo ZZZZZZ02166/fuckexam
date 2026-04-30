@@ -2,19 +2,6 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin, getUserFromRequest } from '@/lib/supabase/server'
 import { embedText } from '@/lib/openai'
 import { chunkText, TextChunk } from '@/lib/chunker'
-import { z } from 'zod'
-
-const BodySchema = z.object({
-  subject_id: z.string().uuid(),
-  storage_path: z.string(),
-  file_name: z.string(),
-  material_type: z.enum([
-    'course_lecture_material',
-    'tutorial_material',
-    'past_exam_questions',
-    'exam_solutions_marking_guide',
-  ]).default('course_lecture_material'),
-})
 
 const EMBED_BATCH = 20
 
@@ -27,26 +14,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = await getUserFromRequest(req.headers.authorization)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
-  const parsed = BodySchema.safeParse(req.body)
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+  const { id: material_id } = req.query as { id: string }
 
-  const { subject_id, storage_path, file_name, material_type } = parsed.data
-
-  const { data: subject } = await supabaseAdmin
-    .from('subjects')
-    .select('id')
-    .eq('id', subject_id)
-    .eq('user_id', user.id)
+  const { data: material } = await supabaseAdmin
+    .from('materials')
+    .select('id, storage_path, file_name, material_type, subject_id, subjects!inner(user_id)')
+    .eq('id', material_id)
     .single()
-  if (!subject) return res.status(404).json({ error: 'Subject not found' })
 
-  // Download, parse, chunk, embed — all before inserting the material row
-  // so that failures here leave no orphaned DB records
+  if (!material) return res.status(404).json({ error: 'Material not found' })
+
+  const subject = (material as any).subjects
+  if (!subject || subject.user_id !== user.id) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+
   const { data: fileBlob, error: downloadErr } = await supabaseAdmin.storage
     .from('materials')
-    .download(storage_path)
+    .download(material.storage_path)
   if (downloadErr || !fileBlob) {
-    return res.status(500).json({ error: 'Could not download uploaded file' })
+    return res.status(500).json({ error: 'Could not download file' })
   }
 
   let fullText = ''
@@ -63,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!fullText.trim()) {
-    return res.status(400).json({ error: 'No text could be extracted from file' })
+    return res.status(400).json({ error: 'No text extracted' })
   }
 
   const chunks = chunkText(fullText)
@@ -85,32 +72,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(502).json({ error: 'Embedding failed: ' + (err as Error).message })
   }
 
-  // All risky work done — now persist
-  const { data: material, error: materialErr } = await supabaseAdmin
-    .from('materials')
-    .insert({ subject_id, file_name, storage_path, material_type })
-    .select()
-    .single()
-  if (materialErr) return res.status(500).json({ error: materialErr.message })
+  // All risky work done — now replace chunks
+  await supabaseAdmin.from('chunks').delete().eq('material_id', material_id)
 
   const { error: chunksErr } = await supabaseAdmin.from('chunks').insert(
     chunksWithEmbeddings.map(c => ({
-      material_id: material.id,
+      material_id,
       content: c.content,
       embedding: JSON.stringify(c.embedding),
       metadata: c.metadata,
-      material_type,
+      material_type: material.material_type,
     }))
   )
-  if (chunksErr) {
-    await supabaseAdmin.from('materials').delete().eq('id', material.id)
-    return res.status(500).json({ error: chunksErr.message })
-  }
+  if (chunksErr) return res.status(500).json({ error: chunksErr.message })
 
   await supabaseAdmin
     .from('materials')
     .update({ processed_at: new Date().toISOString() })
-    .eq('id', material.id)
+    .eq('id', material_id)
 
-  return res.status(200).json({ material_id: material.id, chunks_count: chunks.length })
+  return res.status(200).json({ material_id, chunks_count: chunks.length })
 }
