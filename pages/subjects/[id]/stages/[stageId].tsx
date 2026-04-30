@@ -601,6 +601,24 @@ function SummaryTab({ content }: { content: SummaryContent }) {
         </div>
       )}
 
+      {content.formulas && content.formulas.length > 0 && (
+        <div>
+          <SectionLabel icon="∑" text="Key Formulas" />
+          <div className="space-y-2">
+            {content.formulas.map((f, i) => (
+              <div key={i} className="flex bg-white rounded-xl border border-[#E2E8F0] overflow-hidden shadow-sm">
+                <div className="w-[3px] shrink-0 bg-violet-500" />
+                <div className="px-4 py-3 flex-1 min-w-0">
+                  <code className="block bg-slate-900 text-violet-300 rounded-lg px-3 py-2 text-sm font-mono mb-2">{f.expression}</code>
+                  <p className="text-[#64748B] text-sm leading-relaxed">{f.variables}</p>
+                  <p className="text-violet-600 text-xs mt-1.5 font-medium">{f.whenToUse}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {content.ideaConnections?.length > 0 && (
         <div>
           <SectionLabel icon="🔗" text="How It Connects" />

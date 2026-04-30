@@ -29,6 +29,11 @@ const SummarySchema = z.object({
     answer: z.string(),
   })),
   detailedNotes: z.string(),
+  formulas: z.array(z.object({
+    expression: z.string(),
+    variables: z.string(),
+    whenToUse: z.string(),
+  })).optional().default([]),
 })
 const FlashcardsSchema = z.object({ cards: z.array(z.object({ front: z.string(), back: z.string() })) })
 const NODE_TYPES = ['concept', 'problem', 'solution', 'exam_trap', 'code_example',

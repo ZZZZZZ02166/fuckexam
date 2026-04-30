@@ -1,23 +1,32 @@
 export const PROMPTS = {
   perFileDecompose: (fileContent: string, fileName: string, examFormat: string) => `
-You are a curriculum designer. Decompose this single lecture file into granular study stages for exam preparation.
+You are a curriculum designer. Decompose this single lecture file into study stages for exam preparation.
 
 File: ${fileName}
 Exam format: ${examFormat}
 
-Rules:
-- Create one stage per distinct examinable concept cluster in this file
-- A concept cluster deserves its own stage when a student could be tested on it independently
-- Split concepts that are genuinely distinct — do NOT merge to reduce count
-- Compression is wrong: if this file covers 8 separately testable topics, produce 8 stages
-- Stage name: 3–6 words describing exactly what is NEW in that stage
+STAGE COUNT:
+Prefer compact, meaningful concept clusters.
+Group a definition, its formula or procedure, and a simple worked example into ONE stage when
+they belong together. Avoid tiny slide-level stages. Also avoid broad overloaded stages that
+hide independently testable concepts.
+Produce as many stages as genuinely needed for complete, exam-useful coverage — not fewer,
+not more.
+
+DO NOT create stages for:
+- Slides that only list learning objectives or learning outcomes
+- Course overview or weekly topic summary slides
+- Administrative slides (assessment dates, reading lists, timetables)
+- Slides that only recap or summarise content already covered elsewhere
+Only create stages for content that introduces substantive new knowledge a student would be tested on.
 
 Per stage:
-- name: 3–6 words, precise, describes what is new
+- name: 3–6 words, precise, describes exactly what is NEW in this stage
 - key_concepts: 3–8 specific, precise, examinable concepts covered in this stage
-- prerequisite_knowledge: specific concepts or topics a student MUST already understand before
-  this stage makes sense. Be precise — e.g. "GDP definition and components", not "economics basics".
-  Return an empty array only for genuinely foundational stages that assume zero prior knowledge.
+- prerequisite_knowledge: name the SPECIFIC concepts from other parts of this course that a
+  student must understand before this stage makes sense. Reference actual concept names, not
+  broad fields (e.g. "aggregate demand definition and components", not "macroeconomics basics").
+  Return an empty array only for genuinely foundational stages with no prior course dependencies.
 
 File content:
 ${fileContent}
@@ -26,9 +35,10 @@ ${fileContent}
   orderFiles: (fileDescriptions: string, subjectName: string) => `
 You are ordering lecture files for "${subjectName}" from foundational to advanced.
 
-Below are the lecture files with their first few stage topics listed.
-Return them in the order a student should study them — foundational concepts first, applied/policy topics last.
-Use the file names and stage topics as signals. If a file covers "introduction", "basics", or "fundamentals", it comes early.
+Below are the files with their stages and key concepts. Order them so a student can study
+from foundational to applied concepts. Use stage names, key concepts, and file names as
+signals. If file names contain lecture or chapter numbers, treat them as a useful but not
+decisive clue — the content is the primary signal.
 
 ${fileDescriptions}
 `.trim(),
@@ -69,30 +79,36 @@ ${stageList}
 `.trim(),
 
   orderStages: (stagesJson: string, stageCount: number, subjectName: string, examFormat: string) => `
-You are reviewing a proposed study path for "${subjectName}" (exam: ${examFormat}).
+You are ordering ${stageCount} study stages for a course titled "${subjectName}" (exam: ${examFormat}).
 
-The ${stageCount} stages below are already in a tentative pedagogical order derived from the course's own lecture sequence and prerequisite analysis. Your job is to make MINIMAL, TARGETED improvements — only move a stage when it clearly violates an explicit prerequisite dependency.
+Arrange these stages so a student can follow the path top-to-bottom, building knowledge progressively.
+Apply these rules in strict priority order:
 
-WHEN TO MOVE A STAGE — only if ALL of these are true:
-- The stage's prerequisite_knowledge explicitly requires knowledge that a LATER stage provides
-- Moving it resolves the dependency without creating other violations
-- The move is clearly necessary based on the content, not just domain convention
+RULE 1 — PREREQUISITE CONSTRAINTS (non-negotiable):
+If stage B's prerequisite_knowledge field names a concept that appears in stage A's key_concepts,
+then A must appear before B. Never violate this rule.
 
-WHEN NOT TO MOVE A STAGE:
-- Do not reorder based on your opinion of how this subject is typically taught in textbooks
-- Do not move stages because you think "concept X usually precedes Y" in standard curricula
-- Do not make large structural changes — the existing order reflects the course's own lecture sequence, which the instructor designed deliberately
-- Stylistic or cosmetic reorderings are wrong. If in doubt, keep the original position.
+RULE 2 — CURRICULUM DESIGN PRINCIPLES (apply as tiebreaker):
+When Rule 1 leaves stages unordered relative to each other:
+a. Definitions and foundational concepts before formulas and procedures that use them
+b. Introductory or overview concepts before detailed or advanced ones in the same topic
+c. Core theory and models before applications, worked examples, or case studies
+d. General frameworks before specialized applications, policy evaluations, or edge cases
+e. Simpler versions of a concept before more complex or extended versions
 
-VALID reasons to move (prerequisite_knowledge-driven only):
-- A stage lists a concept in prerequisite_knowledge that only appears in a stage numbered later in the input
-- Moving the prerequisite stage earlier resolves the gap
+RULE 3 — USE PROVIDED METADATA ONLY, NO OUTSIDE CONVENTIONS:
+Reason only from the provided stage metadata: stage name, key_concepts, prerequisite_knowledge,
+source_files, and the input order as a weak tie-breaker. If source_files contain lecture or
+chapter numbers, these can inform your sense of how the course is sequenced — treat them as
+a weak signal only, not a hard ordering rule.
+Do NOT use outside textbook conventions or generic domain knowledge to reorder the course.
+If the metadata does not indicate a dependency between two stages, apply Rule 2 or preserve
+their relative input order.
 
-Return only JSON matching this schema: { ordered_stage_ids: string[] }
-The array must contain the same IDs in the order a student should study them.
+Return only JSON: { ordered_stage_ids: string[] }
 You MUST include every stage exactly once. Do NOT add, remove, rename, merge, or skip any stage.
 
-Proposed order (make MINIMAL changes only):
+Stages:
 ${stagesJson}
 `.trim(),
 
@@ -227,7 +243,13 @@ Return a JSON object with these exact fields:
 - quickCheck: array of 2-3 questions testing the [CURRENT STAGE] material only, each with:
   - question: a short self-test question
   - answer: the correct answer (1-2 sentences)
-- detailedNotes: 200-300 word markdown string about the current stage content only — no headings, **bold** key terms, "- " bullets for lists
+- formulas: array of objects — mathematical formulas and equations present in the source material
+  for this stage. Return [] if this stage has no quantitative content. Do NOT invent formulas.
+  Each object has:
+  - expression: the formula in plain-text notation (e.g. "k = 1 / (1 − MPC)", "MV = PY", "ΔU ≈ −0.5 × ΔOutput_Gap")
+  - variables: one-line definition of each symbol (e.g. "k = multiplier; MPC = marginal propensity to consume")
+  - whenToUse: one sentence on when to apply this formula in an exam context
+- detailedNotes: 300-400 word markdown string about the current stage content only — no headings, **bold** key terms, "- " bullets for lists. Include mathematical formulas and worked numerical examples when present in the source material.
 
 Use only the source material provided. Do not invent facts.
 

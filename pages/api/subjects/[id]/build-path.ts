@@ -76,13 +76,28 @@ function jaccardSimilarity(a: string, b: string): number {
   return intersection / union
 }
 
+// Two stages are considered duplicates if their names match closely OR if their key_concepts
+// overlap significantly (catches same concept with different names across files).
+function stagesOverlap(
+  existing: DedupedStage,
+  incoming: { name: string; key_concepts: string[] }
+): boolean {
+  if (jaccardSimilarity(existing.name, incoming.name) >= 0.6) return true
+  const setA = new Set(existing.key_concepts.map(c => c.toLowerCase()))
+  const setB = new Set(incoming.key_concepts.map(c => c.toLowerCase()))
+  if (setA.size === 0 || setB.size === 0) return false
+  const intersection = [...setA].filter(c => setB.has(c)).length
+  const union = new Set([...setA, ...setB]).size
+  return intersection / union >= 0.4
+}
+
 // Deterministic dedup: iterates files in the ALREADY-ORDERED sequence.
 // First occurrence of a near-duplicate wins (it's from the earlier/more-foundational file).
 function deduplicateStages(orderedFileResults: PerFileResult[]): DedupedStage[] {
   const deduped: DedupedStage[] = []
   for (const { file_name, stages } of orderedFileResults) {
     for (const stage of stages) {
-      const existing = deduped.find(d => jaccardSimilarity(d.name, stage.name) >= 0.6)
+      const existing = deduped.find(d => stagesOverlap(d, stage))
       if (existing) {
         if (!existing.source_files.includes(file_name)) existing.source_files.push(file_name)
         for (const c of stage.key_concepts) {
@@ -289,9 +304,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log(`[ai] file order (by lecture#): ${orderedFiles.map(f => `${f.file_name}(#${f.lecture_num})`).join(' → ')}`)
   } else {
     // Ask GPT to order just the files — small N, easy task
-    const fileDescriptions = perFileResults.map(f =>
-      `- ${f.file_name}: covers ${f.stages.slice(0, 3).map(s => s.name).join(', ')}`
-    ).join('\n')
+    const fileDescriptions = perFileResults.map(f => {
+      const stageLines = f.stages.map(s =>
+        `  • ${s.name} [${s.key_concepts.slice(0, 2).join(', ')}]`
+      ).join('\n')
+      return `${f.file_name}:\n${stageLines}`
+    }).join('\n\n')
 
     const fo = await openai.chat.completions.parse({
       model: 'gpt-4o',
@@ -320,13 +338,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log(`[ai] dedup: ${totalProposed} → ${deduped.length} stages (removed ${totalProposed - deduped.length} near-duplicates)`)
 
   // ── STAGE ORDERING ────────────────────────────────────────────────────────
-  // 1. Topo sort using prerequisite_knowledge as pre-order hint and fallback
-  const topoOrdered = topoSortStages(deduped)
-  const topoReorderedCount = deduped.filter((s, i) => topoOrdered.indexOf(s) !== i).length
-  console.log(`[ai] topoSort: ${topoReorderedCount}/${deduped.length} stages reordered by prerequisite graph`)
-
-  // 2. GPT pedagogical ordering pass — compact metadata only, no lecture content
-  const stageMetadata = topoOrdered.map((s, i) => ({
+  // GPT ordering pass — compact metadata only, no lecture content.
+  // Topo sort is kept as a fallback if GPT fails twice.
+  const stageMetadata = deduped.map((s, i) => ({
     id: `stage_${i}`,
     name: s.name,
     key_concepts: s.key_concepts,
@@ -366,7 +380,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return null
       }
       const indexMap = new Map(stageMetadata.map((s, i) => [s.id, i]))
-      return ids.map(id => topoOrdered[indexMap.get(id)!])
+      return ids.map(id => deduped[indexMap.get(id)!])
     } catch (err) {
       console.warn(`[ai] GPT order error: ${err}`)
       return null
@@ -386,12 +400,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (retry) {
       finalOrdered = retry
       orderMethod = 'gpt_pedagogical_stage_order (retry)'
-    } else if (topoReorderedCount > 0) {
-      finalOrdered = topoOrdered
-      orderMethod = 'fallback_topological_order'
     } else {
-      finalOrdered = deduped
-      orderMethod = 'fallback_original_order'
+      // GPT failed twice — fall back to topo sort then original order
+      const topoOrdered = topoSortStages(deduped)
+      const topoReorderedCount = deduped.filter((s, i) => topoOrdered.indexOf(s) !== i).length
+      if (topoReorderedCount > 0) {
+        finalOrdered = topoOrdered
+        orderMethod = 'fallback_topological_order'
+      } else {
+        finalOrdered = deduped
+        orderMethod = 'fallback_original_order'
+      }
     }
   }
 

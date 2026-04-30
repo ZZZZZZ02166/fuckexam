@@ -138,6 +138,7 @@ export interface SummaryContent {
   examTraps: Array<{ trap: string; correction: string }>
   quickCheck: Array<{ question: string; answer: string }>
   detailedNotes: string
+  formulas?: Array<{ expression: string; variables: string; whenToUse: string }>
   masteryTerms?: string[]
 }
 export interface FlashcardsContent { cards: Array<{ front: string; back: string }> }
