@@ -10,10 +10,20 @@ import { zodResponseFormat } from 'openai/helpers/zod'
 const SummarySchema = z.object({
   quickOverview: z.array(z.string()),
   bigIdea: z.string(),
+  mustKnow: z.array(z.string()),
   keyConcepts: z.array(z.object({
     term: z.string(),
     explanation: z.string(),
     whyItMatters: z.string(),
+  })),
+  adaptiveSections: z.array(z.object({
+    sectionType: z.string(),
+    title: z.string(),
+    purpose: z.string(),
+    content: z.string(),
+    items: z.array(z.string()).nullable(),
+    examRelevance: z.string().nullable(),
+    sourcePages: z.array(z.string()).nullable(),
   })),
   ideaConnections: z.array(z.object({
     from: z.string(),
@@ -29,11 +39,6 @@ const SummarySchema = z.object({
     answer: z.string(),
   })),
   detailedNotes: z.string(),
-  formulas: z.array(z.object({
-    expression: z.string(),
-    variables: z.string(),
-    whenToUse: z.string(),
-  })).optional().default([]),
 })
 const FlashcardsSchema = z.object({ cards: z.array(z.object({ front: z.string(), back: z.string() })) })
 const NODE_TYPES = ['concept', 'problem', 'solution', 'exam_trap', 'code_example',

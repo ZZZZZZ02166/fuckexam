@@ -9,7 +9,8 @@ import { useAuth } from '../_app'
 import { cn } from '@/lib/utils'
 import type { UploadMaterialType } from '@/types/database'
 
-type Step = 'details' | 'upload' | 'processing' | 'done'
+type Step = 'details' | 'ordering' | 'upload' | 'processing' | 'done'
+type OrderingMode = 'upload_order' | 'ai_organised'
 
 interface FileEntry {
   id: string
@@ -68,8 +69,6 @@ function NewSubjectForm() {
   const router = useRouter()
   const { user } = useAuth()
 
-  // Dynamically create a file input on demand — never kept in the DOM,
-  // avoids browser security restrictions and Playwright modal detection.
   function pickFile(materialType: UploadMaterialType) {
     const input = document.createElement('input')
     input.type = 'file'
@@ -82,6 +81,7 @@ function NewSubjectForm() {
   }
 
   const [step, setStep] = useState<Step>('details')
+  const [orderingMode, setOrderingMode] = useState<OrderingMode | null>(null)
   const [name, setName] = useState('')
   const [examDate, setExamDate] = useState('')
   const [examFormat, setExamFormat] = useState('')
@@ -114,6 +114,24 @@ function NewSubjectForm() {
     setFileEntries(prev => prev.filter(e => e.id !== id))
   }
 
+  function moveLecture(id: string, direction: 'up' | 'down') {
+    setFileEntries(prev => {
+      const lectures = prev.filter(e => e.materialType === 'course_lecture_material')
+      const others = prev.filter(e => e.materialType !== 'course_lecture_material')
+      const idx = lectures.findIndex(e => e.id === id)
+      if (direction === 'up' && idx > 0) {
+        const next = [...lectures]
+        ;[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]]
+        return [...next, ...others]
+      } else if (direction === 'down' && idx < lectures.length - 1) {
+        const next = [...lectures]
+        ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+        return [...next, ...others]
+      }
+      return prev
+    })
+  }
+
   function openPreview(entry: FileEntry) {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl(URL.createObjectURL(entry.file))
@@ -127,12 +145,13 @@ function NewSubjectForm() {
   }
 
   const hasLectureFile = fileEntries.some(e => e.materialType === 'course_lecture_material')
+  const lectureFiles = fileEntries.filter(e => e.materialType === 'course_lecture_material')
   const totalFiles = fileEntries.length
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    setStep('upload')
+    setStep('ordering')
   }
 
   async function handleUpload(e: React.FormEvent) {
@@ -157,13 +176,20 @@ function NewSubjectForm() {
       return
     }
 
-    const ordered = [...fileEntries].sort((a, b) =>
-      a.materialType === 'course_lecture_material' ? -1 : b.materialType === 'course_lecture_material' ? 1 : 0
-    )
+    // Lectures first (in their current display order), then other material types
+    const otherFiles = fileEntries.filter(e => e.materialType !== 'course_lecture_material')
+    const ordered = [...lectureFiles, ...otherFiles]
+
+    if (orderingMode === 'upload_order') {
+      console.log('[upload] lecture order:', lectureFiles.map((e, i) => `${i + 1} ${e.file.name}`).join(', '))
+    }
 
     const fileErrors: string[] = []
+    let lectureCounter = 0
 
     for (const entry of ordered) {
+      const isLecture = entry.materialType === 'course_lecture_material'
+      const uploadOrder = isLecture ? ++lectureCounter : undefined
       try {
         addStatus(`Uploading ${entry.file.name}…`)
         const storagePath = `${user.id}/${Date.now()}_${entry.file.name}`
@@ -181,6 +207,7 @@ function NewSubjectForm() {
             storage_path: storagePath,
             file_name: entry.file.name,
             material_type: entry.materialType,
+            upload_order: uploadOrder,
           }),
         })
         completeStatus()
@@ -196,7 +223,10 @@ function NewSubjectForm() {
 
     try {
       addStatus('Building your study path from all materials…')
-      await apiJson(`/api/subjects/${subject!.id}/build-path`, { method: 'POST' })
+      await apiJson(`/api/subjects/${subject!.id}/build-path`, {
+        method: 'POST',
+        body: JSON.stringify({ ordering_mode: orderingMode }),
+      })
       completeStatus()
     } catch (err: any) {
       completeStatus()
@@ -273,9 +303,100 @@ function NewSubjectForm() {
                   disabled={!name.trim()}
                   className="w-full rounded-xl px-4 py-3 text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm mt-2"
                 >
-                  Next: upload materials →
+                  Next: choose ordering →
                 </button>
               </form>
+            </>
+          )}
+
+          {/* ── Ordering step ── */}
+          {step === 'ordering' && (
+            <>
+              <p className="text-[#64748B] text-sm mb-6">
+                Choose how we should order your lecture material before building the path. Tutorials, exams, and solutions will still be used as supporting material when relevant.
+              </p>
+              <div className="space-y-3 mb-6">
+
+                {/* Option 1 — Follow upload order */}
+                <button
+                  type="button"
+                  onClick={() => setOrderingMode('upload_order')}
+                  className={cn(
+                    'w-full text-left rounded-2xl border-2 px-5 py-4 transition shadow-sm',
+                    orderingMode === 'upload_order'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-[#E2E8F0] bg-white hover:border-blue-200 hover:bg-blue-50/40'
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={cn(
+                      'mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center',
+                      orderingMode === 'upload_order' ? 'border-blue-500 bg-blue-500' : 'border-[#CBD5E1]'
+                    )}>
+                      {orderingMode === 'upload_order' && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        <span className="font-bold text-[#0F172A] text-sm">Follow my upload order</span>
+                        <span className="text-[9px] font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">Best for organised lecture files</span>
+                      </div>
+                      <p className="text-sm text-[#64748B] leading-relaxed">
+                        Choose this if your lecture files are already in the correct weekly or course sequence. We will build the study path mainly in the order you upload the lecture materials, then clean up obvious issues like review-only slides or small local ordering problems.
+                      </p>
+                      <p className="text-xs text-[#94A3B8] mt-2 italic">Tip: upload lecture files in order.</p>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Option 2 — AI organised */}
+                <button
+                  type="button"
+                  onClick={() => setOrderingMode('ai_organised')}
+                  className={cn(
+                    'w-full text-left rounded-2xl border-2 px-5 py-4 transition shadow-sm',
+                    orderingMode === 'ai_organised'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-[#E2E8F0] bg-white hover:border-blue-200 hover:bg-blue-50/40'
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={cn(
+                      'mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center',
+                      orderingMode === 'ai_organised' ? 'border-blue-500 bg-blue-500' : 'border-[#CBD5E1]'
+                    )}>
+                      {orderingMode === 'ai_organised' && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        <span className="font-bold text-[#0F172A] text-sm">Let AI organise the path</span>
+                        <span className="text-[9px] font-extrabold uppercase tracking-widest text-violet-600 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full">Best for messy files</span>
+                      </div>
+                      <p className="text-sm text-[#64748B] leading-relaxed">
+                        Choose this if your files are renamed, uploaded randomly, or not clearly ordered. We will analyse the content and organise stages using prerequisite logic, such as foundations before applications and concepts before examples.
+                      </p>
+                      <p className="text-xs text-[#94A3B8] mt-2 italic">Useful when filenames or lecture numbers may be misleading.</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep('details')}
+                  className="flex-1 rounded-xl px-4 py-3 text-sm font-bold bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition shadow-sm"
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  disabled={!orderingMode}
+                  onClick={() => setStep('upload')}
+                  className="flex-[2] rounded-xl px-4 py-3 text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
+                >
+                  Continue to upload materials →
+                </button>
+              </div>
             </>
           )}
 
@@ -306,13 +427,21 @@ function NewSubjectForm() {
 
                 {/* ── LEFT: section cards ── */}
                 <div className="flex flex-col gap-4">
-                  {/* Rule callout */}
+                  {/* Rule + mode reminder callout */}
                   <div className="rounded-2xl bg-indigo-50 border border-indigo-100 px-4 py-3 flex gap-2.5 items-start">
                     <span className="text-indigo-400 text-sm mt-0.5 shrink-0">💡</span>
-                    <p className="text-sm text-indigo-800 leading-relaxed">
-                      <span className="font-bold">Simple rule: </span>
-                      Lecture files build the study path. The other files improve practice, Answer Coach, and exam-style questions.
-                    </p>
+                    <div>
+                      <p className="text-sm text-indigo-800 leading-relaxed">
+                        <span className="font-bold">Simple rule: </span>
+                        Lecture files build the study path. The other files improve practice, Answer Coach, and exam-style questions.
+                      </p>
+                      {orderingMode === 'upload_order' && (
+                        <p className="text-xs text-indigo-600 mt-1 font-medium">Upload lecture files in the order you want to study them.</p>
+                      )}
+                      {orderingMode === 'ai_organised' && (
+                        <p className="text-xs text-indigo-600 mt-1 font-medium">File order matters less. We'll organise stages by content and prerequisites.</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Section cards */}
@@ -320,6 +449,8 @@ function NewSubjectForm() {
                     {MATERIAL_SECTIONS.map((section, index) => {
                       const sectionFiles = fileEntries.filter(e => e.materialType === section.type)
                       const hasFiles = sectionFiles.length > 0
+                      const isLectureSection = section.type === 'course_lecture_material'
+                      const showReorderList = isLectureSection && orderingMode === 'upload_order'
 
                       return (
                         <div
@@ -371,32 +502,75 @@ function NewSubjectForm() {
 
                           {hasFiles && (
                             <div className="px-4 pb-3.5 ml-[46px] space-y-1.5">
-                              {sectionFiles.map(entry => (
-                                <div
-                                  key={entry.id}
-                                  onClick={() => openPreview(entry)}
-                                  className={cn(
-                                    'flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition group',
-                                    previewEntry?.id === entry.id
-                                      ? 'bg-blue-50 border-blue-200'
-                                      : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-blue-50 hover:border-blue-200'
-                                  )}
-                                >
-                                  <span className="text-[11px] text-[#94A3B8] shrink-0">📄</span>
-                                  <span className="flex-1 text-[12px] text-[#334155] font-medium truncate">{entry.file.name}</span>
-                                  <span className="text-[10px] text-[#94A3B8] shrink-0 group-hover:text-blue-400 transition">
-                                    {previewEntry?.id === entry.id ? 'previewing' : 'preview'}
-                                  </span>
-                                  <span className="text-[10px] text-[#CBD5E1] shrink-0">{(entry.file.size / 1024 / 1024).toFixed(1)} MB</span>
-                                  <button
-                                    type="button"
-                                    onClick={e => { e.stopPropagation(); removeEntry(entry.id) }}
-                                    className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#CBD5E1] hover:text-red-400 hover:bg-red-50 transition text-[10px]"
+                              {showReorderList ? (
+                                /* Numbered reorderable list for lectures in upload_order mode */
+                                <>
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-2">Lecture order for study path</p>
+                                  {sectionFiles.map((entry, idx) => (
+                                    <div
+                                      key={entry.id}
+                                      className="flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2"
+                                    >
+                                      <span className="text-[11px] font-bold text-blue-600 w-5 shrink-0 text-center">{idx + 1}</span>
+                                      <span className="flex-1 text-[12px] text-[#334155] font-medium truncate">{entry.file.name}</span>
+                                      <span className="text-[10px] text-[#CBD5E1] shrink-0">{(entry.file.size / 1024 / 1024).toFixed(1)} MB</span>
+                                      <div className="flex gap-0.5 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => moveLecture(entry.id, 'up')}
+                                          disabled={idx === 0}
+                                          className="w-5 h-5 flex items-center justify-center rounded text-[#94A3B8] hover:text-blue-600 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed transition text-[10px]"
+                                        >
+                                          ↑
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => moveLecture(entry.id, 'down')}
+                                          disabled={idx === sectionFiles.length - 1}
+                                          className="w-5 h-5 flex items-center justify-center rounded text-[#94A3B8] hover:text-blue-600 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed transition text-[10px]"
+                                        >
+                                          ↓
+                                        </button>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeEntry(entry.id)}
+                                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#CBD5E1] hover:text-red-400 hover:bg-red-50 transition text-[10px]"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ))}
+                                </>
+                              ) : (
+                                /* Standard file list for ai_organised mode or non-lecture sections */
+                                sectionFiles.map(entry => (
+                                  <div
+                                    key={entry.id}
+                                    onClick={() => openPreview(entry)}
+                                    className={cn(
+                                      'flex items-center gap-2 rounded-xl border px-3 py-2 cursor-pointer transition group',
+                                      previewEntry?.id === entry.id
+                                        ? 'bg-blue-50 border-blue-200'
+                                        : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-blue-50 hover:border-blue-200'
+                                    )}
                                   >
-                                    ✕
-                                  </button>
-                                </div>
-                              ))}
+                                    <span className="text-[11px] text-[#94A3B8] shrink-0">📄</span>
+                                    <span className="flex-1 text-[12px] text-[#334155] font-medium truncate">{entry.file.name}</span>
+                                    <span className="text-[10px] text-[#94A3B8] shrink-0 group-hover:text-blue-400 transition">
+                                      {previewEntry?.id === entry.id ? 'previewing' : 'preview'}
+                                    </span>
+                                    <span className="text-[10px] text-[#CBD5E1] shrink-0">{(entry.file.size / 1024 / 1024).toFixed(1)} MB</span>
+                                    <button
+                                      type="button"
+                                      onClick={e => { e.stopPropagation(); removeEntry(entry.id) }}
+                                      className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#CBD5E1] hover:text-red-400 hover:bg-red-50 transition text-[10px]"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))
+                              )}
                             </div>
                           )}
                         </div>
@@ -409,7 +583,7 @@ function NewSubjectForm() {
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => setStep('details')}
+                      onClick={() => setStep('ordering')}
                       className="flex-1 rounded-xl px-4 py-3 text-sm font-bold bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] transition shadow-sm"
                     >
                       ← Back
@@ -424,48 +598,50 @@ function NewSubjectForm() {
                   </div>
                 </div>
 
-                {/* ── RIGHT: preview pane (sticky) ── */}
-                <div className="h-full" style={{ minHeight: '420px' }}>
-                  <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden flex flex-col h-full">
-                    {previewEntry && previewUrl ? (
-                      <>
-                        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#F1F5F9] shrink-0">
-                          <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                            <span className="text-xs">📄</span>
+                {/* ── RIGHT: preview pane (sticky) — hidden in upload_order mode to give more space ── */}
+                {orderingMode !== 'upload_order' && (
+                  <div className="h-full" style={{ minHeight: '420px' }}>
+                    <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden flex flex-col h-full">
+                      {previewEntry && previewUrl ? (
+                        <>
+                          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#F1F5F9] shrink-0">
+                            <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                              <span className="text-xs">📄</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-[#0F172A] truncate leading-tight">{previewEntry.file.name}</p>
+                              <p className="text-[10px] text-[#94A3B8] mt-0.5">
+                                {(previewEntry.file.size / 1024 / 1024).toFixed(1)} MB · {MATERIAL_SECTIONS.find(s => s.type === previewEntry.materialType)?.label}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={closePreview}
+                              className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-[#CBD5E1] hover:text-[#64748B] hover:bg-[#F1F5F9] transition text-xs font-bold"
+                            >
+                              ✕
+                            </button>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-[#0F172A] truncate leading-tight">{previewEntry.file.name}</p>
-                            <p className="text-[10px] text-[#94A3B8] mt-0.5">
-                              {(previewEntry.file.size / 1024 / 1024).toFixed(1)} MB · {MATERIAL_SECTIONS.find(s => s.type === previewEntry.materialType)?.label}
-                            </p>
+                          <div className="flex-1 overflow-hidden bg-[#F8FAFC]">
+                            <iframe
+                              src={previewUrl}
+                              className="w-full h-full border-0"
+                              title={previewEntry.file.name}
+                            />
                           </div>
-                          <button
-                            type="button"
-                            onClick={closePreview}
-                            className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-[#CBD5E1] hover:text-[#64748B] hover:bg-[#F1F5F9] transition text-xs font-bold"
-                          >
-                            ✕
-                          </button>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-center px-8">
+                          <div className="w-16 h-16 rounded-2xl bg-[#F1F5F9] flex items-center justify-center mb-4">
+                            <span className="text-3xl opacity-40">📄</span>
+                          </div>
+                          <p className="text-sm font-bold text-[#334155] mb-1.5">PDF preview</p>
+                          <p className="text-xs text-[#94A3B8] leading-relaxed">Upload a file, then click it to<br />preview its contents here</p>
                         </div>
-                        <div className="flex-1 overflow-hidden bg-[#F8FAFC]">
-                          <iframe
-                            src={previewUrl}
-                            className="w-full h-full border-0"
-                            title={previewEntry.file.name}
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-center px-8">
-                        <div className="w-16 h-16 rounded-2xl bg-[#F1F5F9] flex items-center justify-center mb-4">
-                          <span className="text-3xl opacity-40">📄</span>
-                        </div>
-                        <p className="text-sm font-bold text-[#334155] mb-1.5">PDF preview</p>
-                        <p className="text-xs text-[#94A3B8] leading-relaxed">Upload a file, then click it to<br />preview its contents here</p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </form>
           )}

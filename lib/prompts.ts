@@ -78,6 +78,32 @@ Stages (${stageCount} total — preserve this order exactly):
 ${stageList}
 `.trim(),
 
+  orderStagesConservative: (stagesJson: string, stageCount: number, subjectName: string, examFormat: string) => `
+You are reviewing the ordering of ${stageCount} study stages for a course titled "${subjectName}" (exam: ${examFormat}).
+
+The stages are already in the student's intended study sequence — this reflects the order they uploaded their lecture files. PRESERVE this order as the baseline.
+
+Your only job: fix clear, explicit prerequisite violations.
+
+MOVE A STAGE ONLY IF:
+Stage B's prerequisite_knowledge field explicitly names a concept that appears in stage A's key_concepts,
+AND stage B currently appears BEFORE stage A. In that case, move stage A to just before stage B.
+
+DO NOT:
+- Apply curriculum design principles or textbook conventions to suggest a "better" academic order
+- Use general domain knowledge to reorder stages
+- Move a stage because a concept "feels" more foundational
+- Make any change not directly forced by an explicit prerequisite in the metadata
+
+If no explicit prerequisite violations exist, return the stages in exactly the input order.
+
+Return only JSON: { ordered_stage_ids: string[] }
+Include every stage exactly once.
+
+Stages:
+${stagesJson}
+`.trim(),
+
   orderStages: (stagesJson: string, stageCount: number, subjectName: string, examFormat: string) => `
 You are ordering ${stageCount} study stages for a course titled "${subjectName}" (exam: ${examFormat}).
 
@@ -228,11 +254,21 @@ YOUR SCOPE IS STRICTLY LIMITED to the concepts marked [CURRENT STAGE] above.
 Return a JSON object with these exact fields:
 - quickOverview: array of 5-8 short strings — the bare minimum facts about ${topicNames} the student must know, nothing from other stages
 - bigIdea: one paragraph (2-4 sentences) explaining the core idea of this stage and how it fits in the learning journey
+- mustKnow: array of 3-6 concise strings — the highest-stakes items a student MUST have memorised before the exam. These are the most critical facts, rules, formulas, or definitions for this stage. Be specific and exam-ready (e.g. "k = 1 / (1 − MPC): the Keynesian multiplier formula", "Offer + acceptance + consideration = valid contract").
 - keyConcepts: array of 3-6 objects — CRITICAL: the "term" field must be a concept explicitly listed under [CURRENT STAGE] in the curriculum map, or a direct sub-component of it. NEVER write a concept card for anything listed under [ALREADY COVERED] or [COVERED LATER]. If a concept appears in your source material but belongs to another stage, do not define it — mention it in prose only as a forward/backward reference.
   Each object has:
   - term: ONLY a [CURRENT STAGE] concept name
   - explanation: 1-2 sentences defining it clearly
   - whyItMatters: one sentence on why this is tested in: ${examFormat}
+- adaptiveSections: After generating the fields above, inspect the source material and ask: "What important exam-relevant content would be lost if I only used the generic fields above?" If the stage contains formulas, equations, worked examples, diagrams, graphs, case law or legal rules, experimental evidence, algorithms, procedure steps, mechanisms, protocols, proofs, derivations, comparison tables, timelines, design trade-offs, definitions to memorise exactly, or any other structured subject-specific content — include it here. Return [] only if the universal fields already capture everything important. Do NOT invent unsupported content. Do NOT add decorative or padding sections. Only include sections clearly present in the source material and useful for exam preparation.
+  Each object has:
+  - sectionType: a short descriptive label chosen to fit this specific content (e.g. "formula set", "worked example", "causal chain", "algorithm", "process steps", "case rule", "study evidence", "comparison", "timeline", "proof sketch", "mechanism", "design trade-off"). Do NOT use a fixed list — choose the label that best describes this content.
+  - title: a short descriptive title for this section
+  - purpose: one sentence explaining why this section matters for exam preparation
+  - content: the main body text (a formula, rule statement, explanation, etc.)
+  - items: optional array of strings — use when there are multiple parallel items (e.g. a list of formulas, steps in a procedure, case rules). Omit if content alone is sufficient.
+  - examRelevance: optional one sentence on how to use this in an exam answer
+  - sourcePages: optional array of source reference strings if identifiable from the material
 - ideaConnections: array of 2-4 objects showing how this stage's concepts relate to each other or to prior knowledge, each with:
   - from: a concept name
   - to: a concept name
@@ -243,13 +279,7 @@ Return a JSON object with these exact fields:
 - quickCheck: array of 2-3 questions testing the [CURRENT STAGE] material only, each with:
   - question: a short self-test question
   - answer: the correct answer (1-2 sentences)
-- formulas: array of objects — mathematical formulas and equations present in the source material
-  for this stage. Return [] if this stage has no quantitative content. Do NOT invent formulas.
-  Each object has:
-  - expression: the formula in plain-text notation (e.g. "k = 1 / (1 − MPC)", "MV = PY", "ΔU ≈ −0.5 × ΔOutput_Gap")
-  - variables: one-line definition of each symbol (e.g. "k = multiplier; MPC = marginal propensity to consume")
-  - whenToUse: one sentence on when to apply this formula in an exam context
-- detailedNotes: 300-400 word markdown string about the current stage content only — no headings, **bold** key terms, "- " bullets for lists. Include mathematical formulas and worked numerical examples when present in the source material.
+- detailedNotes: 300-400 word markdown string about the current stage content only — no headings, **bold** key terms, "- " bullets for lists.
 
 Use only the source material provided. Do not invent facts.
 

@@ -31,9 +31,9 @@ export type Database = {
         Relationships: [{ foreignKeyName: "mastery_records_topic_id_fkey"; columns: ["topic_id"]; isOneToOne: false; referencedRelation: "topics"; referencedColumns: ["id"] }]
       }
       materials: {
-        Row: { created_at: string | null; file_name: string; id: string; material_type: string | null; processed_at: string | null; storage_path: string; subject_id: string }
-        Insert: { created_at?: string | null; file_name: string; id?: string; material_type?: string | null; processed_at?: string | null; storage_path: string; subject_id: string }
-        Update: { created_at?: string | null; file_name?: string; id?: string; material_type?: string | null; processed_at?: string | null; storage_path?: string; subject_id?: string }
+        Row: { created_at: string | null; file_name: string; id: string; material_type: string | null; processed_at: string | null; storage_path: string; subject_id: string; upload_order: number | null }
+        Insert: { created_at?: string | null; file_name: string; id?: string; material_type?: string | null; processed_at?: string | null; storage_path: string; subject_id: string; upload_order?: number | null }
+        Update: { created_at?: string | null; file_name?: string; id?: string; material_type?: string | null; processed_at?: string | null; storage_path?: string; subject_id?: string; upload_order?: number | null }
         Relationships: [{ foreignKeyName: "materials_subject_id_fkey"; columns: ["subject_id"]; isOneToOne: false; referencedRelation: "subjects"; referencedColumns: ["id"] }]
       }
       questions: {
@@ -130,15 +130,26 @@ export const UPLOAD_MATERIAL_TYPE_LABELS: Record<UploadMaterialType, string> = {
   exam_solutions_marking_guide: 'Solutions / marking guide',
 }
 
+export interface AdaptiveSection {
+  sectionType: string
+  title: string
+  purpose: string
+  content: string
+  items?: string[]
+  examRelevance?: string
+  sourcePages?: string[]
+}
+
 export interface SummaryContent {
   quickOverview: string[]
   bigIdea: string
-  keyConcepts: Array<{ term: string; explanation: string; whyItMatters: string }>
+  mustKnow?: string[]
+  keyConcepts: Array<{ term: string; explanation: string; whyItMatters?: string }>
+  adaptiveSections?: AdaptiveSection[]
   ideaConnections: Array<{ from: string; to: string; relationship: string }>
   examTraps: Array<{ trap: string; correction: string }>
   quickCheck: Array<{ question: string; answer: string }>
   detailedNotes: string
-  formulas?: Array<{ expression: string; variables: string; whenToUse: string }>
   masteryTerms?: string[]
 }
 export interface FlashcardsContent { cards: Array<{ front: string; back: string }> }

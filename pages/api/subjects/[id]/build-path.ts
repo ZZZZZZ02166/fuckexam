@@ -208,12 +208,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .single()
   if (!subject) return res.status(404).json({ error: 'Subject not found' })
 
+  const { ordering_mode } = (req.body ?? {}) as { ordering_mode?: 'upload_order' | 'ai_organised' }
+  const orderingMode: 'upload_order' | 'ai_organised' = ordering_mode ?? 'ai_organised'
+
   const { data: materials } = await supabaseAdmin
     .from('materials')
-    .select('id, file_name')
+    .select('id, file_name, upload_order')
     .eq('subject_id', subject_id)
     .eq('material_type', 'course_lecture_material')
-    .order('created_at')
+    .order('upload_order', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: true })
 
   if (!materials || materials.length === 0) {
     return res.status(400).json({ error: 'No lecture material found for this subject' })
@@ -289,12 +293,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log(`[ai] pass1 complete — ${totalProposed} proposed stages across ${perFileResults.length} files`)
 
   // ── FILE ORDERING ─────────────────────────────────────────────────────────
-  // Sort files by lecture/week number when present — deterministic and always correct.
-  // Fall back to a small GPT call (ordering just the files, not 30+ stages) when no numbers.
   const hasNumbers = perFileResults.some(f => f.lecture_num !== null)
   let orderedFiles: PerFileResult[]
 
-  if (hasNumbers) {
+  if (orderingMode === 'upload_order') {
+    // Preserve DB fetch order (upload_order ASC, created_at ASC fallback) — no filename/number sort
+    orderedFiles = perFileResults
+    console.log(`[ai] file order (upload_order preserved): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
+  } else if (hasNumbers) {
+    // ai_organised + lecture numbers present — sort by lecture number
     orderedFiles = [...perFileResults].sort((a, b) => {
       if (a.lecture_num !== null && b.lecture_num !== null) return a.lecture_num - b.lecture_num
       if (a.lecture_num !== null) return -1
@@ -303,7 +310,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
     console.log(`[ai] file order (by lecture#): ${orderedFiles.map(f => `${f.file_name}(#${f.lecture_num})`).join(' → ')}`)
   } else {
-    // Ask GPT to order just the files — small N, easy task
+    // ai_organised + no numbers — GPT orderFiles
     const fileDescriptions = perFileResults.map(f => {
       const stageLines = f.stages.map(s =>
         `  • ${s.name} [${s.key_concepts.slice(0, 2).join(', ')}]`
@@ -324,7 +331,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .map(name => perFileResults.find(f => f.file_name === name))
       .filter(Boolean) as PerFileResult[]
 
-    // Append any files that weren't returned by GPT (safety net)
     for (const f of perFileResults) {
       if (!orderedFiles.find(o => o.file_name === f.file_name)) orderedFiles.push(f)
     }
@@ -349,6 +355,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }))
   const expectedIds = new Set(stageMetadata.map(s => s.id))
 
+  const stagesJson = JSON.stringify(stageMetadata, null, 2)
+  const orderPrompt = orderingMode === 'upload_order'
+    ? PROMPTS.orderStagesConservative(stagesJson, deduped.length, subjectName, examFormat)
+    : PROMPTS.orderStages(stagesJson, deduped.length, subjectName, examFormat)
+
   async function attemptGptOrder(): Promise<DedupedStage[] | null> {
     try {
       const ro = await openai.chat.completions.parse({
@@ -356,16 +367,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         messages: [
           {
             role: 'system',
-            content: 'You are a curriculum designer ordering study stages for optimal exam preparation.',
+            content: orderingMode === 'upload_order'
+              ? 'You are a curriculum designer reviewing stage ordering. Preserve the student\'s intended sequence; only fix explicit prerequisite violations.'
+              : 'You are a curriculum designer ordering study stages for optimal exam preparation.',
           },
           {
             role: 'user',
-            content: PROMPTS.orderStages(
-              JSON.stringify(stageMetadata, null, 2),
-              deduped.length,
-              subjectName,
-              examFormat
-            ),
+            content: orderPrompt,
           },
         ],
         response_format: zodResponseFormat(StageOrderSchema, 'stage_order'),

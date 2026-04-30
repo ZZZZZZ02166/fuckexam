@@ -14,6 +14,7 @@ const BodySchema = z.object({
     'past_exam_questions',
     'exam_solutions_marking_guide',
   ]).default('course_lecture_material'),
+  upload_order: z.number().int().nonnegative().optional(),
 })
 
 const EMBED_BATCH = 20
@@ -30,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const parsed = BodySchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
-  const { subject_id, storage_path, file_name, material_type } = parsed.data
+  const { subject_id, storage_path, file_name, material_type, upload_order } = parsed.data
 
   const { data: subject } = await supabaseAdmin
     .from('subjects')
@@ -86,9 +87,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // All risky work done — now persist
+  console.log(`[process-material] inserting material="${file_name}" type=${material_type} upload_order=${upload_order ?? 'null'}`)
   const { data: material, error: materialErr } = await supabaseAdmin
     .from('materials')
-    .insert({ subject_id, file_name, storage_path, material_type })
+    .insert({ subject_id, file_name, storage_path, material_type, upload_order: upload_order ?? null })
     .select()
     .single()
   if (materialErr) return res.status(500).json({ error: materialErr.message })

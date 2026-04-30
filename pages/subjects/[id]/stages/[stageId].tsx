@@ -583,6 +583,22 @@ function SummaryTab({ content }: { content: SummaryContent }) {
         </div>
       )}
 
+      {(content.mustKnow ?? []).length > 0 && (
+        <div>
+          <SectionLabel icon="⭐" text="Must Know" />
+          <div className="bg-amber-50 rounded-xl border border-amber-200 px-4 py-3">
+            <ul className="space-y-1.5">
+              {(content.mustKnow ?? []).map((item, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-sm text-[#1E293B] font-medium">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {content.keyConcepts?.length > 0 && (
         <div>
           <SectionLabel icon="🎯" text="Key Concepts" />
@@ -601,21 +617,45 @@ function SummaryTab({ content }: { content: SummaryContent }) {
         </div>
       )}
 
-      {content.formulas && content.formulas.length > 0 && (
-        <div>
-          <SectionLabel icon="∑" text="Key Formulas" />
-          <div className="space-y-2">
-            {content.formulas.map((f, i) => (
+      {(content.adaptiveSections ?? []).length > 0 && (
+        <div className="space-y-3">
+          {(content.adaptiveSections ?? []).map((section, i) => {
+            const isCode = /formula|equation|calculation|code|algorithm/i.test(section.sectionType)
+            return (
               <div key={i} className="flex bg-white rounded-xl border border-[#E2E8F0] overflow-hidden shadow-sm">
                 <div className="w-[3px] shrink-0 bg-violet-500" />
                 <div className="px-4 py-3 flex-1 min-w-0">
-                  <code className="block bg-slate-900 text-violet-300 rounded-lg px-3 py-2 text-sm font-mono mb-2">{f.expression}</code>
-                  <p className="text-[#64748B] text-sm leading-relaxed">{f.variables}</p>
-                  <p className="text-violet-600 text-xs mt-1.5 font-medium">{f.whenToUse}</p>
+                  <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-violet-600 bg-violet-50 border border-violet-200 rounded px-1.5 py-0.5 mb-1.5">{section.sectionType}</span>
+                  <p className="text-[#0F172A] font-bold text-sm mb-1">{section.title}</p>
+                  <p className="text-[#64748B] text-xs mb-2 italic">{section.purpose}</p>
+                  {isCode ? (
+                    <code className="block bg-slate-900 text-violet-300 rounded-lg px-3 py-2 text-sm font-mono whitespace-pre-wrap">{section.content}</code>
+                  ) : (
+                    <p className="text-[#334155] text-sm leading-relaxed">{section.content}</p>
+                  )}
+                  {(section.items ?? []).length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {(section.items ?? []).map((item, j) => (
+                        <li key={j} className={isCode
+                          ? 'font-mono text-sm bg-slate-900 text-violet-300 rounded px-2 py-1'
+                          : 'text-sm text-[#334155] flex items-start gap-2'
+                        }>
+                          {!isCode && <span className="mt-1.5 w-1 h-1 rounded-full bg-violet-400 shrink-0" />}
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {section.examRelevance && (
+                    <p className="text-violet-600 text-xs mt-2 font-medium">{section.examRelevance}</p>
+                  )}
+                  {(section.sourcePages ?? []).length > 0 && (
+                    <p className="text-[#94A3B8] text-xs mt-1">Source: {(section.sourcePages ?? []).join(', ')}</p>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            )
+          })}
         </div>
       )}
 
