@@ -77,3 +77,14 @@
 [83932638ms] [LOG] [Fast Refresh] done in 128ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
 [84031945ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
 [84032238ms] [LOG] [Fast Refresh] done in 292ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[84537330ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[84798427ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[85175455ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[85175810ms] [LOG] [Fast Refresh] done in 356ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[85187258ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[85187522ms] [LOG] [Fast Refresh] done in 265ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[85187535ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[85187613ms] [LOG] [Fast Refresh] done in 79ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[85188057ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3003/api/subjects/8e732f95-1a77-43cc-9cb5-412eeb2b6099:0
+[85205428ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[85205835ms] [LOG] [Fast Refresh] done in 407ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13

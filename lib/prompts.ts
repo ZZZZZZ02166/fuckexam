@@ -141,14 +141,35 @@ ${stagesJson}
   orderModules: (modulesJson: string, subjectName: string, examFormat: string) => `
 You are ordering lecture modules for "${subjectName}" (exam: ${examFormat}).
 
-Each module is one uploaded lecture file. Order them so a student builds knowledge
-progressively — foundational concepts first, advanced applications later.
+Each module contains stages from one uploaded lecture file. Order them so a student
+builds knowledge progressively — foundational before advanced.
 
-PRIMARY signal: each module's key concepts and what prerequisite knowledge its stages require.
-SECONDARY signal: stage names and what they lead toward.
-WEAK HINT ONLY: lecture or chapter numbers in the file name. Do NOT use these as the
-primary criterion. A file named "Lecture11" may be foundational; "Lecture04" may be advanced.
-Reason from the content, not the filename numbers.
+Apply these rules in strict priority order. A higher-priority rule always overrides a lower one.
+
+RULE 1 — PREREQUISITE DEPENDENCIES (highest priority):
+The "prerequisite_knowledge" field lists concepts a module's stages explicitly require the
+student to already know. If module B's prerequisite_knowledge references concepts that appear
+in module A's key_concepts, module A MUST come before module B.
+This rule is non-negotiable — it overrides all filename or ordering signals.
+
+RULE 2 — CONTENT-BASED LEARNING FLOW (primary ordering signal):
+Reason from the actual content: what concepts does each module introduce, and what does it
+build on? Place modules that introduce foundational definitions and frameworks before modules
+that apply, extend, or combine them. Theory before application, simpler models before complex
+ones, core concepts before policy analysis or edge cases.
+Use stage_names and key_concepts as your primary evidence.
+
+RULE 3 — LECTURE OR CHAPTER NUMBERS (tiebreaker only):
+Only apply this rule when Rules 1 and 2 leave the relative order of two modules genuinely
+ambiguous — meaning neither content nor prerequisite evidence clearly distinguishes them.
+In that case, a lecture or chapter number in the file name (e.g. "Lecture05") is a reasonable
+signal that this is how the course was sequenced.
+
+CRITICAL CONSTRAINTS:
+- Never order modules purely by filename or lecture number.
+- Never let a filename number override clear content or prerequisite evidence.
+- If filename order and content evidence conflict, content evidence wins.
+- The goal is the best learning sequence based on what the material actually contains.
 
 Return only JSON: { ordered_module_ids: string[] }
 Include every module ID exactly once.
