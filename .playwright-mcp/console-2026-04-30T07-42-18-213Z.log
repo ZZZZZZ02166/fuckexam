@@ -2,3 +2,69 @@
 [     114ms] [LOG] [Fast Refresh] done in 65ms @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
 [     617ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:28004
 [     647ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[ 1005637ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[ 4821758ms] [ERROR] Failed to load resource: net::ERR_TIMED_OUT @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[ 4821765ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:42)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:223:11)
+    at new Promise (<anonymous>)
+    at retryable (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:204:21)
+    at SupabaseAuthClient._refreshAccessToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3749:81)
+    at SupabaseAuthClient._callRefreshToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3907:48)
+    at SupabaseAuthClient.__loadSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2382:57)
+    at async SupabaseAuthClient._useSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2316:28)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:4186:32) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[ 5295499ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[ 6452202ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[ 7898514ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[ 9088016ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[11691817ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[21036081ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[21436745ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[21676665ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[21854331ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[22105124ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[22216861ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[24335243ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[24720709ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[24890320ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[27165856ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[27250653ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[38198697ms] [ERROR] Failed to load resource: net::ERR_TIMED_OUT @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[38198700ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:42)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:223:11)
+    at new Promise (<anonymous>)
+    at retryable (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:204:21)
+    at SupabaseAuthClient._refreshAccessToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3749:81)
+    at SupabaseAuthClient._callRefreshToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3907:48)
+    at SupabaseAuthClient.__loadSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2382:57)
+    at async SupabaseAuthClient._useSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2316:28)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:4186:32) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[49104685ms] [ERROR] Failed to load resource: net::ERR_TIMED_OUT @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[49104686ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:42)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:223:11)
+    at new Promise (<anonymous>)
+    at retryable (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:204:21)
+    at SupabaseAuthClient._refreshAccessToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3749:81)
+    at SupabaseAuthClient._callRefreshToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3907:48)
+    at SupabaseAuthClient.__loadSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2382:57)
+    at async SupabaseAuthClient._useSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2316:28)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:4186:32) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[71161142ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[75155977ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[76295609ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[79341442ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
