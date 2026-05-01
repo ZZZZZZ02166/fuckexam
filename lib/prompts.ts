@@ -300,15 +300,15 @@ Return a JSON object with these exact fields:
   - term: ONLY a [CURRENT STAGE] concept name
   - explanation: 1-2 sentences defining it clearly
   - whyItMatters: one sentence on why this is tested in: ${examFormat}
-- adaptiveSections: After generating the fields above, inspect the source material and ask: "What important exam-relevant content would be lost if I only used the generic fields above?" If the stage contains formulas, equations, worked examples, diagrams, graphs, case law or legal rules, experimental evidence, algorithms, procedure steps, mechanisms, protocols, proofs, derivations, comparison tables, timelines, design trade-offs, definitions to memorise exactly, or any other structured subject-specific content — include it here. Return [] only if the universal fields already capture everything important. Do NOT invent unsupported content. Do NOT add decorative or padding sections. Only include sections clearly present in the source material and useful for exam preparation.
+- adaptiveSections: Scan the source material for any structured, exam-relevant content that the generic fields above cannot adequately capture. Add a section for each distinct piece of such content you find. Useful types include (but are not limited to): formula sets, worked examples with step-by-step solutions, causal chains or mechanisms, process or procedure steps, comparison tables, case rules or legal rules, experimental evidence, algorithms, proofs or derivations, design trade-offs, timelines, and exact definitions to memorise. For each section: decide the most descriptive label for what it actually is (sectionType), write a title that makes it easy to find during revision (title), explain in one sentence why it matters for the exam (purpose), provide the core content — formula, rule, explanation, or worked solution — in the content field, and if there are multiple parallel items (e.g. three separate formulas, six procedure steps), list them in the items array. Return [] only when the source material genuinely contains nothing that requires structured treatment beyond what quickOverview, mustKnow, keyConcepts, and detailedNotes already cover. Do NOT invent content not present in the source material. Do NOT add sections purely for decoration.
   Each object has:
-  - sectionType: a short descriptive label chosen to fit this specific content (e.g. "formula set", "worked example", "causal chain", "algorithm", "process steps", "case rule", "study evidence", "comparison", "timeline", "proof sketch", "mechanism", "design trade-off"). Do NOT use a fixed list — choose the label that best describes this content.
-  - title: a short descriptive title for this section
-  - purpose: one sentence explaining why this section matters for exam preparation
-  - content: the main body text (a formula, rule statement, explanation, etc.)
-  - items: optional array of strings — use when there are multiple parallel items (e.g. a list of formulas, steps in a procedure, case rules). Omit if content alone is sufficient.
-  - examRelevance: optional one sentence on how to use this in an exam answer
-  - sourcePages: optional array of source reference strings if identifiable from the material
+  - sectionType: descriptive label that fits this specific content — choose freely, do NOT use a fixed list
+  - title: short descriptive title for this section
+  - purpose: one sentence on why this matters for exam preparation
+  - content: the main body — formula, rule statement, worked solution, explanation, etc.
+  - items: optional array of strings for multiple parallel items (steps, rules, formulas); omit if content alone is sufficient
+  - examRelevance: optional one sentence on how to apply this in an exam answer
+  - sourcePages: optional array of source reference strings if identifiable
 - ideaConnections: array of 2-4 objects showing how this stage's concepts relate to each other or to prior knowledge, each with:
   - from: a concept name
   - to: a concept name
@@ -319,7 +319,7 @@ Return a JSON object with these exact fields:
 - quickCheck: array of 2-3 questions testing the [CURRENT STAGE] material only, each with:
   - question: a short self-test question
   - answer: the correct answer (1-2 sentences)
-- detailedNotes: 300-400 word markdown string about the current stage content only — no headings, **bold** key terms, "- " bullets for lists.
+- detailedNotes: a 500-700 word markdown string covering the current stage content in depth — no headings, **bold** key terms, "- " for lists. This is the student's main reference for exam revision. Write it as a dense but readable study note: explain each concept clearly, show how concepts connect to each other, include any important caveats or edge cases, and flag what is commonly tested. Prefer substance over brevity — if a concept requires three sentences to explain properly, use three sentences.
 
 Use only the source material provided. Do not invent facts.
 

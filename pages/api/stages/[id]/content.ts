@@ -134,7 +134,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
   const { id: stage_id } = req.query as { id: string }
-  const { type, force } = req.body as { type: MaterialType; force?: boolean }
+  const { type, force, pregenerate } = req.body as { type: MaterialType; force?: boolean; pregenerate?: boolean }
 
   if (!['summary', 'flashcards', 'concept_map', 'answer_coach'].includes(type)) {
     return res.status(400).json({ error: 'type must be summary | flashcards | concept_map' })
@@ -549,6 +549,17 @@ ${JSON.stringify(mapData)}`,
     content = mapData as ConceptMapContent
   }
 
+  const { data: alreadyInserted } = await supabaseAdmin
+    .from('generated_items')
+    .select('*')
+    .eq('stage_id', stage_id)
+    .eq('type', type)
+    .single()
+  if (alreadyInserted) {
+    console.log('[ai] content', type, 'double_check_hit stage=', stage_id)
+    return res.status(200).json(alreadyInserted)
+  }
+
   const { data: item, error } = await supabaseAdmin
     .from('generated_items')
     .insert({ stage_id, type, content: content as unknown as Json })
@@ -556,7 +567,7 @@ ${JSON.stringify(mapData)}`,
     .single()
   if (error) return res.status(500).json({ error: error.message })
 
-  if (stage.status === 'not_started') {
+  if (!pregenerate && stage.status === 'not_started') {
     await supabaseAdmin
       .from('study_stages')
       .update({ status: 'in_progress' })

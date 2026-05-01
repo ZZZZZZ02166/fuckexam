@@ -1,0 +1,40 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: fuckexam
+        - generic [ref=e7]: AI study companion
+      - navigation [ref=e8]:
+        - paragraph [ref=e9]: Menu
+        - generic [ref=e10]:
+          - link "🏠 Dashboard" [ref=e11] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e12]: 🏠
+            - text: Dashboard
+          - link "📚 Study Path" [ref=e13] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e14]: 📚
+            - text: Study Path
+          - link "💎 Mastery Map" [ref=e15] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e16]: 💎
+            - text: Mastery Map
+        - paragraph [ref=e17]: Account
+        - link "＋ Add subject" [ref=e18] [cursor=pointer]:
+          - /url: /subjects/new
+          - generic [ref=e19]: ＋
+          - text: Add subject
+      - generic [ref=e21]:
+        - generic [ref=e22]: 🎓
+        - generic [ref=e23]:
+          - paragraph [ref=e24]: nioozhiqi
+          - button "Sign out" [ref=e25]
+    - generic [ref=e26]:
+      - banner [ref=e27]:
+        - generic [ref=e29]: Dashboard
+        - link "+ Add subject" [ref=e31] [cursor=pointer]:
+          - /url: /subjects/new
+      - main [ref=e32]
+  - button "Open Next.js Dev Tools" [ref=e41] [cursor=pointer]:
+    - img [ref=e42]
+  - alert [ref=e45]

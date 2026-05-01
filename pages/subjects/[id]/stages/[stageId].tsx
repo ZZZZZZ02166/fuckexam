@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -69,6 +69,8 @@ function StageView() {
   const [cardIndex, setCardIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
 
+  const preGenFiredRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (!stageId) return
     loadStage()
@@ -77,8 +79,9 @@ function StageView() {
   async function loadStage() {
     setLoading(true)
     let genItems: GeneratedItem[] = []
+    let subjectData: any = null
     try {
-      const subjectData = await apiJson<any>(`/api/subjects/${subjectId}`)
+      subjectData = await apiJson<any>(`/api/subjects/${subjectId}`)
       const stage = subjectData.stages.find((s: StudyStage) => s.id === stageId)
       if (!stage) { router.replace(`/subjects/${subjectId}/path`); return }
 
@@ -115,10 +118,36 @@ function StageView() {
           method: 'POST',
           body: JSON.stringify({ type: 'summary' }),
         })
-        setData(prev => prev ? { ...prev, generated: [...prev.generated, item] } : prev)
+        setData(prev => prev ? {
+          ...prev,
+          generated: [...prev.generated, item],
+          stage: prev.stage.status === 'not_started' ? { ...prev.stage, status: 'in_progress' } : prev.stage,
+        } : prev)
       } catch { /* silently fail */ }
       setGenerating(false)
     }
+
+    if (subjectData) preGenerateNextStageSummary(subjectData)
+  }
+
+  async function preGenerateNextStageSummary(subjectData: any) {
+    const allStages: StudyStage[] = subjectData.stages
+    const currentStage = allStages.find((s: StudyStage) => s.id === stageId)
+    if (!currentStage) return
+    const nextStage = allStages.find((s: StudyStage) => s.stage_order === currentStage.stage_order + 1)
+    if (!nextStage) return
+    if (preGenFiredRef.current === nextStage.id) return
+    preGenFiredRef.current = nextStage.id
+
+    try {
+      const items = await apiJson<GeneratedItem[]>(`/api/stages/${nextStage.id}/content-list`).catch(() => [])
+      if (items.some(i => i.type === 'summary')) return
+    } catch { return }
+
+    apiJson(`/api/stages/${nextStage.id}/content`, {
+      method: 'POST',
+      body: JSON.stringify({ type: 'summary', pregenerate: true }),
+    }).catch(() => {})
   }
 
   async function generateContent(type: Tab, force = false) {
@@ -132,7 +161,11 @@ function StageView() {
         method: 'POST',
         body: JSON.stringify({ type, force }),
       })
-      setData(prev => prev ? { ...prev, generated: [...prev.generated.filter(g => g.type !== type), item] } : prev)
+      setData(prev => prev ? {
+        ...prev,
+        generated: [...prev.generated.filter(g => g.type !== type), item],
+        stage: prev.stage.status === 'not_started' ? { ...prev.stage, status: 'in_progress' } : prev.stage,
+      } : prev)
     } finally {
       setGenerating(false)
     }
