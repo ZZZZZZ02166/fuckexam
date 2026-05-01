@@ -138,6 +138,25 @@ Stages:
 ${stagesJson}
 `.trim(),
 
+  orderModules: (modulesJson: string, subjectName: string, examFormat: string) => `
+You are ordering lecture modules for "${subjectName}" (exam: ${examFormat}).
+
+Each module is one uploaded lecture file. Order them so a student builds knowledge
+progressively — foundational concepts first, advanced applications later.
+
+PRIMARY signal: each module's key concepts and what prerequisite knowledge its stages require.
+SECONDARY signal: stage names and what they lead toward.
+WEAK HINT ONLY: lecture or chapter numbers in the file name. Do NOT use these as the
+primary criterion. A file named "Lecture11" may be foundational; "Lecture04" may be advanced.
+Reason from the content, not the filename numbers.
+
+Return only JSON: { ordered_module_ids: string[] }
+Include every module ID exactly once.
+
+Modules:
+${modulesJson}
+`.trim(),
+
   buildSubject: (materialSample: string, examFormat: string, subjectName: string, lectureFileCount = 1) => `
 You are a curriculum designer building a university exam study system.
 

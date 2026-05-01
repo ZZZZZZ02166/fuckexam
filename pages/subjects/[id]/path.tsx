@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -33,6 +33,28 @@ interface SubjectData {
   materials: MaterialRow[]
 }
 
+interface ModuleGroup {
+  materialId: string
+  displayTitle: string
+  moduleOrder: number
+  stages: StudyStage[]
+}
+
+function computeModuleGroups(stages: StudyStage[]): ModuleGroup[] | null {
+  if (!stages.some(s => s.source_material_id)) return null
+  const map = new Map<string, ModuleGroup>()
+  for (const stage of stages) {
+    const key = stage.source_material_id ?? '__ungrouped__'
+    if (!map.has(key)) {
+      const raw = stage.source_file_name ?? 'Module'
+      const display = raw.replace(/\.pdf$/i, '').replace(/[_\-]+/g, ' ').trim()
+      map.set(key, { materialId: key, displayTitle: display, moduleOrder: stage.module_order ?? 999, stages: [] })
+    }
+    map.get(key)!.stages.push(stage)
+  }
+  return [...map.values()].sort((a, b) => a.moduleOrder - b.moduleOrder)
+}
+
 export default function PathPage() {
   return (
     <RequireAuth>
@@ -61,6 +83,29 @@ function PathView() {
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [id])
+
+  const moduleGroups = useMemo(
+    () => (data ? computeModuleGroups(data.stages) : null),
+    [data]
+  )
+
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (!moduleGroups) return
+    const activeId =
+      moduleGroups.find(g => g.stages.some(s => s.status === 'in_progress'))?.materialId
+      ?? moduleGroups[0]?.materialId
+    setExpandedModules(new Set(activeId ? [activeId] : []))
+  }, [moduleGroups])
+
+  function toggleModule(id: string) {
+    setExpandedModules(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#F0F4FF]">
@@ -166,92 +211,229 @@ function PathView() {
           {/* Materials */}
           <MaterialsSection materials={materials ?? []} subjectId={id} userId={user?.id} onUploaded={reload} />
 
-          {/* Stage list */}
+          {/* Stage list — module cards or flat fallback */}
           <div>
             <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748B] mb-4">Study stages</h2>
-            <div className="space-y-0">
-              {stages.map((stage, index) => {
-                const ml = stageMasteryLevel(stage)
-                const isComplete = stage.status === 'complete'
-                const isActive = stage.status === 'in_progress'
 
-                return (
-                  <div key={stage.id} className="flex gap-3 sm:gap-4">
-                    {/* Badge + connector */}
-                    <div className="flex flex-col items-center w-9 sm:w-10 shrink-0">
+            {moduleGroups ? (
+              /* Module cards (new subjects with source_material_id) */
+              <div className="space-y-2">
+                {moduleGroups.map(group => {
+                  const isExpanded = expandedModules.has(group.materialId)
+                  const completedCount = group.stages.filter(s => s.status === 'complete').length
+                  const totalMins = group.stages.reduce((n, s) => n + (s.estimated_minutes ?? 0), 0)
+                  const hasActive = group.stages.some(s => s.status === 'in_progress')
+
+                  return (
+                    <div key={group.materialId} className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden">
+                      {/* Module header */}
+                      <button
+                        onClick={() => toggleModule(group.materialId)}
+                        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className={cn(
+                            'w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0',
+                            hasActive ? 'bg-blue-600 text-white' :
+                            completedCount === group.stages.length && group.stages.length > 0 ? 'bg-green-100 text-green-700' :
+                            'bg-slate-100 text-slate-500'
+                          )}>
+                            {group.moduleOrder}
+                          </span>
+                          <div className="min-w-0 text-left">
+                            <p className={cn(
+                              'font-bold text-sm truncate',
+                              hasActive ? 'text-blue-700' : 'text-[#0F172A]'
+                            )}>
+                              {group.displayTitle}
+                            </p>
+                            <p className="text-[11px] text-[#94A3B8] mt-0.5">
+                              {completedCount}/{group.stages.length} stages · ~{totalMins} min
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[#94A3B8] text-xs ml-3 shrink-0 font-bold">
+                          {isExpanded ? '▴' : '▾'}
+                        </span>
+                      </button>
+
+                      {/* Stages inside module */}
+                      {isExpanded && (
+                        <div className="px-3 pb-3 space-y-0 border-t border-[#F1F5F9]">
+                          {group.stages.map((stage, index) => {
+                            const ml = stageMasteryLevel(stage)
+                            const isComplete = stage.status === 'complete'
+                            const isActive = stage.status === 'in_progress'
+                            const isLastInGroup = index === group.stages.length - 1
+
+                            return (
+                              <div key={stage.id} className="flex gap-3 pt-2">
+                                {/* Badge + connector */}
+                                <div className="flex flex-col items-center w-9 shrink-0">
+                                  <button
+                                    onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
+                                    className={cn(
+                                      'w-8 h-8 rounded-xl flex items-center justify-center text-xs font-extrabold z-10 shrink-0 border-2 transition-all',
+                                      isActive
+                                        ? 'bg-blue-600 border-blue-600 text-white'
+                                        : isComplete && ml === 'green'
+                                        ? 'bg-green-50 border-green-400 text-green-700'
+                                        : isComplete && ml === 'yellow'
+                                        ? 'bg-amber-50 border-amber-400 text-amber-700'
+                                        : isComplete && ml === 'red'
+                                        ? 'bg-red-50 border-red-400 text-red-700'
+                                        : isComplete
+                                        ? 'bg-amber-50 border-amber-400 text-amber-700'
+                                        : 'bg-white border-[#CBD5E1] text-[#94A3B8]'
+                                    )}
+                                  >
+                                    {isComplete ? '✓' : stage.stage_order}
+                                  </button>
+                                  {!isLastInGroup && (
+                                    <div className={cn(
+                                      'w-0.5 flex-1 my-1 rounded-full min-h-[12px]',
+                                      isComplete && ml === 'green'  ? 'bg-green-200' :
+                                      isComplete && ml === 'yellow' ? 'bg-amber-200' :
+                                      isComplete && ml === 'red'    ? 'bg-red-200' :
+                                      isComplete                    ? 'bg-amber-200' :
+                                      'bg-[#E2E8F0]'
+                                    )} />
+                                  )}
+                                </div>
+
+                                {/* Stage card */}
+                                <button
+                                  onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
+                                  className={cn(
+                                    'flex-1 text-left rounded-xl border px-3 py-3 mb-1.5 transition-all',
+                                    isActive
+                                      ? 'border-blue-300 bg-blue-50 hover:border-blue-400'
+                                      : isComplete && ml === 'green'
+                                      ? 'border-green-200 bg-green-50 hover:border-green-300'
+                                      : isComplete && ml === 'yellow'
+                                      ? 'border-amber-200 bg-amber-50 hover:border-amber-300'
+                                      : isComplete && ml === 'red'
+                                      ? 'border-red-200 bg-red-50 hover:border-red-300'
+                                      : isComplete
+                                      ? 'border-[#E2E8F0] bg-white hover:border-green-200'
+                                      : 'border-[#E2E8F0] bg-white hover:border-blue-200 hover:shadow-sm'
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className={cn(
+                                        'font-bold text-sm truncate',
+                                        isActive ? 'text-[#0F172A]' :
+                                        isComplete && ml === 'green' ? 'text-green-800' :
+                                        isComplete && ml === 'yellow' ? 'text-amber-800' :
+                                        isComplete && ml === 'red' ? 'text-red-800' :
+                                        isComplete ? 'text-[#64748B]' : 'text-[#0F172A]'
+                                      )}>
+                                        {stage.name}
+                                      </p>
+                                      <p className="text-[#94A3B8] text-xs mt-0.5">~{stage.estimated_minutes} min</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <MasteryDot level={ml as any} />
+                                      <StatusChip status={stage.status ?? 'not_started'} />
+                                    </div>
+                                  </div>
+                                </button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              /* Flat list fallback (old subjects without module metadata) */
+              <div className="space-y-0">
+                {stages.map((stage, index) => {
+                  const ml = stageMasteryLevel(stage)
+                  const isComplete = stage.status === 'complete'
+                  const isActive = stage.status === 'in_progress'
+
+                  return (
+                    <div key={stage.id} className="flex gap-3 sm:gap-4">
+                      {/* Badge + connector */}
+                      <div className="flex flex-col items-center w-9 sm:w-10 shrink-0">
+                        <button
+                          onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
+                          className={cn(
+                            'w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-sm font-extrabold z-10 shrink-0 border-2 transition-all',
+                            isActive
+                              ? 'bg-blue-600 border-blue-600 text-white'
+                              : isComplete && ml === 'green'
+                              ? 'bg-green-50 border-green-400 text-green-700'
+                              : isComplete && ml === 'yellow'
+                              ? 'bg-amber-50 border-amber-400 text-amber-700'
+                              : isComplete && ml === 'red'
+                              ? 'bg-red-50 border-red-400 text-red-700'
+                              : isComplete
+                              ? 'bg-amber-50 border-amber-400 text-amber-700'
+                              : 'bg-white border-[#CBD5E1] text-[#94A3B8]'
+                          )}
+                        >
+                          {isComplete ? '✓' : stage.stage_order}
+                        </button>
+                        {index < stages.length - 1 && (
+                          <div className={cn(
+                            'w-0.5 flex-1 my-1.5 rounded-full min-h-[16px]',
+                            isComplete && ml === 'green'  ? 'bg-green-300' :
+                            isComplete && ml === 'yellow' ? 'bg-amber-200' :
+                            isComplete && ml === 'red'    ? 'bg-red-200' :
+                            isComplete                    ? 'bg-amber-200' :
+                            'bg-[#E2E8F0]'
+                          )} />
+                        )}
+                      </div>
+
+                      {/* Stage card */}
                       <button
                         onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
                         className={cn(
-                          'w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-sm font-extrabold z-10 shrink-0 border-2 transition-all',
+                          'flex-1 text-left rounded-xl border px-4 py-3.5 mb-3 transition-all group',
                           isActive
-                            ? 'bg-blue-600 border-blue-600 text-white'
+                            ? 'border-blue-300 bg-blue-50 hover:border-blue-400'
                             : isComplete && ml === 'green'
-                            ? 'bg-green-50 border-green-400 text-green-700'
+                            ? 'border-green-200 bg-green-50 hover:border-green-300'
                             : isComplete && ml === 'yellow'
-                            ? 'bg-amber-50 border-amber-400 text-amber-700'
+                            ? 'border-amber-200 bg-amber-50 hover:border-amber-300'
                             : isComplete && ml === 'red'
-                            ? 'bg-red-50 border-red-400 text-red-700'
+                            ? 'border-red-200 bg-red-50 hover:border-red-300'
                             : isComplete
-                            ? 'bg-amber-50 border-amber-400 text-amber-700'
-                            : 'bg-white border-[#CBD5E1] text-[#94A3B8]'
+                            ? 'border-[#E2E8F0] bg-white hover:border-green-200'
+                            : 'border-[#E2E8F0] bg-white hover:border-blue-200 hover:shadow-sm'
                         )}
                       >
-                        {isComplete ? '✓' : stage.stage_order}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className={cn(
+                              'font-bold text-sm truncate',
+                              isActive ? 'text-[#0F172A]' :
+                              isComplete && ml === 'green' ? 'text-green-800' :
+                              isComplete && ml === 'yellow' ? 'text-amber-800' :
+                              isComplete && ml === 'red' ? 'text-red-800' :
+                              isComplete ? 'text-[#64748B]' : 'text-[#0F172A]'
+                            )}>
+                              {stage.name}
+                            </p>
+                            <p className="text-[#94A3B8] text-xs mt-0.5">~{stage.estimated_minutes} min</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <MasteryDot level={ml as any} />
+                            <StatusChip status={stage.status ?? 'not_started'} />
+                          </div>
+                        </div>
                       </button>
-                      {index < stages.length - 1 && (
-                        <div className={cn(
-                          'w-0.5 flex-1 my-1.5 rounded-full min-h-[16px]',
-                          isComplete && ml === 'green'  ? 'bg-green-300' :
-                          isComplete && ml === 'yellow' ? 'bg-amber-200' :
-                          isComplete && ml === 'red'    ? 'bg-red-200' :
-                          isComplete                    ? 'bg-amber-200' :
-                          'bg-[#E2E8F0]'
-                        )} />
-                      )}
                     </div>
-
-                    {/* Stage card */}
-                    <button
-                      onClick={() => router.push(`/subjects/${id}/stages/${stage.id}`)}
-                      className={cn(
-                        'flex-1 text-left rounded-xl border px-4 py-3.5 mb-3 transition-all group',
-                        isActive
-                          ? 'border-blue-300 bg-blue-50 hover:border-blue-400'
-                          : isComplete && ml === 'green'
-                          ? 'border-green-200 bg-green-50 hover:border-green-300'
-                          : isComplete && ml === 'yellow'
-                          ? 'border-amber-200 bg-amber-50 hover:border-amber-300'
-                          : isComplete && ml === 'red'
-                          ? 'border-red-200 bg-red-50 hover:border-red-300'
-                          : isComplete
-                          ? 'border-[#E2E8F0] bg-white hover:border-green-200'
-                          : 'border-[#E2E8F0] bg-white hover:border-blue-200 hover:shadow-sm'
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className={cn(
-                            'font-bold text-sm truncate',
-                            isActive ? 'text-[#0F172A]' :
-                            isComplete && ml === 'green' ? 'text-green-800' :
-                            isComplete && ml === 'yellow' ? 'text-amber-800' :
-                            isComplete && ml === 'red' ? 'text-red-800' :
-                            isComplete ? 'text-[#64748B]' : 'text-[#0F172A]'
-                          )}>
-                            {stage.name}
-                          </p>
-                          <p className="text-[#94A3B8] text-xs mt-0.5">~{stage.estimated_minutes} min</p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <MasteryDot level={ml as any} />
-                          <StatusChip status={stage.status ?? 'not_started'} />
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </Layout>

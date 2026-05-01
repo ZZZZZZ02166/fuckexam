@@ -64,10 +64,10 @@ export type Database = {
         Relationships: [{ foreignKeyName: "student_answers_question_id_fkey"; columns: ["question_id"]; isOneToOne: false; referencedRelation: "questions"; referencedColumns: ["id"] }]
       }
       study_stages: {
-        Row: { estimated_minutes: number | null; id: string; material_types: string[] | null; name: string; stage_order: number; status: string | null; subject_id: string; test_types: string[] | null; topic_ids: string[] | null }
-        Insert: { estimated_minutes?: number | null; id?: string; material_types?: string[] | null; name: string; stage_order: number; status?: string | null; subject_id: string; test_types?: string[] | null; topic_ids?: string[] | null }
-        Update: { estimated_minutes?: number | null; id?: string; material_types?: string[] | null; name?: string; stage_order?: number; status?: string | null; subject_id?: string; test_types?: string[] | null; topic_ids?: string[] | null }
-        Relationships: [{ foreignKeyName: "study_stages_subject_id_fkey"; columns: ["subject_id"]; isOneToOne: false; referencedRelation: "subjects"; referencedColumns: ["id"] }]
+        Row: { estimated_minutes: number | null; id: string; material_types: string[] | null; module_order: number | null; name: string; source_file_name: string | null; source_material_id: string | null; stage_order: number; status: string | null; subject_id: string; test_types: string[] | null; topic_ids: string[] | null }
+        Insert: { estimated_minutes?: number | null; id?: string; material_types?: string[] | null; module_order?: number | null; name: string; source_file_name?: string | null; source_material_id?: string | null; stage_order: number; status?: string | null; subject_id: string; test_types?: string[] | null; topic_ids?: string[] | null }
+        Update: { estimated_minutes?: number | null; id?: string; material_types?: string[] | null; module_order?: number | null; name?: string; source_file_name?: string | null; source_material_id?: string | null; stage_order?: number; status?: string | null; subject_id?: string; test_types?: string[] | null; topic_ids?: string[] | null }
+        Relationships: [{ foreignKeyName: "study_stages_source_material_id_fkey"; columns: ["source_material_id"]; isOneToOne: false; referencedRelation: "materials"; referencedColumns: ["id"] }, { foreignKeyName: "study_stages_subject_id_fkey"; columns: ["subject_id"]; isOneToOne: false; referencedRelation: "subjects"; referencedColumns: ["id"] }]
       }
       subjects: {
         Row: { created_at: string | null; exam_date: string | null; exam_format_text: string | null; id: string; name: string; user_id: string }

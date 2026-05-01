@@ -14,12 +14,17 @@ const PerFileSchema = z.object({
   })),
 })
 
-// File ordering fallback (when no lecture numbers in filenames)
+// File ordering fallback (kept for safety — not called in module-first flow)
 const FileOrderSchema = z.object({
   ordered_file_names: z.array(z.string()),
 })
 
-// Pedagogical stage ordering pass
+// Module ordering
+const ModuleOrderSchema = z.object({
+  ordered_module_ids: z.array(z.string()),
+})
+
+// Pedagogical stage ordering (kept for safety — not called in module-first flow)
 const StageOrderSchema = z.object({
   ordered_stage_ids: z.array(z.string()),
 })
@@ -55,6 +60,11 @@ interface DedupedStage {
   source_files: string[]
 }
 
+interface StageWithModule {
+  stage: DedupedStage
+  module: { material_id: string; file_name: string; module_order: number }
+}
+
 // Jaccard similarity on content words (>= 4 chars, not stop words)
 function jaccardSimilarity(a: string, b: string): number {
   const stopWords = new Set([
@@ -76,8 +86,6 @@ function jaccardSimilarity(a: string, b: string): number {
   return intersection / union
 }
 
-// Two stages are considered duplicates if their names match closely OR if their key_concepts
-// overlap significantly (catches same concept with different names across files).
 function stagesOverlap(
   existing: DedupedStage,
   incoming: { name: string; key_concepts: string[] }
@@ -91,8 +99,7 @@ function stagesOverlap(
   return intersection / union >= 0.4
 }
 
-// Deterministic dedup: iterates files in the ALREADY-ORDERED sequence.
-// First occurrence of a near-duplicate wins (it's from the earlier/more-foundational file).
+// Cross-file dedup: first occurrence wins; subsequent files add to source_files
 function deduplicateStages(orderedFileResults: PerFileResult[]): DedupedStage[] {
   const deduped: DedupedStage[] = []
   for (const { file_name, stages } of orderedFileResults) {
@@ -116,6 +123,7 @@ function deduplicateStages(orderedFileResults: PerFileResult[]): DedupedStage[] 
   return deduped
 }
 
+// Kept for safety — not called in module-first flow
 function topoSortStages(stages: DedupedStage[]): DedupedStage[] {
   const n = stages.length
   const inDegree = new Array(n).fill(0)
@@ -263,8 +271,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log(`[ai] build-path subject=${subject_id} files=${allFileData.length} — pass 1 (parallel per-file)`)
 
   // ── PASS 1: per-file decomposition in parallel ─────────────────────────────
-  // Each file processed independently → same granularity as single-file processing.
-  // Stages come out in DOCUMENT ORDER from each file (correct within-file sequence).
   const perFileResults: PerFileResult[] = await Promise.all(
     allFileData.map(async ({ material, fileContent }) => {
       const r = await openai.chat.completions.parse({
@@ -292,102 +298,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const totalProposed = perFileResults.reduce((n, f) => n + f.stages.length, 0)
   console.log(`[ai] pass1 complete — ${totalProposed} proposed stages across ${perFileResults.length} files`)
 
-  // ── FILE ORDERING ─────────────────────────────────────────────────────────
-  const hasNumbers = perFileResults.some(f => f.lecture_num !== null)
-  let orderedFiles: PerFileResult[]
-
-  if (orderingMode === 'upload_order') {
-    // Preserve DB fetch order (upload_order ASC, created_at ASC fallback) — no filename/number sort
-    orderedFiles = perFileResults
-    console.log(`[ai] file order (upload_order preserved): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
-  } else if (hasNumbers) {
-    // ai_organised + lecture numbers present — sort by lecture number
-    orderedFiles = [...perFileResults].sort((a, b) => {
-      if (a.lecture_num !== null && b.lecture_num !== null) return a.lecture_num - b.lecture_num
-      if (a.lecture_num !== null) return -1
-      if (b.lecture_num !== null) return 1
-      return 0
-    })
-    console.log(`[ai] file order (by lecture#): ${orderedFiles.map(f => `${f.file_name}(#${f.lecture_num})`).join(' → ')}`)
-  } else {
-    // ai_organised + no numbers — GPT orderFiles
-    const fileDescriptions = perFileResults.map(f => {
-      const stageLines = f.stages.map(s =>
-        `  • ${s.name} [${s.key_concepts.slice(0, 2).join(', ')}]`
-      ).join('\n')
-      return `${f.file_name}:\n${stageLines}`
-    }).join('\n\n')
-
-    const fo = await openai.chat.completions.parse({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'user', content: PROMPTS.orderFiles(fileDescriptions, subjectName) },
-      ],
-      response_format: zodResponseFormat(FileOrderSchema, 'file_order'),
-    })
-
-    const orderedNames = fo.choices[0].message.parsed?.ordered_file_names ?? perFileResults.map(f => f.file_name)
-    orderedFiles = orderedNames
-      .map(name => perFileResults.find(f => f.file_name === name))
-      .filter(Boolean) as PerFileResult[]
-
-    for (const f of perFileResults) {
-      if (!orderedFiles.find(o => o.file_name === f.file_name)) orderedFiles.push(f)
+  // ── MODULE ORDERING ───────────────────────────────────────────────────────
+  // Build compact metadata per module for AI ordering
+  const modulesMeta = allFileData.map(({ material }, idx) => {
+    const pf = perFileResults[idx]
+    return {
+      id: material.id,
+      file_name: material.file_name,
+      stage_names: pf.stages.map(s => s.name),
+      key_concepts: [...new Set(pf.stages.flatMap(s => s.key_concepts))].slice(0, 20),
+      prerequisite_knowledge: [...new Set(pf.stages.flatMap(s => s.prerequisite_knowledge))].slice(0, 10),
     }
-    console.log(`[ai] file order (by GPT): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
-  }
+  })
 
-  // ── CODE DEDUP ─────────────────────────────────────────────────────────────
-  // Now that files are in correct order, dedup preserves within-file sequence
-  // and cross-file order. First occurrence wins — it's from the earlier file.
-  const deduped = deduplicateStages(orderedFiles)
-  console.log(`[ai] dedup: ${totalProposed} → ${deduped.length} stages (removed ${totalProposed - deduped.length} near-duplicates)`)
-
-  // ── STAGE ORDERING ────────────────────────────────────────────────────────
-  // GPT ordering pass — compact metadata only, no lecture content.
-  // Topo sort is kept as a fallback if GPT fails twice.
-  const stageMetadata = deduped.map((s, i) => ({
-    id: `stage_${i}`,
-    name: s.name,
-    key_concepts: s.key_concepts,
-    prerequisite_knowledge: s.prerequisite_knowledge,
-    source_files: s.source_files,
-  }))
-  const expectedIds = new Set(stageMetadata.map(s => s.id))
-
-  const stagesJson = JSON.stringify(stageMetadata, null, 2)
-  const orderPrompt = orderingMode === 'upload_order'
-    ? PROMPTS.orderStagesConservative(stagesJson, deduped.length, subjectName, examFormat)
-    : PROMPTS.orderStages(stagesJson, deduped.length, subjectName, examFormat)
-
-  async function attemptGptOrder(): Promise<DedupedStage[] | null> {
+  async function attemptModuleOrder(): Promise<string[] | null> {
     try {
       const ro = await openai.chat.completions.parse({
         model: 'gpt-4o',
         messages: [
-          {
-            role: 'system',
-            content: orderingMode === 'upload_order'
-              ? 'You are a curriculum designer reviewing stage ordering. Preserve the student\'s intended sequence; only fix explicit prerequisite violations.'
-              : 'You are a curriculum designer ordering study stages for optimal exam preparation.',
-          },
-          {
-            role: 'user',
-            content: orderPrompt,
-          },
+          { role: 'system', content: 'You are a curriculum designer ordering lecture modules for optimal learning flow.' },
+          { role: 'user', content: PROMPTS.orderModules(JSON.stringify(modulesMeta, null, 2), subjectName, examFormat) },
+        ],
+        response_format: zodResponseFormat(ModuleOrderSchema, 'module_order'),
+      })
+      const ids = ro.choices[0].message.parsed?.ordered_module_ids ?? []
+      const expectedIds = new Set(modulesMeta.map(m => m.id))
+      if (ids.length !== modulesMeta.length || ids.some(id => !expectedIds.has(id)) || new Set(ids).size !== ids.length) {
+        console.warn(`[ai] module order invalid: got ${ids.length}, expected ${modulesMeta.length}`)
+        return null
+      }
+      return ids
+    } catch (err) {
+      console.warn(`[ai] module order error: ${err}`)
+      return null
+    }
+  }
+
+  // Kept for safety — not called in module-first flow
+  async function attemptGptOrder(stageMeta: Array<{ id: string; name: string; key_concepts: string[]; prerequisite_knowledge: string[]; source_files: string[] }>, deduped: DedupedStage[], prompt: string): Promise<DedupedStage[] | null> {
+    const expectedIds = new Set(stageMeta.map(s => s.id))
+    try {
+      const ro = await openai.chat.completions.parse({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: 'You are a curriculum designer ordering study stages for optimal exam preparation.' },
+          { role: 'user', content: prompt },
         ],
         response_format: zodResponseFormat(StageOrderSchema, 'stage_order'),
       })
       const ids = ro.choices[0].message.parsed?.ordered_stage_ids ?? []
-      if (
-        ids.length !== deduped.length ||
-        new Set(ids).size !== deduped.length ||
-        ids.some(id => !expectedIds.has(id))
-      ) {
+      if (ids.length !== deduped.length || new Set(ids).size !== deduped.length || ids.some(id => !expectedIds.has(id))) {
         console.warn(`[ai] GPT order invalid: returned ${ids.length} ids, expected ${deduped.length}`)
         return null
       }
-      const indexMap = new Map(stageMetadata.map((s, i) => [s.id, i]))
+      const indexMap = new Map(stageMeta.map((s, i) => [s.id, i]))
       return ids.map(id => deduped[indexMap.get(id)!])
     } catch (err) {
       console.warn(`[ai] GPT order error: ${err}`)
@@ -395,38 +359,95 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  let finalOrdered: DedupedStage[]
-  let orderMethod: string
+  let orderedFiles: PerFileResult[]
 
-  const gptOrder = await attemptGptOrder()
-  if (gptOrder) {
-    finalOrdered = gptOrder
-    orderMethod = 'gpt_pedagogical_stage_order'
+  if (orderingMode === 'upload_order') {
+    orderedFiles = perFileResults  // DB fetch order (upload_order ASC)
+    console.log(`[ai] module order (upload_order): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
   } else {
-    console.warn(`[ai] GPT order failed, retrying once`)
-    const retry = await attemptGptOrder()
-    if (retry) {
-      finalOrdered = retry
-      orderMethod = 'gpt_pedagogical_stage_order (retry)'
-    } else {
-      // GPT failed twice — fall back to topo sort then original order
-      const topoOrdered = topoSortStages(deduped)
-      const topoReorderedCount = deduped.filter((s, i) => topoOrdered.indexOf(s) !== i).length
-      if (topoReorderedCount > 0) {
-        finalOrdered = topoOrdered
-        orderMethod = 'fallback_topological_order'
-      } else {
-        finalOrdered = deduped
-        orderMethod = 'fallback_original_order'
+    // ai_organised: AI module ordering, retry once, then fallback
+    const aiModuleOrder = (await attemptModuleOrder()) ?? (await attemptModuleOrder())
+    if (aiModuleOrder) {
+      const idToPerFile = new Map(allFileData.map((f, i) => [f.material.id, perFileResults[i]]))
+      orderedFiles = aiModuleOrder.map(id => idToPerFile.get(id)!).filter(Boolean)
+      // append any missing files (safety net)
+      for (const pf of perFileResults) {
+        if (!orderedFiles.includes(pf)) orderedFiles.push(pf)
       }
+      console.log(`[ai] module order (AI): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
+    } else {
+      // fallback: lecture number sort, then DB order
+      const hasNumbers = perFileResults.some(f => f.lecture_num !== null)
+      if (hasNumbers) {
+        orderedFiles = [...perFileResults].sort((a, b) => {
+          if (a.lecture_num !== null && b.lecture_num !== null) return a.lecture_num - b.lecture_num
+          if (a.lecture_num !== null) return -1
+          if (b.lecture_num !== null) return 1
+          return 0
+        })
+      } else {
+        orderedFiles = perFileResults
+      }
+      console.log(`[ai] module order (fallback): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
     }
   }
 
-  console.log(`[ai] stage order method: ${orderMethod}`)
+  // ── CROSS-FILE DEDUP (kept as-is) ─────────────────────────────────────────
+  const deduped = deduplicateStages(orderedFiles)
+  console.log(`[ai] dedup: ${totalProposed} → ${deduped.length} stages (removed ${totalProposed - deduped.length} near-duplicates)`)
+
+  const crossFileMerged = deduped.filter(d => d.source_files.length > 1)
+  if (crossFileMerged.length > 0) {
+    console.log(`[ai] cross-file merged stages (${crossFileMerged.length}): ${crossFileMerged.map(d => `"${d.name}" [${d.source_files.join(', ')}]`).join(' | ')}`)
+    console.log('[ai] merged stage module assignment: using source_files[0] as primary module')
+  }
+
+  const perModuleCounts = orderedFiles.map(f => ({
+    file: f.file_name,
+    raw: f.stages.length,
+    deduped: deduped.filter(d => d.source_files[0] === f.file_name).length,
+  }))
+  console.log(`[ai] per-module stage counts: ${JSON.stringify(perModuleCounts)}`)
+
+  // ── MODULE-FIRST STAGE ORDERING ───────────────────────────────────────────
+  // Stages ordered by module, then dedup-iteration order within each module.
+  // No global GPT stage reordering in module-first mode.
+
+  const fileNameToModule = new Map<string, { material_id: string; file_name: string; module_order: number }>()
+  orderedFiles.forEach((pf, idx) => {
+    const mat = allFileData.find(f => f.material.file_name === pf.file_name)
+    if (mat) {
+      fileNameToModule.set(pf.file_name, {
+        material_id: mat.material.id,
+        file_name: pf.file_name,
+        module_order: idx + 1,
+      })
+    }
+  })
+
+  // Group deduped stages by primary source file (source_files[0])
+  const moduleStageMap = new Map<string, DedupedStage[]>()
+  for (const stage of deduped) {
+    const key = stage.source_files[0]
+    if (!moduleStageMap.has(key)) moduleStageMap.set(key, [])
+    moduleStageMap.get(key)!.push(stage)
+  }
+
+  // Flatten in module order
+  const stagesWithModules: StageWithModule[] = []
+  for (const pf of orderedFiles) {
+    const moduleInfo = fileNameToModule.get(pf.file_name)
+    if (!moduleInfo) continue
+    const groupStages = moduleStageMap.get(pf.file_name) ?? []
+    for (const stage of groupStages) {
+      stagesWithModules.push({ stage, module: moduleInfo })
+    }
+  }
+
+  const finalOrdered = stagesWithModules.map(sw => sw.stage)
+  console.log(`[ai] stage order method: module_first (${stagesWithModules.length} stages across ${orderedFiles.length} modules)`)
 
   // ── PASS 2: enrich only ────────────────────────────────────────────────────
-  // Stages are in final pedagogical order. GPT only extracts topics + fills details.
-  // No ordering task → no ordering errors. Explicit stageCount constraint prevents compression.
   const stageList = finalOrdered.map((s, i) =>
     `${i + 1}. ${s.name}\n   Source files: ${s.source_files.join(', ')}\n   Concepts: ${s.key_concepts.join(', ')}` +
     (s.prerequisite_knowledge.length > 0
@@ -492,6 +513,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const topicNameToId = new Map((topicsInserted ?? []).map(t => [t.name.toLowerCase(), t.id]))
 
+  // result.stages[i] is aligned with stagesWithModules[i] — Pass 2 preserves input order
   const stageRows = result.stages.map((stage, i) => ({
     subject_id,
     name: stage.name,
@@ -501,6 +523,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     status: 'not_started' as const,
     material_types: stage.material_types,
     test_types: stage.test_types,
+    source_material_id: stagesWithModules[i]?.module.material_id ?? null,
+    source_file_name: stagesWithModules[i]?.module.file_name ?? null,
+    module_order: stagesWithModules[i]?.module.module_order ?? null,
   }))
 
   const { error: stagesErr } = await supabaseAdmin.from('study_stages').insert(stageRows)
