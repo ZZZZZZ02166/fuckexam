@@ -74,6 +74,12 @@ interface StageWithModule {
   module: { material_id: string; file_name: string; module_order: number }
 }
 
+interface MaterialForPath {
+  id: string
+  file_name: string
+  upload_order: number | null
+}
+
 function normalizeConcept(concept: string): string {
   return concept
     .toLowerCase()
@@ -91,6 +97,37 @@ function conceptsMatch(a: string, b: string): boolean {
   return (na.length >= 8 && nb.includes(na)) || (nb.length >= 8 && na.includes(nb))
 }
 
+function conceptSimilarity(a: string, b: string): number {
+  const stopWords = new Set([
+    'definition', 'calculation', 'interpretation', 'relationship', 'difference',
+    'effects', 'impact', 'role', 'overview', 'introduction', 'analysis',
+  ])
+  const words = (concept: string) => new Set(
+    normalizeConcept(concept)
+      .split(/\s+/)
+      .filter(word => word.length >= 4 && !stopWords.has(word))
+  )
+  const aw = words(a)
+  const bw = words(b)
+  if (!aw.size || !bw.size) return 0
+  const intersection = [...aw].filter(word => bw.has(word)).length
+  return intersection / Math.min(aw.size, bw.size)
+}
+
+function shouldTreatAsReview(concept: string, ownedConcepts: string[], futureConcepts: string[]): boolean {
+  if (ownedConcepts.some(existing => conceptsMatch(existing, concept))) return true
+
+  // If a later adjacent/same-module stage owns a more specific version of this
+  // concept, keep this stage from visibly teaching it as a fresh card.
+  return futureConcepts.some(future =>
+    conceptsMatch(concept, future) ||
+    (
+      conceptSimilarity(concept, future) >= 0.75 &&
+      normalizeConcept(future).length >= normalizeConcept(concept).length
+    )
+  )
+}
+
 function uniqueConcepts(concepts: string[]): string[] {
   const result: string[] = []
   for (const concept of concepts.map(c => c.trim()).filter(Boolean)) {
@@ -106,10 +143,11 @@ function computeStageScopes(stages: DedupedStage[]): Array<{
 }> {
   const ownedConcepts: string[] = []
 
-  return stages.map(stage => {
+  return stages.map((stage, index) => {
     const rawKeyConcepts = uniqueConcepts(stage.key_concepts)
+    const futureConcepts = uniqueConcepts(stages.slice(index + 1).flatMap(s => s.key_concepts))
     const review_concepts = rawKeyConcepts.filter(concept =>
-      ownedConcepts.some(existing => conceptsMatch(existing, concept))
+      shouldTreatAsReview(concept, ownedConcepts, futureConcepts)
     )
     let key_concepts = rawKeyConcepts.filter(concept =>
       !review_concepts.some(review => conceptsMatch(review, concept))
@@ -380,7 +418,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const examFormat = subject.exam_format_text ?? 'university written exam'
   const subjectName = subject.name ?? 'Unknown Subject'
 
-  const allFileData: Array<{ material: { id: string; file_name: string }; fileContent: string }> = []
+  console.log(`[build-path] ordering_mode=${orderingMode}`)
+
+  const allFileData: Array<{ material: MaterialForPath; fileContent: string }> = []
 
   for (const material of materials) {
     const { data: chunks } = await supabaseAdmin
@@ -451,6 +491,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return {
       id: material.id,
       file_name: material.file_name,
+      original_position: idx + 1,
+      upload_order: material.upload_order,
+      lecture_number: pf.lecture_num,
       stage_names: pf.stages.map(s => s.name),
       key_concepts: [...new Set(pf.stages.flatMap(s => s.key_concepts))].slice(0, 20),
       prerequisite_knowledge: [...new Set(pf.stages.flatMap(s => s.prerequisite_knowledge))].slice(0, 10),
@@ -509,7 +552,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (orderingMode === 'upload_order') {
     orderedFiles = perFileResults  // DB fetch order (upload_order ASC)
-    console.log(`[ai] module order (upload_order): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
+    console.log(`[build-path] module order source=upload_order: ${orderedFiles.map(f => f.file_name).join(' → ')}`)
   } else {
     // ai_organised: AI module ordering, retry once, then fallback
     const aiModuleOrder = (await attemptModuleOrder()) ?? (await attemptModuleOrder())
@@ -520,21 +563,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       for (const pf of perFileResults) {
         if (!orderedFiles.includes(pf)) orderedFiles.push(pf)
       }
-      console.log(`[ai] module order (AI): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
+      console.log(`[build-path] module order source=ai_content: ${orderedFiles.map(f => f.file_name).join(' → ')}`)
     } else {
-      // fallback: lecture number sort, then DB order
-      const hasNumbers = perFileResults.some(f => f.lecture_num !== null)
-      if (hasNumbers) {
+      const numbered = perFileResults.filter(f => f.lecture_num !== null)
+      if (numbered.length >= 2) {
         orderedFiles = [...perFileResults].sort((a, b) => {
           if (a.lecture_num !== null && b.lecture_num !== null) return a.lecture_num - b.lecture_num
           if (a.lecture_num !== null) return -1
           if (b.lecture_num !== null) return 1
           return 0
         })
+        console.log(`[build-path] module order source=fallback_lecture_number: ${orderedFiles.map(f => f.file_name).join(' → ')}`)
       } else {
         orderedFiles = perFileResults
+        console.log(`[build-path] module order source=fallback_db_order: ${orderedFiles.map(f => f.file_name).join(' → ')}`)
       }
-      console.log(`[ai] module order (fallback): ${orderedFiles.map(f => f.file_name).join(' → ')}`)
     }
   }
 

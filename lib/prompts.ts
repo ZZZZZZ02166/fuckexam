@@ -202,29 +202,46 @@ builds knowledge progressively — foundational before advanced.
 
 Apply these rules in strict priority order. A higher-priority rule always overrides a lower one.
 
-RULE 1 — PREREQUISITE DEPENDENCIES (highest priority):
+RULE 1 — CONTENT AND PREREQUISITES ARE THE MAIN SIGNAL:
+Use the module's stage_names, key_concepts, and prerequisite_knowledge to infer the best
+learning sequence. If files were uploaded randomly, do NOT preserve that random input order.
+
+RULE 2 — COURSE SEQUENCE IS A STRONG BASELINE WHEN EVIDENT:
+Lecture/week/chapter numbering usually encodes the instructor's intended pedagogical sequence.
+When filenames or module metadata show a clear course sequence, preserve that sequence unless
+the module content gives clear evidence that doing so would make a later module require
+concepts that have not been taught yet.
+Do not move a later lecture earlier just because it introduces a broad "framework" for topics
+that the instructor chose to teach earlier. If the course teaches fiscal or monetary policy
+before AD-AS, keep that order unless AD-AS concepts are explicitly required first.
+
+RULE 3 — PREREQUISITE DEPENDENCIES:
 The "prerequisite_knowledge" field lists concepts a module's stages explicitly require the
 student to already know. If module B's prerequisite_knowledge references concepts that appear
 in module A's key_concepts, module A MUST come before module B.
-This rule is non-negotiable — it overrides all filename or ordering signals.
+This rule can override the course sequence only when the dependency is explicit and necessary.
 
-RULE 2 — CONTENT-BASED LEARNING FLOW (primary ordering signal):
+RULE 4 — CONTENT-BASED LEARNING FLOW:
 Reason from the actual content: what concepts does each module introduce, and what does it
 build on? Place modules that introduce foundational definitions and frameworks before modules
 that apply, extend, or combine them. Theory before application, simpler models before complex
 ones, core concepts before policy analysis or edge cases.
 Use stage_names and key_concepts as your primary evidence.
+Do not infer that a later "framework" lecture must move earlier merely because it can analyze
+earlier policy modules. Respect the instructor's sequence unless the prior module cannot be
+understood without the later one.
 
-RULE 3 — LECTURE OR CHAPTER NUMBERS (tiebreaker only):
-Only apply this rule when Rules 1 and 2 leave the relative order of two modules genuinely
-ambiguous — meaning neither content nor prerequisite evidence clearly distinguishes them.
-In that case, a lecture or chapter number in the file name (e.g. "Lecture05") is a reasonable
-signal that this is how the course was sequenced.
+RULE 5 — AMBIGUOUS CASES:
+If content evidence is genuinely ambiguous, use clear lecture/week/chapter numbering as the
+tiebreaker. If there is no reliable numbering, keep the original module order as a last resort.
 
 CRITICAL CONSTRAINTS:
-- Never order modules purely by filename or lecture number.
-- Never let a filename number override clear content or prerequisite evidence.
-- If filename order and content evidence conflict, content evidence wins.
+- Never reorder modules just to make a textbook-style abstract sequence.
+- Never let a weak inferred dependency override the instructor's lecture sequence.
+- If lecture sequence and content evidence conflict, explain internally whether the dependency
+  is explicit enough to justify overriding the instructor's order; otherwise keep lecture order.
+- Do not blindly preserve original input order in AI-organised mode when filenames/content show
+  a better course sequence.
 - The goal is the best learning sequence based on what the material actually contains.
 
 Return only JSON: { ordered_module_ids: string[] }
@@ -361,7 +378,7 @@ ${curriculumContext}
 
 YOUR SCOPE IS STRICTLY LIMITED to CURRENT-STAGE KEY CONCEPTS above.
 - Concepts marked [ALREADY COVERED]: the student knows these — do NOT define or re-explain them. You may reference them only in short dependency phrases.
-- Concepts marked [COVERED LATER]: do NOT introduce, define, preview, or explain these. They will be taught in future stages.
+- Concepts marked [COVERED LATER]: do NOT introduce, define, preview, name as a main idea, or explain these. They will be taught in future stages.
 - Everything visible in your output must be about CURRENT-STAGE KEY CONCEPTS ONLY.
 
 ANTI-REPETITION RULE:
@@ -369,13 +386,14 @@ ANTI-REPETITION RULE:
 - Do NOT repeat definitions or formulas that belong to [ALREADY COVERED], INTERNAL PREREQUISITE, or INTERNAL REVIEW concepts.
 - Concepts from [ALREADY COVERED] stages may appear only as short bridge phrases,
   but must not be the primary subject of a mustKnow item, keyConcept entry, quickCheck, examTrap, or adaptiveSection.
-- Future-stage concepts must not be explained or previewed — at most one sentence noting
-  they will be covered later.
+- Future-stage concepts must not be explained, previewed, or used as labels in quickOverview, mustKnow, keyConcepts, adaptiveSections, examTraps, quickCheck, or detailedNotes.
+- If the source material uses a future-stage term while explaining a current concept, rewrite the current concept without naming or defining the future term.
+- Example: if "output gap" is [COVERED LATER], a current-stage note about potential output may say "actual output can be above or below potential output"; it must not define or calculate the output gap.
 ` : ''}
 
 Return a JSON object with these exact fields:
 - quickOverview: array of short strings covering the essential facts needed to understand this stage — include as many as the content requires, avoid padding or repetition, include nothing from other stages
-- bigIdea: one concise paragraph explaining the core idea of this stage and how it fits in the learning journey
+- bigIdea: one concise paragraph explaining the core idea of this stage and how it fits in the learning journey. It may mention prior/future stages only as brief learning-context, never as teaching content.
 - mustKnow: array of concise strings — all high-stakes formulas, rules, definitions, assumptions, procedures, or distinctions from CURRENT-STAGE KEY CONCEPTS that a student must know for the exam. Include all that apply — do not force a minimum or maximum count. Be specific and exam-ready (e.g. "k = 1 / (1 − MPC): the Keynesian multiplier formula", "Offer + acceptance + consideration = valid contract"). Do not include prerequisite or review concepts.
 - keyConcepts: array of objects — include the important CURRENT-STAGE KEY CONCEPTS that genuinely need concept cards; fewer for simple stages, more for dense stages, do not force a fixed number. CRITICAL: the "term" field must be one of the CURRENT-STAGE KEY CONCEPTS listed above, or a direct sub-component of one. NEVER write a concept card for anything listed under INTERNAL PREREQUISITE, INTERNAL REVIEW, [ALREADY COVERED], or [COVERED LATER].
   Each object has:
@@ -395,6 +413,7 @@ Return a JSON object with these exact fields:
   - from: a concept name
   - to: a concept name
   - relationship: e.g. "leads to", "enables", "contrasts with", "is required by", "causes"
+- ideaConnections must not teach [COVERED LATER] concepts. If a future concept is relevant, omit that connection.
 - examTraps: array of common mistakes students make specifically about CURRENT-STAGE KEY CONCEPTS — include only mistakes the stage content actually supports, do not force traps if there are none, each with:
   - trap: the wrong belief
   - correction: what is actually true

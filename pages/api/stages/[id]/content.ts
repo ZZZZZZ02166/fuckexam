@@ -108,6 +108,90 @@ function summaryPassesQualityCheck(content: SummaryContent): boolean {
   )
 }
 
+function normalizeScopeTerm(term: string): string[] {
+  const generic = new Set([
+    'definition', 'calculation', 'interpretation', 'relationship', 'difference',
+    'concept', 'concepts', 'overview', 'introduction', 'analysis', 'effects',
+    'impact', 'role', 'formula', 'components', 'stage',
+  ])
+  return term
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length >= 4 && !generic.has(word))
+}
+
+function textMatchesScopeTerm(text: string, term: string): boolean {
+  const textWords = new Set(normalizeScopeTerm(text))
+  const termWords = normalizeScopeTerm(term)
+  if (termWords.length === 0) return false
+  if (termWords.length <= 2) return termWords.every(word => textWords.has(word))
+  const matched = termWords.filter(word => textWords.has(word)).length
+  return matched / termWords.length >= 0.75
+}
+
+function scopeTermOverlap(a: string, b: string): number {
+  const aWords = new Set(normalizeScopeTerm(a))
+  const bWords = normalizeScopeTerm(b)
+  if (!aWords.size || !bWords.length) return 0
+  const matched = bWords.filter(word => aWords.has(word)).length
+  return matched / bWords.length
+}
+
+function sanitizeSummaryScope(
+  summary: SummaryContent,
+  currentTerms: string[],
+  futureTerms: string[],
+  internalTerms: string[],
+): SummaryContent {
+  const matchesCurrent = (text: string) => currentTerms.some(term => textMatchesScopeTerm(text, term))
+  const matchesBlockedFuture = (text: string) => futureTerms.some(futureTerm =>
+    textMatchesScopeTerm(text, futureTerm) &&
+    !currentTerms.some(currentTerm => scopeTermOverlap(currentTerm, futureTerm) >= 0.75)
+  )
+  const matchesInternal = (text: string) => internalTerms.some(term => textMatchesScopeTerm(text, term))
+  const visiblyOutOfScope = (text: string) => {
+    if (matchesBlockedFuture(text)) return true
+    return matchesInternal(text) && !matchesCurrent(text)
+  }
+  const keepString = (text: string) => !visiblyOutOfScope(text)
+
+  const detailedLines = (summary.detailedNotes ?? '')
+    .split(/\n/)
+    .filter(line => line.trim().length === 0 || keepString(line))
+    .join('\n')
+    .trim()
+
+  const sanitized: SummaryContent = {
+    ...summary,
+    quickOverview: (summary.quickOverview ?? []).filter(keepString),
+    mustKnow: (summary.mustKnow ?? []).filter(keepString),
+    keyConcepts: (summary.keyConcepts ?? []).filter(kc =>
+      matchesCurrent(kc.term) && !matchesBlockedFuture(kc.term)
+    ),
+    adaptiveSections: (summary.adaptiveSections ?? []).filter(section =>
+      keepString(`${section.title} ${section.purpose} ${section.content} ${(section.items ?? []).join(' ')}`)
+    ),
+    ideaConnections: (summary.ideaConnections ?? []).filter(connection =>
+      !visiblyOutOfScope(`${connection.from} ${connection.to}`)
+    ),
+    examTraps: (summary.examTraps ?? []).filter(trap =>
+      keepString(`${trap.trap} ${trap.correction}`)
+    ),
+    quickCheck: (summary.quickCheck ?? []).filter(check =>
+      keepString(`${check.question} ${check.answer}`)
+    ),
+    detailedNotes: detailedLines.length >= 100 ? detailedLines : summary.detailedNotes,
+  }
+
+  // Avoid returning empty high-level sections for simple stages; the model can
+  // still be regenerated, but cached output should remain usable.
+  if (sanitized.quickOverview.length === 0) sanitized.quickOverview = summary.quickOverview
+  if ((sanitized.mustKnow ?? []).length === 0) sanitized.mustKnow = summary.mustKnow
+  if (sanitized.keyConcepts.length === 0) sanitized.keyConcepts = summary.keyConcepts
+  return sanitized
+}
+
 function answerCoachPassesQualityCheck(content: AnswerCoachContent): boolean {
   return (
     (content.likelyQuestions?.length ?? 0) >= 2 &&
@@ -258,9 +342,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let content: SummaryContent | FlashcardsContent | ConceptMapContent | AnswerCoachContent
 
   if (type === 'summary') {
-    const forbiddenList = [...previousTopicNames, ...futureTopicNames].join(', ')
+    const forbiddenList = [
+      ...previousTopicNames,
+      ...futureTopicNames,
+      ...currentPrerequisiteConcepts,
+      ...currentReviewConcepts,
+    ].join(', ')
     const systemMsg = forbiddenList
-      ? `You are a curriculum designer writing stage-specific study content. This stage visibly teaches ONLY these current-stage key concepts: ${teachingConcepts.join(', ')}. You must NOT define or create visible study items for prior, review, prerequisite, or future concepts: ${forbiddenList}. If they appear in source material, reference them only as short dependency context.`
+      ? `You are a curriculum designer writing stage-specific study content. This stage visibly teaches ONLY these current-stage key concepts: ${teachingConcepts.join(', ')}. You must NOT define, preview, or create visible study items for prior, review, prerequisite, or future concepts: ${forbiddenList}. Future concepts are stricter than prerequisites: do not even name them as a teaching label. If prior/prerequisite concepts appear in source material, reference them only as short dependency context.`
       : `You are a curriculum designer. Write stage-specific study content for exactly these current-stage key concepts: ${teachingConcepts.join(', ')}.`
     const messages: Parameters<typeof openai.chat.completions.parse>[0]['messages'] = [
       { role: 'system', content: systemMsg },
@@ -301,6 +390,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (parsed && forbiddenTerms.size) {
+      parsed = sanitizeSummaryScope(
+        parsed,
+        teachingConcepts,
+        futureTopicNames,
+        [...previousTopicNames, ...currentPrerequisiteConcepts, ...currentReviewConcepts],
+      )
       parsed.keyConcepts = (parsed.keyConcepts ?? []).filter(kc => isAllowedConcept(kc.term))
     }
     if (parsed) {
