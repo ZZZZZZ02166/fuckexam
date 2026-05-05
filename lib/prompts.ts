@@ -5,20 +5,46 @@ You are a curriculum designer. Decompose this single lecture file into study sta
 File: ${fileName}
 Exam format: ${examFormat}
 
-STAGE COUNT:
-Prefer compact, meaningful concept clusters.
-Group a definition, its formula or procedure, and a simple worked example into ONE stage when
-they belong together. Avoid tiny slide-level stages. Also avoid broad overloaded stages that
-hide independently testable concepts.
-Produce as many stages as genuinely needed for complete, exam-useful coverage — not fewer,
-not more.
+STAGE BOUNDARY RULE:
+A stage should represent one meaningful learning unit — not one slide or one small concept.
+
+When adjacent concepts naturally depend on each other and are typically studied together,
+combine them into ONE richer stage. Examples of concepts that belong in one stage:
+- definition + formula or procedure + simple worked example
+- concept + distinction + common exam trap
+- model + assumptions + interpretation
+- process + steps + application
+- related measurements that together define a single framework
+- theory + implication + limitation
+
+Split into separate stages ONLY when the later concept introduces a genuinely new
+learning objective, such as:
+- a new formula or equation
+- a new model or framework
+- a new method or procedure
+- a new distinction
+- a new application or case
+- a new worked-example type
+- a new limitation or assumption
+- a new exam skill (interpretation, derivation, evaluation, policy analysis)
+
+Bigger stages are fine when content naturally belongs together.
+Smaller stages are fine when concepts are genuinely distinct.
+Do NOT hard-code a stage count. Do NOT lose detail. Do NOT make one giant file summary.
+Decide based on the actual content of this file.
 
 DO NOT create stages for:
 - Slides that only list learning objectives or learning outcomes
 - Course overview or weekly topic summary slides
 - Administrative slides (assessment dates, reading lists, timetables)
-- Slides that only recap or summarise content already covered elsewhere
-Only create stages for content that introduces substantive new knowledge a student would be tested on.
+
+RECAP AND PREREQUISITE CONTENT:
+When this file contains material that only restates prerequisite concepts rather than
+introducing new learning, do NOT create a standalone stage for it.
+Instead, list those reviewed concepts as prerequisite_knowledge for the first genuinely
+new stage that depends on them.
+A stage is only valid if it introduces genuine new learning value: a new model, formula,
+mechanism, distinction, method, worked procedure, application, limitation, or exam skill.
 
 Per stage:
 - name: 3–6 words, precise, describes exactly what is NEW in this stage
@@ -75,6 +101,36 @@ CONSTRAINTS:
 - Do not reorder, merge, split, rename, add, or remove any stage
 
 Stages (${stageCount} total — preserve this order exactly):
+${stageList}
+`.trim(),
+
+  consolidateStages: (stageList: string) => `
+You are a curriculum quality reviewer. Below is a list of study stages in pedagogical order.
+Your job: identify stages that are genuinely redundant — meaning they introduce nothing new
+beyond what an adjacent stage already covers or requires as prerequisites.
+
+A stage is ONLY a candidate for merging if ALL of the following are true:
+1. Its key concepts are nearly all already present in the prior stage's key_concepts or prerequisite_knowledge
+2. It introduces NO new formula, model, distinction, method/procedure, application, worked example,
+   case, evidence, limitation, assumption, or exam skill
+3. It has no clear unique learning objective — a student who mastered the prior stage would
+   learn nothing new from this stage alone
+
+DO NOT propose merging a stage that introduces any of the above, even if it shares background concepts.
+DO NOT merge based on topic overlap alone. Stages on the same topic can still be genuinely distinct.
+DO NOT use a numeric threshold as your primary decision rule.
+If uncertain, do NOT merge — preserving detail is always preferred over reducing stage count.
+
+For each proposed merge: the absorbing stage (keep_id) keeps its name. All key_concepts and
+prerequisite_knowledge from the absorbed stage are union-merged into the keeper — no content is lost.
+Include a clear reason for each merge explaining specifically why the absorbed stage is safe to absorb
+(e.g. "Stage N adds no new formula or method; its only concepts X and Y are already required by
+Stage M as prerequisite_knowledge").
+
+Return only JSON: { merges: [ { keep_id: <1-based integer>, absorb_ids: [integers], reason: string } ] }
+Return an empty merges array if all stages are genuinely distinct.
+
+Stages:
 ${stageList}
 `.trim(),
 
@@ -275,32 +331,58 @@ ${topics}
 Exam format: ${examFormat}
 `.trim(),
 
-  generateSummary: (topicNames: string, examFormat: string, context: string, curriculumContext?: string) => `
+  generateSummary: (
+    stageName: string,
+    keyConcepts: string[],
+    prerequisiteConcepts: string[],
+    reviewConcepts: string[],
+    examFormat: string,
+    context: string,
+    curriculumContext?: string
+  ) => `
 You write structured study guides for university students preparing for exams.
 
 Exam: ${examFormat}
+Current stage: ${stageName}
+CURRENT-STAGE KEY CONCEPTS — this is the ONLY visible teaching scope:
+${keyConcepts.map(c => `- ${c}`).join('\n')}
+
+INTERNAL PREREQUISITE CONCEPTS — assume known, do not define again, do not make visible sections:
+${prerequisiteConcepts.length ? prerequisiteConcepts.map(c => `- ${c}`).join('\n') : '- none'}
+
+INTERNAL REVIEW CONCEPTS — use only to avoid repetition, do not teach again:
+${reviewConcepts.length ? reviewConcepts.map(c => `- ${c}`).join('\n') : '- none'}
+
 ${curriculumContext ? `
 ═══════════════════════════════════════════
 FULL CURRICULUM MAP (READ CAREFULLY):
 ${curriculumContext}
 ═══════════════════════════════════════════
 
-YOUR SCOPE IS STRICTLY LIMITED to the concepts marked [CURRENT STAGE] above.
-- Concepts marked [ALREADY COVERED]: the student knows these — do NOT define or re-explain them. You may reference them as prerequisites.
-- Concepts marked [COVERED LATER]: do NOT introduce, define, preview, or explain these. They will be taught in future stages. You may say "this leads to [topic], which you will study next" but never explain what they are.
-- Everything in your output must be about the [CURRENT STAGE] concepts ONLY.
-` : `Topics for this stage: ${topicNames}`}
+YOUR SCOPE IS STRICTLY LIMITED to CURRENT-STAGE KEY CONCEPTS above.
+- Concepts marked [ALREADY COVERED]: the student knows these — do NOT define or re-explain them. You may reference them only in short dependency phrases.
+- Concepts marked [COVERED LATER]: do NOT introduce, define, preview, or explain these. They will be taught in future stages.
+- Everything visible in your output must be about CURRENT-STAGE KEY CONCEPTS ONLY.
+
+ANTI-REPETITION RULE:
+- mustKnow and keyConcepts must focus on what is genuinely new in this stage.
+- Do NOT repeat definitions or formulas that belong to [ALREADY COVERED], INTERNAL PREREQUISITE, or INTERNAL REVIEW concepts.
+- Concepts from [ALREADY COVERED] stages may appear only as short bridge phrases,
+  but must not be the primary subject of a mustKnow item, keyConcept entry, quickCheck, examTrap, or adaptiveSection.
+- Future-stage concepts must not be explained or previewed — at most one sentence noting
+  they will be covered later.
+` : ''}
 
 Return a JSON object with these exact fields:
-- quickOverview: array of 5-8 short strings — the bare minimum facts about ${topicNames} the student must know, nothing from other stages
-- bigIdea: one paragraph (2-4 sentences) explaining the core idea of this stage and how it fits in the learning journey
-- mustKnow: array of 3-6 concise strings — the highest-stakes items a student MUST have memorised before the exam. These are the most critical facts, rules, formulas, or definitions for this stage. Be specific and exam-ready (e.g. "k = 1 / (1 − MPC): the Keynesian multiplier formula", "Offer + acceptance + consideration = valid contract").
-- keyConcepts: array of 3-6 objects — CRITICAL: the "term" field must be a concept explicitly listed under [CURRENT STAGE] in the curriculum map, or a direct sub-component of it. NEVER write a concept card for anything listed under [ALREADY COVERED] or [COVERED LATER]. If a concept appears in your source material but belongs to another stage, do not define it — mention it in prose only as a forward/backward reference.
+- quickOverview: array of short strings covering the essential facts needed to understand this stage — include as many as the content requires, avoid padding or repetition, include nothing from other stages
+- bigIdea: one concise paragraph explaining the core idea of this stage and how it fits in the learning journey
+- mustKnow: array of concise strings — all high-stakes formulas, rules, definitions, assumptions, procedures, or distinctions from CURRENT-STAGE KEY CONCEPTS that a student must know for the exam. Include all that apply — do not force a minimum or maximum count. Be specific and exam-ready (e.g. "k = 1 / (1 − MPC): the Keynesian multiplier formula", "Offer + acceptance + consideration = valid contract"). Do not include prerequisite or review concepts.
+- keyConcepts: array of objects — include the important CURRENT-STAGE KEY CONCEPTS that genuinely need concept cards; fewer for simple stages, more for dense stages, do not force a fixed number. CRITICAL: the "term" field must be one of the CURRENT-STAGE KEY CONCEPTS listed above, or a direct sub-component of one. NEVER write a concept card for anything listed under INTERNAL PREREQUISITE, INTERNAL REVIEW, [ALREADY COVERED], or [COVERED LATER].
   Each object has:
-  - term: ONLY a [CURRENT STAGE] concept name
+  - term: ONLY a CURRENT-STAGE KEY CONCEPT name
   - explanation: 1-2 sentences defining it clearly
   - whyItMatters: one sentence on why this is tested in: ${examFormat}
-- adaptiveSections: Scan the source material for any structured, exam-relevant content that the generic fields above cannot adequately capture. Add a section for each distinct piece of such content you find. Useful types include (but are not limited to): formula sets, worked examples with step-by-step solutions, causal chains or mechanisms, process or procedure steps, comparison tables, case rules or legal rules, experimental evidence, algorithms, proofs or derivations, design trade-offs, timelines, and exact definitions to memorise. For each section: decide the most descriptive label for what it actually is (sectionType), write a title that makes it easy to find during revision (title), explain in one sentence why it matters for the exam (purpose), provide the core content — formula, rule, explanation, or worked solution — in the content field, and if there are multiple parallel items (e.g. three separate formulas, six procedure steps), list them in the items array. Return [] only when the source material genuinely contains nothing that requires structured treatment beyond what quickOverview, mustKnow, keyConcepts, and detailedNotes already cover. Do NOT invent content not present in the source material. Do NOT add sections purely for decoration.
+- adaptiveSections: Scan the source material for structured, exam-relevant content about CURRENT-STAGE KEY CONCEPTS that the generic fields above cannot adequately capture. Add a section for each distinct piece of such content you find. Useful types include formula sets, worked examples with step-by-step solutions, causal chains or mechanisms, process or procedure steps, comparison tables, case rules or legal rules, experimental evidence, algorithms, proofs or derivations, design trade-offs, timelines, and exact definitions to memorise. Return [] only when the current-stage key concepts genuinely contain nothing that requires structured treatment beyond quickOverview, mustKnow, keyConcepts, and detailedNotes. Do NOT add sections for prerequisite or review concepts. Do NOT invent content not present in the source material. Do NOT add sections purely for decoration.
   Each object has:
   - sectionType: descriptive label that fits this specific content — choose freely, do NOT use a fixed list
   - title: short descriptive title for this section
@@ -309,17 +391,17 @@ Return a JSON object with these exact fields:
   - items: optional array of strings for multiple parallel items (steps, rules, formulas); omit if content alone is sufficient
   - examRelevance: optional one sentence on how to apply this in an exam answer
   - sourcePages: optional array of source reference strings if identifiable
-- ideaConnections: array of 2-4 objects showing how this stage's concepts relate to each other or to prior knowledge, each with:
+- ideaConnections: array of objects showing how this stage's concepts relate to each other or to prior knowledge — include useful connections only when they genuinely help the student understand this stage, do not add filler, each with:
   - from: a concept name
   - to: a concept name
   - relationship: e.g. "leads to", "enables", "contrasts with", "is required by", "causes"
-- examTraps: array of 2-3 common mistakes students make specifically about ${topicNames}, each with:
+- examTraps: array of common mistakes students make specifically about CURRENT-STAGE KEY CONCEPTS — include only mistakes the stage content actually supports, do not force traps if there are none, each with:
   - trap: the wrong belief
   - correction: what is actually true
-- quickCheck: array of 2-3 questions testing the [CURRENT STAGE] material only, each with:
+- quickCheck: array of questions testing CURRENT-STAGE KEY CONCEPTS — include enough to check the important current-stage concepts, do not force a fixed number, each with:
   - question: a short self-test question
   - answer: the correct answer (1-2 sentences)
-- detailedNotes: a 500-700 word markdown string covering the current stage content in depth — no headings, **bold** key terms, "- " for lists. This is the student's main reference for exam revision. Write it as a dense but readable study note: explain each concept clearly, show how concepts connect to each other, include any important caveats or edge cases, and flag what is commonly tested. Prefer substance over brevity — if a concept requires three sentences to explain properly, use three sentences.
+- detailedNotes: a markdown string covering CURRENT-STAGE KEY CONCEPTS in depth — no headings, **bold** key terms, "- " for lists. This is the student's main reference for this stage. Write as much as needed: concise for simple stages, longer for dense stages with formulas, derivations, procedures, worked examples, or important distinctions. Do not omit important current-stage content, do not pad, do not repeat previous-stage content, do not include unrelated future-stage material. If a prerequisite is necessary, mention it only in a short phrase showing how the current stage builds on it; never define it again.
 
 Use only the source material provided. Do not invent facts.
 

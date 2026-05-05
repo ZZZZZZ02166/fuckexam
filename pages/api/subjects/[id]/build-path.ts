@@ -29,6 +29,15 @@ const StageOrderSchema = z.object({
   ordered_stage_ids: z.array(z.string()),
 })
 
+// Post-dedup consolidation: identify genuinely redundant stages
+const ConsolidationSchema = z.object({
+  merges: z.array(z.object({
+    keep_id: z.number().int().min(1),
+    absorb_ids: z.array(z.number().int().min(1)),
+    reason: z.string(),
+  })),
+})
+
 // Pass 2: enrich only — topics + material details, NO ordering
 const EnrichSchema = z.object({
   topics: z.array(z.object({
@@ -63,6 +72,64 @@ interface DedupedStage {
 interface StageWithModule {
   stage: DedupedStage
   module: { material_id: string; file_name: string; module_order: number }
+}
+
+function normalizeConcept(concept: string): string {
+  return concept
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\b(the|and|of|in|to|a|an|curve|model|concept|concepts|basic|basics)\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function conceptsMatch(a: string, b: string): boolean {
+  const na = normalizeConcept(a)
+  const nb = normalizeConcept(b)
+  if (!na || !nb) return false
+  if (na === nb) return true
+  return (na.length >= 8 && nb.includes(na)) || (nb.length >= 8 && na.includes(nb))
+}
+
+function uniqueConcepts(concepts: string[]): string[] {
+  const result: string[] = []
+  for (const concept of concepts.map(c => c.trim()).filter(Boolean)) {
+    if (!result.some(existing => conceptsMatch(existing, concept))) result.push(concept)
+  }
+  return result
+}
+
+function computeStageScopes(stages: DedupedStage[]): Array<{
+  key_concepts: string[]
+  prerequisite_concepts: string[]
+  review_concepts: string[]
+}> {
+  const ownedConcepts: string[] = []
+
+  return stages.map(stage => {
+    const rawKeyConcepts = uniqueConcepts(stage.key_concepts)
+    const review_concepts = rawKeyConcepts.filter(concept =>
+      ownedConcepts.some(existing => conceptsMatch(existing, concept))
+    )
+    let key_concepts = rawKeyConcepts.filter(concept =>
+      !review_concepts.some(review => conceptsMatch(review, concept))
+    )
+
+    if (key_concepts.length === 0) {
+      key_concepts = [stage.name]
+    }
+
+    for (const concept of key_concepts) {
+      if (!ownedConcepts.some(existing => conceptsMatch(existing, concept))) ownedConcepts.push(concept)
+    }
+
+    const prerequisite_concepts = uniqueConcepts([
+      ...stage.prerequisite_knowledge,
+      ...review_concepts,
+    ]).filter(concept => !key_concepts.some(key => conceptsMatch(key, concept)))
+
+    return { key_concepts, prerequisite_concepts, review_concepts }
+  })
 }
 
 // Jaccard similarity on content words (>= 4 chars, not stop words)
@@ -121,6 +188,85 @@ function deduplicateStages(orderedFileResults: PerFileResult[]): DedupedStage[] 
     }
   }
   return deduped
+}
+
+// Conservative post-dedup consolidation pass: merge genuinely redundant stages
+async function consolidateStages(deduped: DedupedStage[]): Promise<DedupedStage[]> {
+  if (deduped.length <= 1) return deduped
+
+  const stageList = deduped.map((s, i) =>
+    `${i + 1}. "${s.name}" | concepts: [${s.key_concepts.join(', ')}]` +
+    (s.prerequisite_knowledge.length > 0
+      ? ` | prerequisites: [${s.prerequisite_knowledge.join(', ')}]`
+      : '')
+  ).join('\n')
+
+  try {
+    const r = await openai.chat.completions.parse({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are a curriculum quality reviewer identifying genuinely redundant study stages.' },
+        { role: 'user', content: PROMPTS.consolidateStages(stageList) },
+      ],
+      response_format: zodResponseFormat(ConsolidationSchema, 'consolidation'),
+    })
+
+    const merges = r.choices[0].message.parsed?.merges ?? []
+    if (merges.length === 0) {
+      console.log('[build-path] consolidation: no redundant stages found')
+      return deduped
+    }
+
+    // Validate: ids in range, no stage is both keeper and absorbed
+    const allAbsorbIds = new Set(merges.flatMap(m => m.absorb_ids))
+    const validMerges = merges.filter(m => {
+      if (m.keep_id < 1 || m.keep_id > deduped.length) return false
+      if (allAbsorbIds.has(m.keep_id)) return false
+      if (m.absorb_ids.some(id => id < 1 || id > deduped.length || id === m.keep_id)) return false
+      return true
+    })
+
+    if (validMerges.length === 0) {
+      console.log('[build-path] consolidation: proposed merges were invalid, keeping original stages')
+      return deduped
+    }
+
+    const result = deduped.map(s => ({
+      ...s,
+      key_concepts: [...s.key_concepts],
+      prerequisite_knowledge: [...s.prerequisite_knowledge],
+      source_files: [...s.source_files],
+    }))
+    const toRemove = new Set<number>()
+
+    for (const merge of validMerges) {
+      const keepIdx = merge.keep_id - 1
+      const keeper = result[keepIdx]
+      for (const absorbId of merge.absorb_ids) {
+        const absorbIdx = absorbId - 1
+        if (toRemove.has(absorbIdx)) continue
+        const absorbed = result[absorbIdx]
+        for (const c of absorbed.key_concepts) {
+          if (!keeper.key_concepts.includes(c)) keeper.key_concepts.push(c)
+        }
+        for (const p of absorbed.prerequisite_knowledge) {
+          if (!keeper.prerequisite_knowledge.includes(p)) keeper.prerequisite_knowledge.push(p)
+        }
+        for (const f of absorbed.source_files) {
+          if (!keeper.source_files.includes(f)) keeper.source_files.push(f)
+        }
+        toRemove.add(absorbIdx)
+        console.log(`[build-path] consolidation merge: stage "${absorbed.name}" → "${keeper.name}" | reason: ${merge.reason}`)
+      }
+    }
+
+    const consolidated = result.filter((_, i) => !toRemove.has(i))
+    console.log(`[build-path] consolidation: ${deduped.length} → ${consolidated.length} stages (merged ${toRemove.size})`)
+    return consolidated
+  } catch (err) {
+    console.warn(`[build-path] consolidation error: ${err} — keeping original ${deduped.length} stages`)
+    return deduped
+  }
 }
 
 // Kept for safety — not called in module-first flow
@@ -392,9 +538,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // ── CROSS-FILE DEDUP (kept as-is) ─────────────────────────────────────────
+  // ── CROSS-FILE DEDUP ──────────────────────────────────────────────────────
   const deduped = deduplicateStages(orderedFiles)
   console.log(`[ai] dedup: ${totalProposed} → ${deduped.length} stages (removed ${totalProposed - deduped.length} near-duplicates)`)
+
+  // ── CONSOLIDATION PASS (conservative safety net) ──────────────────────────
+  const consolidated = await consolidateStages(deduped)
 
   const crossFileMerged = deduped.filter(d => d.source_files.length > 1)
   if (crossFileMerged.length > 0) {
@@ -425,9 +574,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   })
 
-  // Group deduped stages by primary source file (source_files[0])
+  // Group consolidated stages by primary source file (source_files[0])
   const moduleStageMap = new Map<string, DedupedStage[]>()
-  for (const stage of deduped) {
+  for (const stage of consolidated) {
     const key = stage.source_files[0]
     if (!moduleStageMap.has(key)) moduleStageMap.set(key, [])
     moduleStageMap.get(key)!.push(stage)
@@ -466,7 +615,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       {
         role: 'user',
-        content: PROMPTS.enrichStages(stageList, deduped.length, subjectName, examFormat),
+        content: PROMPTS.enrichStages(stageList, consolidated.length, subjectName, examFormat),
       },
     ],
     response_format: zodResponseFormat(EnrichSchema, 'enriched_study_path'),
@@ -478,8 +627,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   console.log(`[ai] pass2 complete — ${result.topics.length} topics, ${result.stages.length} stages`)
-  if (result.stages.length < deduped.length) {
-    console.warn(`[ai] WARNING: pass2 dropped ${deduped.length - result.stages.length} stages`)
+  if (result.stages.length < consolidated.length) {
+    console.warn(`[ai] WARNING: pass2 dropped ${consolidated.length - result.stages.length} stages`)
   }
 
   // Clear cached stage content before rebuilding
@@ -490,6 +639,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const existingStageIds = existingStages?.map(s => s.id) ?? []
 
   if (existingStageIds.length > 0) {
+    // Delete student_answers first — they FK into questions which FK into study_stages
+    const { data: existingQuestions } = await supabaseAdmin
+      .from('questions')
+      .select('id')
+      .in('stage_id', existingStageIds)
+    const existingQuestionIds = existingQuestions?.map((q: { id: string }) => q.id) ?? []
+    if (existingQuestionIds.length > 0) {
+      await supabaseAdmin.from('student_answers').delete().in('question_id', existingQuestionIds)
+    }
     await supabaseAdmin.from('stage_context_cache').delete().in('stage_id', existingStageIds)
     await supabaseAdmin.from('generated_items').delete().in('stage_id', existingStageIds)
     await supabaseAdmin.from('questions').delete().in('stage_id', existingStageIds)
@@ -512,6 +670,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await supabaseAdmin.from('study_stages').delete().eq('subject_id', subject_id)
 
   const topicNameToId = new Map((topicsInserted ?? []).map(t => [t.name.toLowerCase(), t.id]))
+  const stageScopes = computeStageScopes(finalOrdered)
 
   // result.stages[i] is aligned with stagesWithModules[i] — Pass 2 preserves input order
   const stageRows = result.stages.map((stage, i) => ({
@@ -526,6 +685,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     source_material_id: stagesWithModules[i]?.module.material_id ?? null,
     source_file_name: stagesWithModules[i]?.module.file_name ?? null,
     module_order: stagesWithModules[i]?.module.module_order ?? null,
+    key_concepts: stageScopes[i]?.key_concepts ?? [stage.name],
+    prerequisite_concepts: stageScopes[i]?.prerequisite_concepts ?? [],
+    review_concepts: stageScopes[i]?.review_concepts ?? [],
   }))
 
   const { error: stagesErr } = await supabaseAdmin.from('study_stages').insert(stageRows)
@@ -537,5 +699,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     files_processed: perFileResults.length,
     stages_proposed: totalProposed,
     stages_after_dedup: deduped.length,
+    stages_after_consolidation: consolidated.length,
   })
 }

@@ -28,6 +28,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Stage not found' })
   }
 
+  if (stage.status === 'complete' && status !== 'complete') {
+    return res.status(200).json(stage)
+  }
+
   const { data, error } = await supabaseAdmin
     .from('study_stages')
     .update({ status })

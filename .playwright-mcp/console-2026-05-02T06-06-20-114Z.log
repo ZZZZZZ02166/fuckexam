@@ -1,0 +1,20 @@
+[    1100ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/:0
+[    1273ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:28004
+[    1339ms] Error: ENOENT: no such file or directory, open '/Users/niooz/fuckexam/.next/server/pages/_document.js'
+    at Object.readFileSync (node:fs:436:20)
+    at defaultLoadImpl (node:internal/modules/cjs/loader:1167:17)
+    at loadSource (node:internal/modules/cjs/loader:1857:20)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1964:44)
+    at Module.load (node:internal/modules/cjs/loader:1552:32)
+    at Module._load (node:internal/modules/cjs/loader:1354:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1575:12)
+    at mod.require (file:///Users/niooz/fuckexam/node_modules/next/dist/server/require-hook.js:68:28)
+    at require (node:internal/modules/helpers:191:16)
+    at requirePage (file:///Users/niooz/fuckexam/node_modules/next/dist/server/require.js:99:80)
+    at loadComponentsImpl (file:///Users/niooz/fuckexam/node_modules/next/dist/server/load-components.js:86:38)
+    at DevServer.findPageComponentsImpl (file:///Users/niooz/fuckexam/node_modules/next/dist/server/next-server.js:899:77)
+    at <unknown> (file:///Users/niooz/fuckexam/node_modules/next/dist/server/next-server.js:877:21)
+    at <unknown> (file:///Users/niooz/fuckexam/node_modules/next/dist/server/lib/trace/tracer.js:184:36)
+[    1332ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[    1338ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/favicon.ico:0

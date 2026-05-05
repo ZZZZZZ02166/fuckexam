@@ -76,14 +76,28 @@ function StageView() {
     loadStage()
   }, [stageId])
 
+  async function markCurrentStageInProgress(stage: StudyStage): Promise<StudyStage> {
+    if (stage.status !== 'not_started') return stage
+
+    try {
+      return await apiJson<StudyStage>(`/api/stages/${stage.id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'in_progress' }),
+      })
+    } catch {
+      return stage
+    }
+  }
+
   async function loadStage() {
     setLoading(true)
     let genItems: GeneratedItem[] = []
     let subjectData: any = null
     try {
       subjectData = await apiJson<any>(`/api/subjects/${subjectId}`)
-      const stage = subjectData.stages.find((s: StudyStage) => s.id === stageId)
+      let stage = subjectData.stages.find((s: StudyStage) => s.id === stageId)
       if (!stage) { router.replace(`/subjects/${subjectId}/path`); return }
+      stage = await markCurrentStageInProgress(stage)
 
       setTotalStages(subjectData.stages.length)
 

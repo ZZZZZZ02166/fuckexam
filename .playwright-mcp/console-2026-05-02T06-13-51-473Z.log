@@ -1,0 +1,39 @@
+[     503ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:28004
+[     515ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[  846822ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[  963884ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[10338798ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[11793430ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[17757652ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[24895683ms] [ERROR] Failed to load resource: net::ERR_TIMED_OUT @ https://idnvzdfgkvmakpjuawjs.supabase.co/auth/v1/token?grant_type=refresh_token:0
+[24895703ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:109:24)
+    at _request (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:99:24)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3754:82)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:210:42)
+    at eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:223:11)
+    at new Promise (<anonymous>)
+    at retryable (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:204:21)
+    at SupabaseAuthClient._refreshAccessToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3749:81)
+    at SupabaseAuthClient._callRefreshToken (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3907:48)
+    at SupabaseAuthClient.__loadSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2382:57)
+    at async SupabaseAuthClient._useSession (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:2316:28)
+    at async eval (webpack-internal:///(pages-dir-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:4186:32) @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[25311616ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[28147710ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[30565927ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[32605866ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[34215725ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[35476523ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[36379944ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[38695869ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[43884728ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[45040874ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[71320717ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[73785322ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[75243114ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[75903287ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[76554924ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[77821235ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[82520872ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45

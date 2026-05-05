@@ -103,7 +103,7 @@ function summaryPassesQualityCheck(content: SummaryContent): boolean {
   return (
     (content.quickOverview?.length ?? 0) >= 3 &&
     (content.bigIdea?.trim().length ?? 0) >= 60 &&
-    (content.keyConcepts?.length ?? 0) >= 3 &&
+    (content.keyConcepts?.length ?? 0) >= 1 &&
     (content.detailedNotes?.trim().length ?? 0) >= 100
   )
 }
@@ -134,7 +134,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
   const { id: stage_id } = req.query as { id: string }
-  const { type, force, pregenerate } = req.body as { type: MaterialType; force?: boolean; pregenerate?: boolean }
+  const { type, force } = req.body as { type: MaterialType; force?: boolean; pregenerate?: boolean }
 
   if (!['summary', 'flashcards', 'concept_map', 'answer_coach'].includes(type)) {
     return res.status(400).json({ error: 'type must be summary | flashcards | concept_map' })
@@ -188,11 +188,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Build full curriculum map for scope enforcement
   const { data: allStages } = await supabaseAdmin
     .from('study_stages')
-    .select('id, name, stage_order, topic_ids')
+    .select('id, name, stage_order, topic_ids, key_concepts, prerequisite_concepts, review_concepts')
     .eq('subject_id', stage.subject_id)
     .order('stage_order')
 
   const currentOrder: number = stage.stage_order
+  const currentKeyConcepts = ((stage as any).key_concepts as string[] | null)?.filter(Boolean) ?? []
+  const currentPrerequisiteConcepts = ((stage as any).prerequisite_concepts as string[] | null)?.filter(Boolean) ?? []
+  const currentReviewConcepts = ((stage as any).review_concepts as string[] | null)?.filter(Boolean) ?? []
+  const teachingConcepts = currentKeyConcepts.length > 0 ? currentKeyConcepts : [stage.name]
   const allTopicIds = [...new Set((allStages ?? []).flatMap((s: any) => s.topic_ids ?? []))]
   let allTopicMap = new Map<string, string>()
   if (allTopicIds.length > 0) {
@@ -206,15 +210,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if ((allStages ?? []).length > 1) {
     const lines = (allStages ?? []).map((s: any) => {
+      const stageKeyConcepts = ((s.key_concepts as string[] | null) ?? []).filter(Boolean)
       const stageTopicNames = (s.topic_ids ?? []).map((id: string) => allTopicMap.get(id)).filter(Boolean)
+      const stageScope = stageKeyConcepts.length > 0 ? stageKeyConcepts : stageTopicNames
       if (s.stage_order < currentOrder) {
-        stageTopicNames.forEach((n: string) => previousTopicNames.push(n))
-        return `Stage ${s.stage_order} "${s.name}" [ALREADY COVERED]: ${stageTopicNames.join(', ')}`
+        stageScope.forEach((n: string) => previousTopicNames.push(n))
+        return `Stage ${s.stage_order} "${s.name}" [ALREADY COVERED]: ${stageScope.join(', ')}`
       } else if (s.stage_order === currentOrder) {
-        return `Stage ${s.stage_order} "${s.name}" [CURRENT STAGE]: ${stageTopicNames.join(', ')}`
+        return `Stage ${s.stage_order} "${s.name}" [CURRENT STAGE]: ${stageScope.join(', ')}`
       } else {
-        stageTopicNames.forEach((n: string) => futureTopicNames.push(n))
-        return `Stage ${s.stage_order} "${s.name}" [COVERED LATER]: ${stageTopicNames.join(', ')}`
+        stageScope.forEach((n: string) => futureTopicNames.push(n))
+        return `Stage ${s.stage_order} "${s.name}" [COVERED LATER]: ${stageScope.join(', ')}`
       }
     })
     curriculumContext = lines.join('\n')
@@ -227,7 +233,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const context = await getStageContext(
     stage_id,
     stage.subject_id,
-    topics?.map(t => t.name) ?? [stage.name],
+    teachingConcepts,
     previousTopicNames,
     futureTopicNames,
     purposeMap[type] ?? 'general',
@@ -235,11 +241,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   )
 
   const forbiddenTerms = new Set(
-    [...previousTopicNames, ...futureTopicNames].map(n => n.toLowerCase().trim())
+    [
+      ...previousTopicNames,
+      ...futureTopicNames,
+      ...currentPrerequisiteConcepts,
+      ...currentReviewConcepts,
+    ].map(n => n.toLowerCase().trim())
   )
+  const allowedTerms = new Set(teachingConcepts.map(n => n.toLowerCase().trim()))
   function isAllowedConcept(term: string): boolean {
-    if (!forbiddenTerms.size) return true
     const t = term.toLowerCase().trim()
+    if ([...allowedTerms].some(a => a && (t.includes(a) || a.includes(t)))) return true
     return ![...forbiddenTerms].some(f => t.includes(f) || f.includes(t))
   }
 
@@ -248,11 +260,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (type === 'summary') {
     const forbiddenList = [...previousTopicNames, ...futureTopicNames].join(', ')
     const systemMsg = forbiddenList
-      ? `You are a curriculum designer writing stage-specific study content. This stage covers ONLY: ${topicNames}. You must NOT define or create concept entries for any of the following — they are covered in other stages: ${forbiddenList}. If these appear in the source material, reference them only as forward/backward context in prose, never as key concept definitions.`
-      : 'You are a curriculum designer. Write stage-specific study content for exactly the assigned topics.'
+      ? `You are a curriculum designer writing stage-specific study content. This stage visibly teaches ONLY these current-stage key concepts: ${teachingConcepts.join(', ')}. You must NOT define or create visible study items for prior, review, prerequisite, or future concepts: ${forbiddenList}. If they appear in source material, reference them only as short dependency context.`
+      : `You are a curriculum designer. Write stage-specific study content for exactly these current-stage key concepts: ${teachingConcepts.join(', ')}.`
     const messages: Parameters<typeof openai.chat.completions.parse>[0]['messages'] = [
       { role: 'system', content: systemMsg },
-      { role: 'user', content: PROMPTS.generateSummary(topicNames, examFormat, context, curriculumContext || undefined) },
+      {
+        role: 'user',
+        content: PROMPTS.generateSummary(
+          stage.name,
+          teachingConcepts,
+          currentPrerequisiteConcepts,
+          currentReviewConcepts,
+          examFormat,
+          context,
+          curriculumContext || undefined,
+        ),
+      },
     ]
 
     let parsed: SummaryContent | null = null
@@ -566,13 +589,6 @@ ${JSON.stringify(mapData)}`,
     .select()
     .single()
   if (error) return res.status(500).json({ error: error.message })
-
-  if (!pregenerate && stage.status === 'not_started') {
-    await supabaseAdmin
-      .from('study_stages')
-      .update({ status: 'in_progress' })
-      .eq('id', stage_id)
-  }
 
   return res.status(201).json(item)
 }

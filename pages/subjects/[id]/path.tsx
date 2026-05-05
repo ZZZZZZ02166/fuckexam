@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { Lock } from 'lucide-react'
 import { RequireAuth } from '@/components/RequireAuth'
 import { Layout } from '@/components/Layout'
 import { NextBestTaskCard } from '@/components/NextBestTaskCard'
@@ -229,10 +228,8 @@ function PathView() {
             {moduleGroups ? (
               /* Module cards (new subjects with source_material_id) */
               <div className="space-y-2">
-                {moduleGroups.map((group, groupIndex) => {
-                  const prevGroup = groupIndex > 0 ? moduleGroups[groupIndex - 1] : null
-                  const isLocked = prevGroup !== null && !prevGroup.stages.every(s => s.status === 'complete')
-                  const isExpanded = !isLocked && expandedModules.has(group.materialId)
+                {moduleGroups.map((group) => {
+                  const isExpanded = expandedModules.has(group.materialId)
                   const completedCount = group.stages.filter(s => s.status === 'complete').length
                   const totalMins = group.stages.reduce((n, s) => n + (s.estimated_minutes ?? 0), 0)
                   const hasActive = group.stages.some(s => s.status === 'in_progress')
@@ -240,21 +237,19 @@ function PathView() {
                   return (
                     <div key={group.materialId} className={cn(
                       'rounded-2xl border bg-white overflow-hidden',
-                      isLocked ? 'border-[#E2E8F0] opacity-60' : 'border-[#E2E8F0]'
+                      'border-[#E2E8F0]'
                     )}>
                       {/* Module header */}
                       <button
-                        onClick={() => !isLocked && toggleModule(group.materialId)}
-                        disabled={isLocked}
+                        onClick={() => toggleModule(group.materialId)}
                         className={cn(
                           'w-full flex items-center justify-between px-4 py-3.5 transition-colors',
-                          isLocked ? 'cursor-not-allowed' : 'hover:bg-slate-50'
+                          'hover:bg-slate-50'
                         )}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <span className={cn(
                             'w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0',
-                            isLocked ? 'bg-slate-100 text-slate-400' :
                             hasActive ? 'bg-blue-600 text-white' :
                             completedCount === group.stages.length && group.stages.length > 0 ? 'bg-green-100 text-green-700' :
                             'bg-slate-100 text-slate-500'
@@ -264,20 +259,16 @@ function PathView() {
                           <div className="min-w-0 text-left">
                             <p className={cn(
                               'font-bold text-sm truncate',
-                              isLocked ? 'text-[#94A3B8]' :
                               hasActive ? 'text-blue-700' : 'text-[#0F172A]'
                             )}>
                               {group.displayTitle}
                             </p>
-                            <p className={cn('text-[11px] mt-0.5', isLocked ? 'text-[#CBD5E1]' : 'text-[#94A3B8]')}>
-                              {isLocked ? 'Complete the previous module to unlock' : `${completedCount}/${group.stages.length} stages · ~${totalMins} min`}
+                            <p className="text-[11px] mt-0.5 text-[#94A3B8]">
+                              {completedCount}/{group.stages.length} stages · ~{totalMins} min
                             </p>
                           </div>
                         </div>
-                        {isLocked
-                          ? <Lock className="text-[#CBD5E1] ml-3 shrink-0" size={14} />
-                          : <span className="text-[#94A3B8] text-xs ml-3 shrink-0 font-bold">{isExpanded ? '▴' : '▾'}</span>
-                        }
+                        <span className="text-[#94A3B8] text-xs ml-3 shrink-0 font-bold">{isExpanded ? '▴' : '▾'}</span>
                       </button>
 
                       {/* Stages inside module */}
